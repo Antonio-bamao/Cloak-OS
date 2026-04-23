@@ -44,6 +44,7 @@
    - 调整 `IpDetector` 依赖 bot IP source contract。
    - 增加默认 DetectionPipeline 工厂。
    - 增加默认 CampaignService 工厂，集中 app 运行时装配。
+   - 增加 `BOT_IPS` 配置解析并接入默认 pipeline。
    - 准备替换内存 Repository 的数据库接口。
 
 ## 依赖关系
@@ -62,4 +63,5 @@
 - Repository contract 测试作为未来 PostgreSQL 实现的共享行为基线。
 - Detector 依赖数据源接口，不直接拥有可变外部数据；未来 Redis/数据库数据源可替换 `botIpSource`。
 - 默认 app 装配必须使用真实检测管道，不使用空 Pipeline。
+- `startServer` 默认 app 必须在读取 config 后创建，确保环境配置进入运行时装配。
 - 数据库和 Redis 尚未接入，当前 Repository 使用内存实现以降低 Phase 1 阻塞。

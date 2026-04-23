@@ -57,3 +57,29 @@ test('createDefaultCampaignService wires repositories and the default pipeline',
   assert.equal(result.decision.verdict, 'bot');
   assert.equal(result.response.headers.Location, 'https://safe.example');
 });
+
+test('createDefaultCampaignService reads bot IPs from config detection settings', async () => {
+  const repository = new InMemoryCampaignRepository();
+  const service = createDefaultCampaignService({
+    repository,
+    accessLogRepository: new InMemoryAccessLogRepository(),
+    config: {
+      detection: {
+        botIps: ['66.249.66.1']
+      }
+    }
+  });
+  const campaign = await service.createCampaign({
+    name: 'Config Service',
+    safeUrl: 'https://safe.example',
+    moneyUrl: 'https://money.example',
+    redirectMode: 'redirect'
+  });
+
+  const result = await service.handleVisit(campaign.id, {
+    ip: '66.249.66.1',
+    userAgent: 'Mozilla/5.0 Chrome/123.0'
+  });
+
+  assert.equal(result.decision.verdict, 'bot');
+});

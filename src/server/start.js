@@ -5,22 +5,23 @@ import { createApp } from './app.js';
 export async function startServer({
   config = defaultConfig,
   logger = createLogger(),
-  app = createApp({ logger })
+  app
 } = {}) {
+  const server = app ?? createApp({ logger, config });
   const { host, port } = config.server;
 
   await new Promise((resolve, reject) => {
-    app.once('error', reject);
-    app.listen(port, host, resolve);
+    server.once('error', reject);
+    server.listen(port, host, resolve);
   });
 
-  const address = app.address();
+  const address = server.address();
   logger.info('HTTP server started', {
     host: address.address,
     port: address.port
   });
 
-  return app;
+  return server;
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

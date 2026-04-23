@@ -9,7 +9,8 @@ test('getConfig reads host and port from an injected env object', () => {
     HOST: '127.0.0.1',
     PORT: '4321',
     MIN_CONFIDENCE: '55',
-    BOT_CONFIDENCE: '88'
+    BOT_CONFIDENCE: '88',
+    BOT_IPS: '66.249.66.1, 66.249.66.2,,'
   });
 
   assert.deepEqual(config.server, {
@@ -18,7 +19,8 @@ test('getConfig reads host and port from an injected env object', () => {
   });
   assert.deepEqual(config.detection, {
     suspiciousThreshold: 55,
-    botThreshold: 88
+    botThreshold: 88,
+    botIps: ['66.249.66.1', '66.249.66.2']
   });
 });
 

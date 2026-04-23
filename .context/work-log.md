@@ -118,3 +118,12 @@
 - 结果：默认启动路径不再使用空 Pipeline；IP/UA detector 装配顺序由工厂稳定维护。
 - 验证：运行 `node --test`，46 个测试全部通过；运行 `.context` 校验，返回 `context is valid`。
 - 下一步：增加 `BOT_IPS` 配置读取并接入默认 pipeline。
+
+## 2026-04-23 20:20 CST - 完成 BOT_IPS 配置接入
+
+- 时间：2026-04-23 20:20 CST
+- 目标：让运行时可以通过环境变量注入 Bot IP 列表。
+- 动作：先新增 `BOT_IPS` 配置和默认服务装配测试并确认失败；随后实现 CSV 解析、默认服务读取 config，并调整 `startServer` 默认 app 创建时机。
+- 结果：`BOT_IPS=66.249.66.1,66.249.66.2` 会进入默认 `IpDetector` 的 Bot IP source。
+- 验证：运行 `node --test`，47 个测试全部通过；运行 `.context` 校验，返回 `context is valid`。
+- 下一步：增加运行时配置校验，避免无效端口或阈值进入服务。

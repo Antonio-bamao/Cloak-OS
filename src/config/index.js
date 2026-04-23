@@ -8,9 +8,17 @@ export function getConfig(env = process.env) {
     },
     detection: {
       suspiciousThreshold: Number(env.MIN_CONFIDENCE ?? 60),
-      botThreshold: Number(env.BOT_CONFIDENCE ?? 80)
+      botThreshold: Number(env.BOT_CONFIDENCE ?? 80),
+      botIps: parseCsv(env.BOT_IPS)
     }
   };
 }
 
 export const config = getConfig();
+
+function parseCsv(value = '') {
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}

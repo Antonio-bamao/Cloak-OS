@@ -44,11 +44,14 @@
   - 已新增默认 DetectionPipeline 工厂，集中装配 IP / UA detector。
   - 已新增 `createDefaultCampaignService`，让 app 默认服务使用真实检测管道与访问日志仓储。
   - 已运行测试：46 个测试全部通过。
+  - 已新增 `BOT_IPS` 配置解析，并接入默认 CampaignService / DetectionPipeline。
+  - 已调整 `startServer` 默认 app 创建时机，使配置可进入运行时装配。
+  - 已运行测试：47 个测试全部通过。
 - 进行中：
-  - Phase 2 运行时能力继续推进：Redis Bot IP Source 接口形状、生产配置接入默认 pipeline。
+  - Phase 2 运行时能力继续推进：Redis Bot IP Source 接口形状、运行时配置校验、生产配置文档。
 - 下一步：
   - 预留 Redis Bot IP Source 接口形状。
-  - 增加 Bot IP 配置读取入口，使 `BOT_IPS` 可注入默认 pipeline。
+  - 增加配置校验，避免无效 PORT / 阈值静默进入运行时。
   - 为未来 PostgreSQL Repository 复用 contract 测试保留工厂入口。
 - 阻塞项：
   - 当前仅有架构原则文档，没有产品级字段清单或数据库连接信息，因此 Phase 1 使用内存 Repository。

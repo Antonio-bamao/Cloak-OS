@@ -9,7 +9,8 @@ import { createHttpServer } from './http-server.js';
 export function createApp({
   version,
   logger,
-  campaignService = createDefaultCampaignService()
+  config,
+  campaignService = createDefaultCampaignService({ config })
 } = {}) {
   return createHttpServer({
     logger,
@@ -21,9 +22,10 @@ export function createApp({
 }
 
 export function createDefaultCampaignService({
+  config,
   repository = new InMemoryCampaignRepository(),
   accessLogRepository = new InMemoryAccessLogRepository(),
-  botIps = [],
+  botIps = config?.detection?.botIps ?? [],
   botIpSource
 } = {}) {
   return new CampaignService({
