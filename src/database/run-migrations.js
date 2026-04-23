@@ -178,46 +178,62 @@ export function isDirectRun(moduleUrl, entryPath = process.argv[1]) {
   return path.resolve(fileURLToPath(moduleUrl)) === path.resolve(entryPath);
 }
 
-if (isDirectRun(import.meta.url)) {
-  const cliArgs = parseMigrationCliArgs(process.argv.slice(2));
-  if (cliArgs.help) {
-    console.log(formatMigrationHelp());
-  } else {
-    const mode = cliArgs.mode;
-    const command =
-      mode === 'status' || mode === 'dry-run'
-        ? runMigrationStatusCommand({
-            databaseUrl: cliArgs.databaseUrl,
-            migrationsDir: cliArgs.migrationsDir,
-            config: {
-              repository: {
-                driver: 'postgres'
-              }
-            }
-          }).then((result) => {
-            console.log(
-              mode === 'dry-run'
-                ? formatMigrationDryRunSummary(result)
-                : formatMigrationStatusSummary(result)
-            );
-          })
-        : runMigrationsCommand({
-            databaseUrl: cliArgs.databaseUrl,
-            migrationsDir: cliArgs.migrationsDir,
-            config: {
-              repository: {
-                driver: 'postgres'
-              }
-            }
-          }).then((result) => {
-            console.log(formatMigrationSummary(result));
-          });
+export async function runMigrationCli({
+  argv = process.argv.slice(2),
+  stdout = process.stdout,
+  stderr = process.stderr,
+  runMigrationsCommand: executeMigrationCommand = runMigrationsCommand,
+  runMigrationStatusCommand: executeMigrationStatusCommand = runMigrationStatusCommand
+} = {}) {
+  try {
+    const cliArgs = parseMigrationCliArgs(argv);
 
-    command.catch((error) => {
-      console.error(error.message);
-      process.exitCode = 1;
+    if (cliArgs.help) {
+      stdout.write(`${formatMigrationHelp()}\n`);
+      return { exitCode: 0 };
+    }
+
+    if (cliArgs.mode === 'status' || cliArgs.mode === 'dry-run') {
+      const result = await executeMigrationStatusCommand({
+        databaseUrl: cliArgs.databaseUrl,
+        migrationsDir: cliArgs.migrationsDir,
+        config: {
+          repository: {
+            driver: 'postgres'
+          }
+        }
+      });
+
+      stdout.write(
+        `${cliArgs.mode === 'dry-run'
+          ? formatMigrationDryRunSummary(result)
+          : formatMigrationStatusSummary(result)}\n`
+      );
+      return { exitCode: 0 };
+    }
+
+    const result = await executeMigrationCommand({
+      databaseUrl: cliArgs.databaseUrl,
+      migrationsDir: cliArgs.migrationsDir,
+      config: {
+        repository: {
+          driver: 'postgres'
+        }
+      }
     });
+
+    stdout.write(`${formatMigrationSummary(result)}\n`);
+    return { exitCode: 0 };
+  } catch (error) {
+    stderr.write(`${error.message}\n`);
+    return { exitCode: 1, error };
   }
+}
+
+if (isDirectRun(import.meta.url)) {
+  runMigrationCli().then(({ exitCode }) => {
+    process.exitCode = exitCode;
+  });
 }
 
 function formatMigrationList(filenames) {

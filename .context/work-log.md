@@ -343,3 +343,12 @@
 - 结果：现在可以用 `npm run migrate:dry-run` 或 `node src/database/run-migrations.js --dry-run --database-url <url>` 查看“如果执行 migrate，会应用哪些文件”；也可以用 `--help` 直接查看 CLI 模式和参数。
 - 验证：运行 `node --test test/run-migrations-command.test.js test/docs.test.js`，14 个测试全部通过；运行 `node --test`，106 个测试全部通过。
 - 下一步：若继续数据库方向，可直接做真实 PostgreSQL smoke-check，或继续补 CLI direct-run 行为测试；否则回到管理台空状态 / 错误态打磨。
+
+## 2026-04-23 22:48 CST - 抽出可测试的 migration CLI 调度层
+
+- 时间：2026-04-23 22:48 CST
+- 目标：让 migration CLI 的 help / status / dry-run / migrate / 错误退出行为可以在单测里稳定覆盖，而不依赖真实子进程执行。
+- 动作：先为 `runMigrationCli()` 写失败测试，覆盖 help 输出、dry-run 分发、migrate 分发和 stderr 错误返回；随后把 `src/database/run-migrations.js` 中原本散落在 direct-run 块里的分支逻辑抽成 `runMigrationCli()`，并让 `if (isDirectRun(...))` 只负责调用它并回写 `process.exitCode`。
+- 结果：migration CLI 现在有一个稳定、可注入 stdout/stderr 与命令执行器的调度层，后续如果要补子进程级集成测试或额外 CLI 模式，会更容易扩展。
+- 验证：运行 `node --test test/run-migrations-command.test.js`，16 个测试全部通过；运行 `node --test`，110 个测试全部通过。
+- 下一步：若继续数据库方向，可直接做真实 PostgreSQL smoke-check，或补子进程级 CLI 集成测试；否则回到管理台空状态 / 错误态打磨。

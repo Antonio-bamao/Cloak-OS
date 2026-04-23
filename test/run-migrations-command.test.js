@@ -7,6 +7,7 @@ import {
   formatMigrationStatusSummary,
   formatMigrationSummary,
   parseMigrationCliArgs,
+  runMigrationCli,
   runMigrationStatusCommand,
   runMigrationsCommand
 } from '../src/database/run-migrations.js';
@@ -244,4 +245,84 @@ test('formatMigrationHelp documents modes and key CLI flags', () => {
   assert.match(help, /--dry-run/);
   assert.match(help, /--database-url/);
   assert.match(help, /--migrations-dir/);
+});
+
+test('runMigrationCli prints help without touching the database', async () => {
+  const stdout = [];
+  const stderr = [];
+  const result = await runMigrationCli({
+    argv: ['--help'],
+    stdout: { write(message) { stdout.push(message); } },
+    stderr: { write(message) { stderr.push(message); } },
+    runMigrationsCommand: async () => {
+      throw new Error('should not run');
+    },
+    runMigrationStatusCommand: async () => {
+      throw new Error('should not run');
+    }
+  });
+
+  assert.equal(result.exitCode, 0);
+  assert.match(stdout.join(''), /Migration CLI/);
+  assert.deepEqual(stderr, []);
+});
+
+test('runMigrationCli dispatches dry-run mode through status command and writes dry-run summary', async () => {
+  const stdout = [];
+  const result = await runMigrationCli({
+    argv: ['--dry-run', '--database-url', 'postgres://cloak:secret@127.0.0.1:5432/cloak'],
+    stdout: { write(message) { stdout.push(message); } },
+    stderr: { write() {} },
+    runMigrationStatusCommand: async ({ databaseUrl }) => {
+      assert.equal(databaseUrl, 'postgres://cloak:secret@127.0.0.1:5432/cloak');
+      return {
+        allMigrations: ['001_initial.sql'],
+        appliedMigrations: [],
+        pendingMigrations: ['001_initial.sql']
+      };
+    },
+    runMigrationsCommand: async () => {
+      throw new Error('should not run migrate command');
+    }
+  });
+
+  assert.equal(result.exitCode, 0);
+  assert.match(stdout.join(''), /Would apply 1 migrations/);
+});
+
+test('runMigrationCli dispatches migrate mode and writes migration summary', async () => {
+  const stdout = [];
+  const result = await runMigrationCli({
+    argv: ['--database-url', 'postgres://cloak:secret@127.0.0.1:5432/cloak'],
+    stdout: { write(message) { stdout.push(message); } },
+    stderr: { write() {} },
+    runMigrationsCommand: async ({ databaseUrl }) => {
+      assert.equal(databaseUrl, 'postgres://cloak:secret@127.0.0.1:5432/cloak');
+      return {
+        appliedMigrations: ['001_initial.sql'],
+        skippedMigrations: []
+      };
+    },
+    runMigrationStatusCommand: async () => {
+      throw new Error('should not run status command');
+    }
+  });
+
+  assert.equal(result.exitCode, 0);
+  assert.match(stdout.join(''), /Applied 1 migrations/);
+});
+
+test('runMigrationCli writes errors to stderr and returns exitCode 1', async () => {
+  const stderr = [];
+  const result = await runMigrationCli({
+    argv: ['--status'],
+    stdout: { write() {} },
+    stderr: { write(message) { stderr.push(message); } },
+    runMigrationStatusCommand: async () => {
+      throw new Error('db unavailable');
+    }
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.match(stderr.join(''), /db unavailable/);
 });
