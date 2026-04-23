@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { pathToFileURL } from 'node:url';
 
 import { getConfig, validateConfig } from '../src/config/index.js';
-import { startServer } from '../src/server/start.js';
+import { isDirectRun, startServer } from '../src/server/start.js';
 
 test('getConfig reads host and port from an injected env object', () => {
   const config = getConfig({
@@ -103,4 +104,11 @@ test('startServer validates config before creating the app', async () => {
   );
 
   assert.equal(appCreated, false);
+});
+
+test('isDirectRun compares file URLs and filesystem paths safely', () => {
+  const entryPath = 'C:\\Users\\m1591\\Desktop\\斗篷cloak\\src\\server\\start.js';
+
+  assert.equal(isDirectRun(pathToFileURL(entryPath).href, entryPath), true);
+  assert.equal(isDirectRun(pathToFileURL(entryPath).href, 'C:\\other\\start.js'), false);
 });

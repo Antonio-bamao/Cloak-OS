@@ -190,3 +190,39 @@
 - 结果：管理 API 需要 `Authorization: Bearer <ADMIN_TOKEN>`；`GET /health` 和 `GET /c/:campaignId` 保持公开。
 - 验证：运行 `node --test`，65 个测试全部通过；运行 `.context` 校验，返回 `context is valid`。
 - 下一步：继续后端阶段完成检查，确认是否可以进入 UI 管理台阶段。
+
+## 2026-04-23 22:20 CST - 完成管理台 Analytics Overview API
+
+- 时间：2026-04-23 22:20 CST
+- 目标：补齐进入 UI 管理台前需要的后端概览数据接口。
+- 动作：先新增 analytics API、AnalyticsService、Repository contract 和 README 测试并确认失败；随后实现 `AnalyticsService`、`createAnalyticsRoutes`、`GET /api/v1/analytics/overview` 和 `findAllByTenant()`。
+- 结果：管理台可通过受保护 API 获取 Campaign 总数、总访问量、verdict 计数和 action 计数；统计逻辑独立在 AnalyticsService 中，不侵入 CampaignService。
+- 验证：运行 `node --test`，70 个测试全部通过。
+- 下一步：执行后端阶段完成检查，确认是否进入 UI 管理台阶段。
+
+## 2026-04-23 22:35 CST - 完成管理台全局日志 API
+
+- 时间：2026-04-23 22:35 CST
+- 目标：让 UI 管理台可以直接查询跨 Campaign 的日志列表，避免只依赖单个 Campaign 日志 API。
+- 动作：先新增 AccessLogService、全局日志 API、Repository contract 和 README 测试并确认失败；随后实现 `AccessLogService`、`createAccessLogRoutes`、`GET /api/v1/logs` 和 `findPageByTenant()`。
+- 结果：管理 API 可分页查询全局访问日志，并支持 verdict/action/ipAddress/from/to 过滤；全局日志查询独立在 AccessLogService 中，不侵入 CampaignService。
+- 验证：运行 `node --test`，74 个测试全部通过。
+- 下一步：继续后端阶段完成检查，若没有硬后端缺口则进入 UI 管理台阶段。
+
+## 2026-04-23 22:55 CST - 启动管理台 UI
+
+- 时间：2026-04-23 22:55 CST
+- 目标：按设计 skill 进入管理台 UI，实现可访问的第一屏后台。
+- 动作：使用 `ui-ux-pro-max` 生成并持久化 Cloak Admin 设计系统；先新增 admin UI 托管测试并确认失败；随后实现 `createAdminStaticRoutes`、`public/admin/index.html`、`styles.css`、`app.js` 和 README 入口说明。
+- 结果：`GET /admin` 可加载管理台，包含概览、判定分布、全局日志、活动列表和活动表单；UI 通过同源管理 API 工作，并使用 ADMIN_TOKEN 鉴权。
+- 验证：运行 `node --check public/admin/app.js`；运行 `node --test`，75 个测试全部通过。
+- 下一步：启动本地服务，检查 `/admin` 实际访问；继续做 UI 交互细节与移动端打磨。
+
+## 2026-04-23 23:05 CST - 修复 Windows 直接启动入口并验证管理台
+
+- 时间：2026-04-23 23:05 CST
+- 目标：让 `npm start` / `node src/server/start.js` 在 Windows 下能真正启动 HTTP 服务，方便访问管理台。
+- 动作：复现 `Start-Process node src/server/start.js` 立刻退出；定位为 `import.meta.url === file://${process.argv[1]}` 在 Windows 路径下不匹配；先新增 `isDirectRun()` 测试并确认失败，再使用 `fileURLToPath()` 和 `path.resolve()` 修复。
+- 结果：服务已在 `http://127.0.0.1:3100/admin` 启动，PID `16708`；`/admin` 返回 200，analytics API 返回统一 JSON 响应。
+- 验证：运行 `node --test`，76 个测试全部通过；运行 `.context` 校验，返回 `context is valid`。
+- 下一步：继续管理台 UI 交互细节与移动端检查。

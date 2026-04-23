@@ -58,7 +58,19 @@
    - 增加 AppError 响应头支持，用于 `Retry-After`。
    - 增加管理 API Bearer token 鉴权。
    - 保持 health 和公网 cloak 入口无需认证。
+   - 增加 `AnalyticsService`，独立汇总管理台概览数据。
+   - 增加 `/api/v1/analytics/overview` 受保护管理 API。
+   - 扩展 AccessLog Repository contract，覆盖按 tenant 全量列表与 mutation 隔离。
+   - 增加 `AccessLogService`，独立提供管理台全局日志查询。
+   - 增加 `/api/v1/logs` 受保护管理 API，支持分页和筛选。
+   - 扩展 AccessLog Repository contract，覆盖按 tenant 分页日志查询。
    - 准备替换内存 Repository 的数据库接口。
+7. Phase 3：前端管理台与分析
+   - 使用 `ui-ux-pro-max` 生成 Cloak Admin 设计系统。
+   - 增加 `/admin` 静态管理台入口。
+   - 增加管理台概览指标、判定分布、全局日志、活动列表和活动表单。
+   - 通过同源 API 调用 `/api/v1/analytics/overview`、`/api/v1/logs`、`/api/v1/campaigns`。
+   - 保持管理台 UI 使用 ADMIN_TOKEN，不绕过后端鉴权。
 
 ## 依赖关系
 
@@ -85,4 +97,10 @@
 - 公网 rate limiting 必须作为 route wrapper 接入，不进入 Detector 或 CampaignService。
 - 管理 API 鉴权必须作为 route wrapper 接入，不进入 CampaignService 或 Repository。
 - 公网斗篷入口和健康检查不使用管理 API 鉴权。
+- AnalyticsService 只依赖 CampaignRepository 与 AccessLogRepository，不侵入 CampaignService。
+- Analytics route 只调用 AnalyticsService，并通过管理 API 鉴权 wrapper 接入。
+- AccessLogService 只依赖 AccessLogRepository，避免把全局日志列表塞入 CampaignService。
+- 全局日志 route 只调用 AccessLogService，并通过管理 API 鉴权 wrapper 接入。
+- Admin UI 静态资源由独立 route 托管，不进入业务 Service。
+- Admin UI 只通过公开的管理 API 读写数据，不直接访问 Repository。
 - 数据库和 Redis 尚未接入，当前 Repository 使用内存实现以降低 Phase 1 阻塞。

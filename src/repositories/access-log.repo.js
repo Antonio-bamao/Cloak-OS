@@ -37,6 +37,12 @@ export class InMemoryAccessLogRepository {
     return cloneRecords(logs);
   }
 
+  async findAllByTenant(tenantId = DEFAULT_TENANT_ID) {
+    const logs = this.logs.filter((log) => log.tenantId === tenantId);
+
+    return cloneRecords(logs);
+  }
+
   async findPageByCampaign(
     campaignId,
     tenantId = DEFAULT_TENANT_ID,
@@ -46,24 +52,47 @@ export class InMemoryAccessLogRepository {
       filters = {}
     } = {}
   ) {
-    const normalizedPage = positiveInteger(page, 1);
-    const normalizedPageSize = positiveInteger(pageSize, 20);
-    const allLogs = (await this.findByCampaign(campaignId, tenantId))
-      .filter((log) => matchesFilters(log, filters))
-      .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
-    const start = (normalizedPage - 1) * normalizedPageSize;
+    return paginateLogs(await this.findByCampaign(campaignId, tenantId), {
+      page,
+      pageSize,
+      filters
+    });
+  }
 
-    return {
-      items: allLogs.slice(start, start + normalizedPageSize),
-      total: allLogs.length,
-      page: normalizedPage,
-      pageSize: normalizedPageSize
-    };
+  async findPageByTenant(
+    tenantId = DEFAULT_TENANT_ID,
+    {
+      page = 1,
+      pageSize = 20,
+      filters = {}
+    } = {}
+  ) {
+    return paginateLogs(await this.findAllByTenant(tenantId), {
+      page,
+      pageSize,
+      filters
+    });
   }
 }
 
 function positiveInteger(value, fallback) {
   return Number.isInteger(value) && value > 0 ? value : fallback;
+}
+
+function paginateLogs(logs, { page, pageSize, filters }) {
+  const normalizedPage = positiveInteger(page, 1);
+  const normalizedPageSize = positiveInteger(pageSize, 20);
+  const allLogs = logs
+    .filter((log) => matchesFilters(log, filters))
+    .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+  const start = (normalizedPage - 1) * normalizedPageSize;
+
+  return {
+    items: allLogs.slice(start, start + normalizedPageSize),
+    total: allLogs.length,
+    page: normalizedPage,
+    pageSize: normalizedPageSize
+  };
 }
 
 function matchesFilters(log, filters) {

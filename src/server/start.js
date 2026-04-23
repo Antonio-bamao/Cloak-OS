@@ -1,3 +1,6 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import {
   config as defaultConfig,
   mergeConfig,
@@ -31,7 +34,15 @@ export async function startServer({
   return server;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+export function isDirectRun(moduleUrl, entryPath = process.argv[1]) {
+  if (!entryPath) {
+    return false;
+  }
+
+  return path.resolve(fileURLToPath(moduleUrl)) === path.resolve(entryPath);
+}
+
+if (isDirectRun(import.meta.url)) {
   startServer().catch((error) => {
     const logger = createLogger();
     logger.error('HTTP server failed to start', {

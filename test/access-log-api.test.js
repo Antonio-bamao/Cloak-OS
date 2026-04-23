@@ -175,3 +175,72 @@ test('campaign logs API filters by verdict, action, IP, and time range', async (
     });
   }
 });
+
+test('global logs API returns paginated access logs across campaigns', async () => {
+  const campaignRepository = new InMemoryCampaignRepository();
+  const accessLogRepository = new InMemoryAccessLogRepository();
+  const campaignService = new CampaignService({
+    repository: campaignRepository,
+    accessLogRepository
+  });
+  const firstCampaign = await campaignService.createCampaign({
+    name: 'First Campaign',
+    safeUrl: 'https://safe.example',
+    moneyUrl: 'https://money.example',
+    redirectMode: 'redirect'
+  });
+  const secondCampaign = await campaignService.createCampaign({
+    name: 'Second Campaign',
+    safeUrl: 'https://safe.example',
+    moneyUrl: 'https://money.example',
+    redirectMode: 'redirect'
+  });
+  const firstLog = await accessLogRepository.create({
+    tenantId: firstCampaign.tenantId,
+    campaignId: firstCampaign.id,
+    ipAddress: '203.0.113.1',
+    userAgent: 'UA 1',
+    verdict: 'human',
+    action: 'money',
+    confidence: 0,
+    detectionReasons: [],
+    createdAt: '2026-04-23T10:00:00.000Z'
+  });
+  const secondLog = await accessLogRepository.create({
+    tenantId: secondCampaign.tenantId,
+    campaignId: secondCampaign.id,
+    ipAddress: '66.249.66.1',
+    userAgent: 'Googlebot/2.1',
+    verdict: 'bot',
+    action: 'safe',
+    confidence: 95,
+    detectionReasons: ['ip: matched'],
+    createdAt: '2026-04-23T10:01:00.000Z'
+  });
+  const app = createApp({ campaignService });
+
+  await new Promise((resolve) => app.listen(0, '127.0.0.1', resolve));
+  try {
+    const { port } = app.address();
+    const response = await fetch(
+      `http://127.0.0.1:${port}/api/v1/logs?page=1&pageSize=2`,
+      { headers: AUTH_HEADERS }
+    );
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), {
+      success: true,
+      data: [secondLog, firstLog],
+      message: 'Access logs fetched',
+      pagination: {
+        page: 1,
+        pageSize: 2,
+        total: 2
+      }
+    });
+  } finally {
+    await new Promise((resolve, reject) => {
+      app.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+});

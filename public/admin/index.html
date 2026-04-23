@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cloak Admin</title>
+    <link rel="stylesheet" href="/admin/styles.css">
+  </head>
+  <body>
+    <svg class="icon-sprite" aria-hidden="true">
+      <symbol id="icon-shield" viewBox="0 0 24 24">
+        <path d="M12 3l7 2.8v5.8c0 4.6-2.9 7.6-7 9.4-4.1-1.8-7-4.8-7-9.4V5.8L12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        <path d="M9 12l2 2 4-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="icon-refresh" viewBox="0 0 24 24">
+        <path d="M20 12a8 8 0 1 1-2.3-5.7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="icon-edit" viewBox="0 0 24 24">
+        <path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+      </symbol>
+      <symbol id="icon-trash" viewBox="0 0 24 24">
+        <path d="M5 7h14M10 11v6M14 11v6M8 7l1-3h6l1 3M7 7l1 13h8l1-13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+    </svg>
+
+    <div id="app-shell" class="app-shell">
+      <aside class="sidebar" aria-label="主导航">
+        <a class="brand" href="/admin" aria-label="Cloak Admin">
+          <span class="brand-mark"><svg><use href="#icon-shield"></use></svg></span>
+          <span>
+            <strong>Cloak</strong>
+            <small>Admin Console</small>
+          </span>
+        </a>
+        <nav class="nav-list" aria-label="管理台导航">
+          <a class="nav-item is-active" href="#overview">概览</a>
+          <a class="nav-item" href="#logs">日志</a>
+          <a class="nav-item" href="#campaigns">活动</a>
+        </nav>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Traffic Control</p>
+            <h1>斗篷管理台</h1>
+          </div>
+          <form class="token-form" id="token-form">
+            <label for="admin-token">管理令牌</label>
+            <input id="admin-token" name="adminToken" type="password" autocomplete="current-password" placeholder="ADMIN_TOKEN">
+            <button class="icon-button" type="submit" aria-label="保存令牌">
+              <svg><use href="#icon-shield"></use></svg>
+            </button>
+            <button class="icon-button" id="refresh-button" type="button" aria-label="刷新数据">
+              <svg><use href="#icon-refresh"></use></svg>
+            </button>
+          </form>
+        </header>
+
+        <section class="metrics-grid" id="overview" aria-label="数据概览">
+          <article class="metric-card">
+            <span class="metric-label">Campaigns</span>
+            <strong id="metric-campaigns">0</strong>
+            <small>已配置活动</small>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Visits</span>
+            <strong id="metric-visits">0</strong>
+            <small>累计访问</small>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Bots</span>
+            <strong id="metric-bots">0</strong>
+            <small>安全流量</small>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Money</span>
+            <strong id="metric-money">0</strong>
+            <small>Money 动作</small>
+          </article>
+        </section>
+
+        <section class="dashboard-grid" aria-label="运营面板">
+          <section class="panel decision-panel" aria-labelledby="decision-title">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Decision Mix</p>
+                <h2 id="decision-title">判定分布</h2>
+              </div>
+            </div>
+            <div class="split-bars" id="verdict-bars"></div>
+            <div class="action-strip" id="action-strip"></div>
+          </section>
+
+          <section class="panel form-panel" aria-labelledby="campaign-form-title">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Campaign</p>
+                <h2 id="campaign-form-title">活动配置</h2>
+              </div>
+            </div>
+            <form id="campaign-form" class="campaign-form">
+              <input type="hidden" id="campaign-id">
+              <label>
+                名称
+                <input id="campaign-name" name="name" required>
+              </label>
+              <label>
+                Safe URL
+                <input id="campaign-safe-url" name="safeUrl" type="url" required>
+              </label>
+              <label>
+                Money URL
+                <input id="campaign-money-url" name="moneyUrl" type="url" required>
+              </label>
+              <label>
+                跳转模式
+                <select id="campaign-mode" name="redirectMode">
+                  <option value="redirect">Redirect</option>
+                  <option value="iframe">Iframe</option>
+                  <option value="loading">Loading</option>
+                </select>
+              </label>
+              <div class="form-actions">
+                <button class="secondary-button" id="reset-campaign-form" type="button">清空</button>
+                <button class="primary-button" id="save-campaign-button" type="submit">保存活动</button>
+              </div>
+            </form>
+          </section>
+        </section>
+
+        <section class="panel" id="logs" aria-labelledby="logs-title">
+          <div class="panel-heading table-heading">
+            <div>
+              <p class="eyebrow">Access Logs</p>
+              <h2 id="logs-title">全局日志</h2>
+            </div>
+            <form class="filters" id="log-filters">
+              <select id="filter-verdict" aria-label="按判定筛选">
+                <option value="">全部判定</option>
+                <option value="human">Human</option>
+                <option value="bot">Bot</option>
+                <option value="suspicious">Suspicious</option>
+              </select>
+              <select id="filter-action" aria-label="按动作筛选">
+                <option value="">全部动作</option>
+                <option value="money">Money</option>
+                <option value="safe">Safe</option>
+                <option value="block">Block</option>
+              </select>
+              <input id="filter-ip" aria-label="按 IP 筛选" placeholder="IP 地址">
+              <button class="secondary-button" type="submit">筛选</button>
+            </form>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>时间</th>
+                  <th>Campaign</th>
+                  <th>IP</th>
+                  <th>判定</th>
+                  <th>动作</th>
+                  <th>置信度</th>
+                </tr>
+              </thead>
+              <tbody id="logs-table"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel" id="campaigns" aria-labelledby="campaigns-title">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Inventory</p>
+              <h2 id="campaigns-title">活动列表</h2>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>名称</th>
+                  <th>模式</th>
+                  <th>Safe URL</th>
+                  <th>Money URL</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="campaigns-table"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="/admin/app.js"></script>
+  </body>
+</html>

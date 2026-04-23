@@ -12,11 +12,14 @@ test('README documents startup, tests, env vars, and available API routes', asyn
   assert.match(readme, /BOT_IPS/);
   assert.match(readme, /ADMIN_TOKEN/);
   assert.match(readme, /GET \/health/);
+  assert.match(readme, /GET \/admin/);
   assert.match(readme, /GET \/c\/:campaignId/);
   assert.match(readme, /POST \/api\/v1\/campaigns/);
   assert.match(readme, /PUT \/api\/v1\/campaigns\/:id/);
   assert.match(readme, /DELETE \/api\/v1\/campaigns\/:id/);
   assert.match(readme, /GET \/api\/v1\/campaigns\/:id\/logs/);
+  assert.match(readme, /GET \/api\/v1\/logs/);
+  assert.match(readme, /GET \/api\/v1\/analytics\/overview/);
 });
 
 test('.env.example lists every runtime env var consumed by config', async () => {

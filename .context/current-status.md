@@ -1,6 +1,6 @@
 # 当前状态
 
-- 当前阶段：Phase 1 核心斗篷引擎 MVP
+- 当前阶段：Phase 3 前端管理台与分析起步
 - 已完成：
   - 已阅读 `ENGINEERING_PRINCIPLES.md`。
   - 已初始化 `.context/` 项目记忆系统。
@@ -73,10 +73,29 @@
 - 已保持 `GET /health` 与 `GET /c/:campaignId` 公开。
 - 已新增 `ADMIN_TOKEN` 配置与文档。
 - 已运行测试：65 个测试全部通过。
+- 已新增 `AnalyticsService`，独立汇总 Campaign 数量与访问日志 verdict/action 计数。
+- 已新增受保护管理 API `GET /api/v1/analytics/overview`。
+- 已扩展 `InMemoryAccessLogRepository.findAllByTenant()` 与 Repository contract，保持返回副本边界。
+- 已更新 README 记录 Analytics API。
+- 已运行测试：70 个测试全部通过。
+- 已新增 `AccessLogService`，用于管理台全局日志列表查询。
+- 已新增受保护管理 API `GET /api/v1/logs`，支持分页与 verdict/action/IP/时间范围过滤。
+- 已扩展 `InMemoryAccessLogRepository.findPageByTenant()` 与 Repository contract。
+- 已运行测试：74 个测试全部通过。
+- 已使用 `ui-ux-pro-max` 生成并持久化 `design-system/cloak-admin/MASTER.md`。
+- 已新增无构建依赖的管理台 UI：`GET /admin`、`/admin/styles.css`、`/admin/app.js`。
+- 管理台第一屏包含概览指标、判定分布、全局日志、活动列表与活动表单。
+- 已新增 admin UI 托管测试，并更新 README。
+- 已运行 `node --check public/admin/app.js`。
+- 已运行测试：75 个测试全部通过。
+- 已修复 Windows 下 `node src/server/start.js` 直接运行不会启动的问题。
+- 已新增 `isDirectRun()` 启动入口测试。
+- 已在本地启动服务：`http://127.0.0.1:3100/admin`，PID `16708`。
+- 已验证 `/admin` 返回 200，`/api/v1/analytics/overview` 返回统一响应。
+- 已运行测试：76 个测试全部通过。
 - 进行中：
-  - Phase 2 运行时能力继续推进：生产运行边界收尾、后端阶段完成检查。
+  - Phase 3 管理台 UI 基础体验打磨与后端联调。
 - 下一步：
-  - 执行后端阶段完成检查，梳理进入 UI 前剩余后端事项。
-  - 为未来 PostgreSQL Repository 复用 contract 测试保留工厂入口。
+  - 继续补管理台细节：空状态、错误态、更多筛选和移动端检查。
 - 阻塞项：
   - 当前仅有架构原则文档，没有产品级字段清单或数据库连接信息，因此 Phase 1 使用内存 Repository。

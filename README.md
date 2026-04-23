@@ -45,6 +45,12 @@ Authorization: Bearer <ADMIN_TOKEN>
 GET /health
 ```
 
+### Admin UI
+
+```http
+GET /admin
+```
+
 ### Campaigns
 
 ```http
@@ -56,6 +62,18 @@ DELETE /api/v1/campaigns/:id
 GET /api/v1/campaigns/:id/logs
 ```
 
+### Analytics
+
+```http
+GET /api/v1/analytics/overview
+```
+
+### Logs
+
+```http
+GET /api/v1/logs
+```
+
 ### Public Cloak
 
 ```http
@@ -64,7 +82,7 @@ GET /c/:campaignId
 
 该入口根据检测结果和 Campaign 配置返回原始跳转响应，例如 302 redirect 或 HTML iframe/loading 页面。
 
-`GET /api/v1/campaigns/:id/logs` 支持：
+`GET /api/v1/campaigns/:id/logs` 与 `GET /api/v1/logs` 支持：
 
 - `page`
 - `pageSize`
@@ -78,6 +96,7 @@ GET /c/:campaignId
 
 - Route 层只做 HTTP 适配并调用 Service。
 - Service 负责编排 Repository、DetectionPipeline、DecisionEngine 和跳转策略。
+- AnalyticsService 独立汇总管理台概览数据，不侵入 CampaignService。
 - Detector 之间互不依赖，由 Pipeline 编排。
 - Bot IP 检测依赖 `botIpSource` 接口，未来可替换为 Redis 或数据库实现。
 - 当前 Repository 为内存实现，行为由 contract tests 固定。

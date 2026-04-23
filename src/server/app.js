@@ -1,10 +1,15 @@
 import { createHealthRoute } from '../routes/health.routes.js';
+import { createAdminStaticRoutes } from '../routes/admin-static.routes.js';
 import { createCampaignRoutes } from '../routes/campaign.routes.js';
+import { createAnalyticsRoutes } from '../routes/analytics.routes.js';
+import { createAccessLogRoutes } from '../routes/access-log.routes.js';
 import { createCloakRoute } from '../routes/cloak.routes.js';
 import { createRateLimitedRoute } from '../routes/rate-limit.js';
 import { createAuthenticatedRoutes } from '../routes/authenticated-routes.js';
 import { BearerTokenAuthService } from '../auth/bearer-token-auth.service.js';
 import { CampaignService } from '../services/campaign.service.js';
+import { AnalyticsService } from '../services/analytics.service.js';
+import { AccessLogService } from '../services/access-log.service.js';
 import { InMemoryCampaignRepository } from '../repositories/campaign.repo.js';
 import { InMemoryAccessLogRepository } from '../repositories/access-log.repo.js';
 import { createDefaultDetectionPipeline } from '../core/pipeline-factory.js';
@@ -18,11 +23,17 @@ export function createApp({
   config = defaultConfig,
   cloakRateLimiter = new InMemoryRateLimiter({ limit: 120, windowMs: 60_000 }),
   adminAuthService = new BearerTokenAuthService({ token: config.auth.adminToken }),
-  campaignService = createDefaultCampaignService({ config })
+  campaignService = createDefaultCampaignService({ config }),
+  analyticsService = createDefaultAnalyticsService({ campaignService }),
+  accessLogService = createDefaultAccessLogService({ campaignService })
 } = {}) {
   const cloakRoute = createCloakRoute({ campaignService });
-  const campaignRoutes = createAuthenticatedRoutes(
-    createCampaignRoutes({ campaignService }),
+  const managementRoutes = createAuthenticatedRoutes(
+    {
+      ...createCampaignRoutes({ campaignService }),
+      ...createAccessLogRoutes({ accessLogService }),
+      ...createAnalyticsRoutes({ analyticsService })
+    },
     adminAuthService
   );
 
@@ -30,7 +41,8 @@ export function createApp({
     logger,
     routes: {
       'GET /health': createHealthRoute({ version }),
-      ...campaignRoutes,
+      ...createAdminStaticRoutes(),
+      ...managementRoutes,
       'GET /c/:campaignId': createRateLimitedRoute({
         route: cloakRoute,
         limiter: cloakRateLimiter
@@ -51,4 +63,22 @@ export function createDefaultCampaignService({
     accessLogRepository,
     pipeline: createDefaultDetectionPipeline({ botIps, botIpSource })
   });
+}
+
+export function createDefaultAnalyticsService({
+  campaignService,
+  campaignRepository = campaignService?.repository,
+  accessLogRepository = campaignService?.accessLogRepository
+} = {}) {
+  return new AnalyticsService({
+    campaignRepository,
+    accessLogRepository
+  });
+}
+
+export function createDefaultAccessLogService({
+  campaignService,
+  repository = campaignService?.accessLogRepository
+} = {}) {
+  return new AccessLogService({ repository });
 }
