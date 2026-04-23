@@ -67,3 +67,14 @@
 - 解决方案：新增 `mergeConfig(defaultConfig, overrideConfig)`，`startServer` 合并后再校验。
 - 预防措施：配置校验测试同时覆盖完整配置和局部覆盖启动路径。
 - 状态：已解决。
+
+## 公网斗篷入口未注册且 HTTP server 强制 JSON 响应
+
+- 标题：公网斗篷入口未注册且 HTTP server 强制 JSON 响应
+- 现象：`GET /c/:campaignId` 返回 404；即使 route 存在，HTTP server 也只会 `sendJson`，无法正确返回 302 或 HTML。
+- 触发条件：做后端阶段完成检查时对真实流量入口写集成测试。
+- 影响：系统只能管理 Campaign，不能通过公网入口执行斗篷跳转。
+- 根因：已有 `cloak.routes.js` 未注册到 app；HTTP 协议适配层没有区分管理 API JSON 响应和策略原始响应。
+- 解决方案：注册 `GET /c/:campaignId`，并新增 `sendRouteResponse`，当 route 返回 headers 时原样发送 status/header/body。
+- 预防措施：保留 `cloak-http.test.js` 覆盖 redirect 和 iframe 策略的 HTTP 集成行为。
+- 状态：已解决。

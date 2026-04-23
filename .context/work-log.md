@@ -154,3 +154,12 @@
 - 结果：Redis-like client 通过 `sIsMember` 查询 IP，`load()` 可用 `del` / `sAdd` 刷新集合；`IpDetector` 无需修改即可使用 Redis 数据源。
 - 验证：运行 `node --test`，54 个测试全部通过；运行 `.context` 校验，返回 `context is valid`。
 - 下一步：执行后端阶段完成检查，确认进入 UI 前还缺什么。
+
+## 2026-04-23 21:20 CST - 完成公网斗篷 HTTP 入口
+
+- 时间：2026-04-23 21:20 CST
+- 目标：补齐真实流量访问 Campaign 的公网入口。
+- 动作：先新增 `/c/:campaignId` HTTP 集成测试并确认失败；随后注册 `createCloakRoute`，并让 HTTP server 在 route 返回 headers 时原样发送 status/header/body。
+- 结果：`GET /c/:campaignId` 可返回 302 redirect 或 HTML iframe/loading 页面；管理 API 仍保持统一 JSON 响应。
+- 验证：运行 `node --test`，56 个测试全部通过；运行 `.context` 校验，返回 `context is valid`。
+- 下一步：执行后端阶段完成检查，梳理进入 UI 前是否还有必须补齐的后端缺口。

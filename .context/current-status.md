@@ -57,6 +57,10 @@
   - 已新增 `RedisBotIpSource` 适配器接口形状，通过注入 Redis-like client 使用 Set 查询。
   - 已让 `createBotIpSource({ type: 'redis' })` 创建 Redis 数据源，不改变 `IpDetector` 职责。
   - 已运行测试：54 个测试全部通过。
+  - 已注册公网斗篷入口 `GET /c/:campaignId`。
+  - 已让 HTTP server 支持 route 返回原始 headers/body，用于 302 redirect 和 HTML iframe/loading 响应。
+  - 已更新 README 记录公网斗篷入口。
+  - 已运行测试：56 个测试全部通过。
 - 进行中：
   - Phase 2 运行时能力继续推进：生产运行边界收尾、后端阶段完成检查。
 - 下一步：

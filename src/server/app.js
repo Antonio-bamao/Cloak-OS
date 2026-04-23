@@ -1,5 +1,6 @@
 import { createHealthRoute } from '../routes/health.routes.js';
 import { createCampaignRoutes } from '../routes/campaign.routes.js';
+import { createCloakRoute } from '../routes/cloak.routes.js';
 import { CampaignService } from '../services/campaign.service.js';
 import { InMemoryCampaignRepository } from '../repositories/campaign.repo.js';
 import { InMemoryAccessLogRepository } from '../repositories/access-log.repo.js';
@@ -16,7 +17,8 @@ export function createApp({
     logger,
     routes: {
       'GET /health': createHealthRoute({ version }),
-      ...createCampaignRoutes({ campaignService })
+      ...createCampaignRoutes({ campaignService }),
+      'GET /c/:campaignId': createCloakRoute({ campaignService })
     }
   });
 }

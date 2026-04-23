@@ -48,6 +48,14 @@ GET /api/v1/campaigns/:id
 GET /api/v1/campaigns/:id/logs
 ```
 
+### Public Cloak
+
+```http
+GET /c/:campaignId
+```
+
+该入口根据检测结果和 Campaign 配置返回原始跳转响应，例如 302 redirect 或 HTML iframe/loading 页面。
+
 `GET /api/v1/campaigns/:id/logs` 支持：
 
 - `page`

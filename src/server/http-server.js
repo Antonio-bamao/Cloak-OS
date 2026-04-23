@@ -23,7 +23,7 @@ export function createHttpServer({
         await toRouteRequest(request, matchedRoute.params)
       );
       statusCode = routeResponse.statusCode ?? 200;
-      sendJson(response, statusCode, routeResponse.body);
+      sendRouteResponse(response, statusCode, routeResponse);
     } catch (error) {
       statusCode = error instanceof AppError ? error.statusCode : 500;
       sendJson(response, statusCode, fail(error));
@@ -136,6 +136,16 @@ function sendJson(response, statusCode, body) {
     'Content-Type': 'application/json; charset=utf-8'
   });
   response.end(JSON.stringify(body));
+}
+
+function sendRouteResponse(response, statusCode, routeResponse) {
+  if (routeResponse.headers) {
+    response.writeHead(statusCode, routeResponse.headers);
+    response.end(routeResponse.body ?? '');
+    return;
+  }
+
+  sendJson(response, statusCode, routeResponse.body);
 }
 
 function logRequest({ logger, request, statusCode, latencyMs }) {

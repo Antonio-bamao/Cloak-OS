@@ -11,6 +11,7 @@ test('README documents startup, tests, env vars, and available API routes', asyn
   assert.match(readme, /PORT/);
   assert.match(readme, /BOT_IPS/);
   assert.match(readme, /GET \/health/);
+  assert.match(readme, /GET \/c\/:campaignId/);
   assert.match(readme, /POST \/api\/v1\/campaigns/);
   assert.match(readme, /GET \/api\/v1\/campaigns\/:id\/logs/);
 });
