@@ -8,6 +8,7 @@ test('README documents startup, tests, env vars, and available API routes', asyn
   assert.match(readme, /npm start/);
   assert.match(readme, /npm test/);
   assert.match(readme, /npm run migrate/);
+  assert.match(readme, /npm run migrate:status/);
   assert.match(readme, /HOST/);
   assert.match(readme, /PORT/);
   assert.match(readme, /BOT_IPS/);
@@ -29,6 +30,7 @@ test('README documents startup, tests, env vars, and available API routes', asyn
   assert.match(readme, /REPOSITORY_DRIVER=postgres/);
   assert.match(readme, /连接池|Pool/);
   assert.match(readme, /schema_migrations/);
+  assert.match(readme, /pending/i);
 });
 
 test('.env.example lists every runtime env var consumed by config', async () => {

@@ -7,11 +7,13 @@
 ```bash
 npm test
 npm run migrate
+npm run migrate:status
 npm start
 ```
 
 `npm start` 启动 Node HTTP server，默认监听 `0.0.0.0:3000`。
 `npm run migrate` 会在 `REPOSITORY_DRIVER=postgres` / `DATABASE_URL` 配置下执行 `migrations/*.sql`，并把已执行文件记录到 `schema_migrations`。
+`npm run migrate:status` 会连接 PostgreSQL 并输出当前已知、已执行和 pending 的 migration 文件列表，适合联调前先做 smoke check。
 
 ## Environment
 
@@ -131,3 +133,4 @@ migrations/001_initial.sql
 - 访问日志按 `created_at` 范围分区声明
 
 运行 `npm run migrate` 时，系统会按文件名顺序执行 `migrations/` 下的 `.sql` 文件，并通过 `schema_migrations` 表跳过已执行项。
+运行 `npm run migrate:status` 时，系统会列出全部 migration、已执行 migration 和 pending migration，便于在真实库联调前先确认状态。

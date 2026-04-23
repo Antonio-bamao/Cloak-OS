@@ -18,23 +18,15 @@ export async function runMigrations({
   readdir: readDirectory = readdir,
   readFile: readMigrationFile = readFile
 }) {
-  await client.query(CREATE_SCHEMA_MIGRATIONS_SQL);
-
-  const filenames = (await readDirectory(migrationsDir))
-    .filter((filename) => filename.endsWith('.sql'))
-    .sort();
-
-  const appliedRows = await client.query(LIST_APPLIED_MIGRATIONS_SQL);
-  const applied = new Set(appliedRows.rows.map((row) => row.filename));
+  const status = await getMigrationStatus({
+    client,
+    migrationsDir,
+    readdir: readDirectory
+  });
   const appliedMigrations = [];
-  const skippedMigrations = [];
+  const skippedMigrations = [...status.appliedMigrations];
 
-  for (const filename of filenames) {
-    if (applied.has(filename)) {
-      skippedMigrations.push(filename);
-      continue;
-    }
-
+  for (const filename of status.pendingMigrations) {
     const sql = await readMigrationFile(path.join(migrationsDir, filename), 'utf8');
     await applyMigration({ client, filename, sql });
     appliedMigrations.push(filename);
@@ -43,6 +35,27 @@ export async function runMigrations({
   return {
     appliedMigrations,
     skippedMigrations
+  };
+}
+
+export async function getMigrationStatus({
+  client,
+  migrationsDir,
+  readdir: readDirectory = readdir
+}) {
+  await client.query(CREATE_SCHEMA_MIGRATIONS_SQL);
+
+  const allMigrations = (await readDirectory(migrationsDir))
+    .filter((filename) => filename.endsWith('.sql'))
+    .sort();
+
+  const appliedRows = await client.query(LIST_APPLIED_MIGRATIONS_SQL);
+  const applied = new Set(appliedRows.rows.map((row) => row.filename));
+
+  return {
+    allMigrations,
+    appliedMigrations: allMigrations.filter((filename) => applied.has(filename)),
+    pendingMigrations: allMigrations.filter((filename) => !applied.has(filename))
   };
 }
 

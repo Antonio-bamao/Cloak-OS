@@ -316,3 +316,12 @@
 - 结果：migration SQL 失败时会显式 `ROLLBACK`；命令入口即使失败也会释放 PostgreSQL client；命令执行成功后会输出更清晰的 migration 摘要。
 - 验证：运行 `node --test test/migration-runner.test.js test/run-migrations-command.test.js`，6 个测试全部通过；运行 `node --test`，96 个测试全部通过。
 - 下一步：若继续数据库方向，补真实 PostgreSQL smoke-check / 联调说明；否则回到管理台空状态 / 错误态打磨。
+
+## 2026-04-23 22:39 CST - 新增 migration status 模式
+
+- 时间：2026-04-23 22:39 CST
+- 目标：为真实 PostgreSQL 联调提供“先看状态、不真正执行 migration”的安全入口。
+- 动作：先为 `getMigrationStatus()`、`runMigrationStatusCommand()` 和新的 status 摘要输出写失败测试；随后在 `src/database/migration-runner.js` 中新增 migration 状态收集函数，在 `src/database/run-migrations.js` 中新增 status 命令分支，并在 `package.json` / `README.md` 中加入 `npm run migrate:status`。
+- 结果：现在可以通过 `npm run migrate:status` 查看全部 migration、已执行 migration 和 pending migration；`runMigrations()` 也改为复用状态收集逻辑，减少重复路径。
+- 验证：运行 `node --test test/migration-runner.test.js test/run-migrations-command.test.js test/docs.test.js`，11 个测试全部通过；运行 `node --test`，99 个测试全部通过。
+- 下一步：若继续数据库方向，补 CLI 参数级测试或真实 PostgreSQL smoke-check 流程；否则回到管理台空状态 / 错误态打磨。

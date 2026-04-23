@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  formatMigrationStatusSummary,
   formatMigrationSummary,
+  runMigrationStatusCommand,
   runMigrationsCommand
 } from '../src/database/run-migrations.js';
 
@@ -81,5 +83,62 @@ test('formatMigrationSummary lists applied and skipped migration filenames', () 
   assert.equal(
     summary,
     'Applied 2 migrations: 001_initial.sql, 002_access.sql\nSkipped 1 migrations: 000_bootstrap.sql'
+  );
+});
+
+test('runMigrationStatusCommand creates a postgres client, collects status, and closes the client', async () => {
+  const calls = [];
+  const postgresClient = {
+    async end() {
+      calls.push('end');
+    }
+  };
+
+  const result = await runMigrationStatusCommand({
+    databaseUrl: 'postgres://cloak:secret@127.0.0.1:5432/cloak',
+    createPostgresClient: async (databaseUrl) => {
+      calls.push({ type: 'create', databaseUrl });
+      return postgresClient;
+    },
+    getMigrationStatus: async ({ client, migrationsDir }) => {
+      calls.push({ type: 'status', client, migrationsDir });
+      return {
+        allMigrations: ['001_initial.sql', '002_access.sql'],
+        appliedMigrations: ['001_initial.sql'],
+        pendingMigrations: ['002_access.sql']
+      };
+    },
+    migrationsDir: 'migrations'
+  });
+
+  assert.deepEqual(result, {
+    allMigrations: ['001_initial.sql', '002_access.sql'],
+    appliedMigrations: ['001_initial.sql'],
+    pendingMigrations: ['002_access.sql']
+  });
+  assert.deepEqual(calls, [
+    {
+      type: 'create',
+      databaseUrl: 'postgres://cloak:secret@127.0.0.1:5432/cloak'
+    },
+    {
+      type: 'status',
+      client: postgresClient,
+      migrationsDir: 'migrations'
+    },
+    'end'
+  ]);
+});
+
+test('formatMigrationStatusSummary lists all, applied, and pending migration filenames', () => {
+  const summary = formatMigrationStatusSummary({
+    allMigrations: ['001_initial.sql', '002_access.sql'],
+    appliedMigrations: ['001_initial.sql'],
+    pendingMigrations: ['002_access.sql']
+  });
+
+  assert.equal(
+    summary,
+    'Known 2 migrations: 001_initial.sql, 002_access.sql\nApplied 1 migrations: 001_initial.sql\nPending 1 migrations: 002_access.sql'
   );
 });

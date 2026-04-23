@@ -1,7 +1,46 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { runMigrations } from '../src/database/migration-runner.js';
+import {
+  getMigrationStatus,
+  runMigrations
+} from '../src/database/migration-runner.js';
+
+test('getMigrationStatus sorts SQL files and separates applied from pending migrations', async () => {
+  const calls = [];
+  const client = {
+    async query(sql) {
+      calls.push(sql);
+
+      if (sql.includes('SELECT filename FROM schema_migrations')) {
+        return {
+          rows: [{ filename: '001_initial.sql' }]
+        };
+      }
+
+      return { rows: [] };
+    }
+  };
+
+  const status = await getMigrationStatus({
+    client,
+    migrationsDir: 'migrations',
+    readdir: async () => ['003_seed.sql', '001_initial.sql', '002_access.sql']
+  });
+
+  assert.deepEqual(status, {
+    allMigrations: ['001_initial.sql', '002_access.sql', '003_seed.sql'],
+    appliedMigrations: ['001_initial.sql'],
+    pendingMigrations: ['002_access.sql', '003_seed.sql']
+  });
+  assert.deepEqual(calls, [
+    `CREATE TABLE IF NOT EXISTS schema_migrations (
+  filename TEXT PRIMARY KEY,
+  applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);`,
+    'SELECT filename FROM schema_migrations ORDER BY filename ASC;'
+  ]);
+});
 
 test('runMigrations applies pending SQL files in sorted order and records them', async () => {
   const calls = [];
