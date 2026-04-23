@@ -7,6 +7,7 @@ export function parsePostgresApiSmokeCheckArgs(argv = process.argv.slice(2)) {
   const parsed = {
     databaseUrl: undefined,
     adminToken: undefined,
+    keepCampaign: false,
     help: false
   };
 
@@ -40,6 +41,11 @@ export function parsePostgresApiSmokeCheckArgs(argv = process.argv.slice(2)) {
       continue;
     }
 
+    if (argument === '--keep-campaign') {
+      parsed.keepCampaign = true;
+      continue;
+    }
+
     throw new Error(`Unknown argument: ${argument}`);
   }
 
@@ -50,14 +56,16 @@ export function formatPostgresApiSmokeCheckSummary({
   campaignId,
   redirectStatus,
   logCount,
-  totalVisits
+  totalVisits,
+  cleanup
 } = {}) {
   return [
     'PostgreSQL API smoke check passed',
     `Campaign ID: ${campaignId}`,
     `Redirect status: ${redirectStatus}`,
     `Log count: ${logCount}`,
-    `Total visits: ${totalVisits}`
+    `Total visits: ${totalVisits}`,
+    `Cleanup: ${cleanup}`
   ].join('\n');
 }
 
@@ -65,11 +73,12 @@ export function formatPostgresApiSmokeCheckHelp() {
   return [
     'PostgreSQL API Smoke Check CLI',
     '',
-    'Starts the app in postgres mode, creates a campaign, visits it, and checks logs/analytics.',
+    'Starts the app in postgres mode, creates a campaign, visits it, checks logs/analytics, then cleans up smoke data.',
     '',
     'Flags:',
     '  --database-url <url> Override DATABASE_URL for this command',
     '  --admin-token <token> Override ADMIN_TOKEN for this command',
+    '  --keep-campaign      Leave the created smoke campaign and logs in the database',
     '  --help               Show this help text'
   ].join('\n');
 }
@@ -82,6 +91,7 @@ export async function runPostgresApiSmokeCheck({
   fetch: fetchImpl = fetch
 } = {}) {
   let server;
+  let cleanupContext;
 
   try {
     const cliArgs = parsePostgresApiSmokeCheckArgs(argv);
@@ -125,6 +135,13 @@ export async function runPostgresApiSmokeCheck({
       })
     });
     const campaignId = created.data.id;
+    cleanupContext = {
+      baseUrl,
+      campaignId,
+      fetchImpl,
+      headers,
+      keepCampaign: cliArgs.keepCampaign
+    };
     const redirectResponse = await fetchImpl(`${baseUrl}/c/${campaignId}`, {
       redirect: 'manual',
       headers: {
@@ -139,11 +156,14 @@ export async function runPostgresApiSmokeCheck({
     const analytics = await requestJson(fetchImpl, `${baseUrl}/api/v1/analytics/overview`, {
       headers
     });
+    const cleanup = await cleanupSmokeArtifacts(cleanupContext);
+    cleanupContext = undefined;
     const summary = formatPostgresApiSmokeCheckSummary({
       campaignId,
       redirectStatus: redirectResponse.status,
       logCount: logs.pagination?.total ?? logs.data.length,
-      totalVisits: analytics.data.totalVisits
+      totalVisits: analytics.data.totalVisits,
+      cleanup
     });
 
     stdout.write(`${summary}\n`);
@@ -152,6 +172,14 @@ export async function runPostgresApiSmokeCheck({
     stderr.write(`${error.message}\n`);
     return { exitCode: 1, error };
   } finally {
+    if (cleanupContext) {
+      try {
+        await cleanupSmokeArtifacts(cleanupContext);
+      } catch (error) {
+        stderr.write(`Cleanup failed: ${error.message}\n`);
+      }
+    }
+
     if (server) {
       await new Promise((resolve, reject) => {
         server.close((error) => (error ? reject(error) : resolve()));
@@ -183,6 +211,24 @@ async function requestJson(fetchImpl, url, options) {
   }
 
   return body;
+}
+
+async function cleanupSmokeArtifacts({ baseUrl, campaignId, fetchImpl, headers, keepCampaign }) {
+  if (keepCampaign) {
+    return 'kept';
+  }
+
+  await requestJson(fetchImpl, `${baseUrl}/api/v1/campaigns/${campaignId}/logs`, {
+    method: 'DELETE',
+    headers
+  });
+
+  await requestJson(fetchImpl, `${baseUrl}/api/v1/campaigns/${campaignId}`, {
+    method: 'DELETE',
+    headers
+  });
+
+  return 'logs deleted, campaign deleted';
 }
 
 function assertStatus(actual, expected, label) {

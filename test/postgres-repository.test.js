@@ -154,6 +154,45 @@ test('PostgresAccessLogRepository lists campaign logs without exposing stored ro
   assert.deepEqual(await repository.findByCampaign('campaign-1', 'tenant-2'), []);
 });
 
+test('PostgresAccessLogRepository deletes campaign logs by tenant', async () => {
+  const repository = new PostgresAccessLogRepository({ client: createFakePostgresClient() });
+  await repository.create({
+    tenantId: 'tenant-1',
+    campaignId: 'campaign-1',
+    ipAddress: '203.0.113.10',
+    userAgent: 'Mozilla/5.0',
+    verdict: 'human',
+    action: 'money',
+    confidence: 0,
+    detectionReasons: []
+  });
+  await repository.create({
+    tenantId: 'tenant-1',
+    campaignId: 'campaign-2',
+    ipAddress: '203.0.113.11',
+    userAgent: 'Mozilla/5.0',
+    verdict: 'human',
+    action: 'money',
+    confidence: 0,
+    detectionReasons: []
+  });
+  await repository.create({
+    tenantId: 'tenant-2',
+    campaignId: 'campaign-1',
+    ipAddress: '203.0.113.12',
+    userAgent: 'Mozilla/5.0',
+    verdict: 'human',
+    action: 'money',
+    confidence: 0,
+    detectionReasons: []
+  });
+
+  assert.equal(await repository.deleteByCampaign('campaign-1', 'tenant-1'), 1);
+  assert.deepEqual(await repository.findByCampaign('campaign-1', 'tenant-1'), []);
+  assert.equal((await repository.findByCampaign('campaign-2', 'tenant-1')).length, 1);
+  assert.equal((await repository.findByCampaign('campaign-1', 'tenant-2')).length, 1);
+});
+
 function createFakePostgresClient() {
   return {
     calls: [],
@@ -243,6 +282,14 @@ function createFakePostgresClient() {
 
       if (normalized.includes('COUNT(*) AS total') && normalized.includes('FROM access_logs')) {
         return { rows: [{ total: String(filterLogs(this.logs, normalized, params).length) }], rowCount: 1 };
+      }
+
+      if (normalized.startsWith('DELETE FROM access_logs')) {
+        const before = this.logs.length;
+        this.logs = this.logs.filter(
+          (row) => row.campaign_id !== params[0] || row.tenant_id !== params[1]
+        );
+        return { rows: [], rowCount: before - this.logs.length };
       }
 
       if (normalized.startsWith('SELECT') && normalized.includes('FROM access_logs')) {

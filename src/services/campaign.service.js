@@ -106,6 +106,22 @@ export class CampaignService {
     });
   }
 
+  async deleteAccessLogs(campaignId, tenantId = DEFAULT_TENANT_ID) {
+    await this.getCampaign(campaignId, tenantId);
+
+    if (!this.accessLogRepository?.deleteByCampaign) {
+      return {
+        campaignId,
+        deleted: 0
+      };
+    }
+
+    return {
+      campaignId,
+      deleted: await this.accessLogRepository.deleteByCampaign(campaignId, tenantId)
+    };
+  }
+
   async recordAccessLog({ campaign, ctx, decision }) {
     if (!this.accessLogRepository) {
       return null;

@@ -254,6 +254,45 @@ function accessLogRepositoryContract(name, createRepository) {
       }
     );
   });
+
+  test(`${name}: deletes campaign logs by tenant`, async () => {
+    const repository = createRepository();
+    await repository.create({
+      tenantId: 'tenant-1',
+      campaignId: 'campaign-1',
+      ipAddress: '203.0.113.1',
+      userAgent: 'UA 1',
+      verdict: 'human',
+      action: 'money',
+      confidence: 0,
+      detectionReasons: []
+    });
+    await repository.create({
+      tenantId: 'tenant-1',
+      campaignId: 'campaign-2',
+      ipAddress: '203.0.113.2',
+      userAgent: 'UA 2',
+      verdict: 'bot',
+      action: 'safe',
+      confidence: 95,
+      detectionReasons: []
+    });
+    await repository.create({
+      tenantId: 'tenant-2',
+      campaignId: 'campaign-1',
+      ipAddress: '203.0.113.3',
+      userAgent: 'UA 3',
+      verdict: 'human',
+      action: 'money',
+      confidence: 0,
+      detectionReasons: []
+    });
+
+    assert.equal(await repository.deleteByCampaign('campaign-1', 'tenant-2'), 1);
+    assert.equal(await repository.deleteByCampaign('campaign-1', 'tenant-1'), 1);
+    assert.deepEqual(await repository.findByCampaign('campaign-1', 'tenant-1'), []);
+    assert.equal((await repository.findByCampaign('campaign-2', 'tenant-1')).length, 1);
+  });
 }
 
 campaignRepositoryContract(

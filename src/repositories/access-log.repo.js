@@ -73,6 +73,15 @@ export class InMemoryAccessLogRepository {
       filters
     });
   }
+
+  async deleteByCampaign(campaignId, tenantId = DEFAULT_TENANT_ID) {
+    const before = this.logs.length;
+    this.logs = this.logs.filter(
+      (log) => log.campaignId !== campaignId || log.tenantId !== tenantId
+    );
+
+    return before - this.logs.length;
+  }
 }
 
 function positiveInteger(value, fallback) {

@@ -109,6 +109,15 @@ export class PostgresAccessLogRepository {
     });
   }
 
+  async deleteByCampaign(campaignId, tenantId = DEFAULT_TENANT_ID) {
+    const result = await this.client.query(
+      'DELETE FROM access_logs WHERE campaign_id = $1 AND tenant_id = $2',
+      [campaignId, tenantId]
+    );
+
+    return result.rowCount;
+  }
+
   async findPage({ baseConditions, page, pageSize, filters }) {
     const normalizedPage = positiveInteger(page, 1);
     const normalizedPageSize = positiveInteger(pageSize, 20);

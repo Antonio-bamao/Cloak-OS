@@ -174,6 +174,7 @@
   - 新增脚本 `npm run smoke:postgres-api`。
   - smoke-check 会在 PostgreSQL 模式下启动真实 app，通过 HTTP 创建 Campaign、访问 `/c/:id`、查询全局 logs 与 Analytics。
   - 已补 `test/postgres-api-smoke-check.test.js`，覆盖参数解析、成功流程和错误关闭。
+  - 已补 cleanup 能力：成功 smoke 后默认删除本次创建的测试 Campaign；如需保留样本可追加 `--keep-campaign`。
 - 已修复真实 API smoke 暴露的数据库 schema 问题：
   - 根因：`access_logs` 是按 `created_at` 分区的 partitioned table，但 `001_initial.sql` 没有创建任何分区，导致访问日志 insert 没有落点。
   - 新增 `migrations/002_access_logs_default_partition.sql`，创建 `access_logs_default` 默认分区。
@@ -198,10 +199,23 @@
 - 已运行定向验证：`node --test test/postgres-admin-smoke-check.test.js test/docs.test.js`，7 个测试全部通过。
 - 已运行真实验证：`node src/database/run-postgres-admin-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak`，PostgreSQL admin smoke check 通过。
 - 已运行全量验证：`node --test`，127 个测试全部通过。
+- 已运行定向验证：`node --test test/postgres-api-smoke-check.test.js`，6 个测试全部通过。
+- 已运行定向验证：`node --test test/docs.test.js`，2 个测试全部通过。
+- 已运行真实验证：`node src/database/run-postgres-api-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak`，输出 `Cleanup: deleted`，确认真实 HTTP DELETE 已执行。
+- 已运行真实验证：`node src/database/run-postgres-admin-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak`，Campaign count 仍为 2，Log count / Total visits 为 2。
+- 已运行全量验证：`node --test`，129 个测试全部通过。
+- 已新增访问日志 cleanup 能力：
+  - `InMemoryAccessLogRepository` / `PostgresAccessLogRepository` 新增 tenant-scoped `deleteByCampaign()`。
+  - `CampaignService` 新增 `deleteAccessLogs()`，删除前仍会校验 Campaign 存在。
+  - 新增受保护管理 API `DELETE /api/v1/campaigns/:id/logs`，用于显式清理某个 Campaign 的访问日志。
+  - PostgreSQL API smoke 默认先删除本次 Campaign 的访问日志，再删除测试 Campaign；`--keep-campaign` 会同时保留 Campaign 和日志样本。
+  - 已更新 README 和文档漂移测试记录新端点与 cleanup 行为。
+- 已运行全量验证：`node --test`，132 个测试全部通过。
+- 已运行真实验证：`node src/database/run-postgres-api-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak`，输出 `Cleanup: logs deleted, campaign deleted`。
+- 已运行真实验证：`node src/database/run-postgres-admin-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak`，Campaign count 2、Log count 2、Total visits 2，确认本轮 API smoke 未继续增长持久化日志。
 - 进行中：
-  - Phase 2/3 收尾：PostgreSQL 运行时装配、migration、真实 Docker PostgreSQL smoke-check、API smoke flow 和 admin UI smoke flow 已完成。
+  - Phase 2/3 收尾：PostgreSQL 运行时装配、migration、真实 Docker PostgreSQL smoke-check、API smoke flow、API smoke cleanup、访问日志 cleanup 和 admin UI smoke flow 已完成。
 - 下一步：
-  - 若继续数据库方向：可补 PostgreSQL API smoke 的 cleanup 能力，避免反复联调留下测试 Campaign。
   - 若继续打磨工具链：可补子进程级 CLI 集成测试或把 smoke-check 扩展为可选 `/health` HTTP 探测。
   - 若回到管理台方向：补空状态、错误态和 PostgreSQL 模式下的联调检查。
 - 阻塞项：

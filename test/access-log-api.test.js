@@ -176,6 +176,73 @@ test('campaign logs API filters by verdict, action, IP, and time range', async (
   }
 });
 
+test('campaign logs API deletes logs for one campaign', async () => {
+  const campaignRepository = new InMemoryCampaignRepository();
+  const accessLogRepository = new InMemoryAccessLogRepository();
+  const campaignService = new CampaignService({
+    repository: campaignRepository,
+    accessLogRepository
+  });
+  const campaign = await campaignService.createCampaign({
+    name: 'Cleanup Campaign',
+    safeUrl: 'https://safe.example',
+    moneyUrl: 'https://money.example',
+    redirectMode: 'redirect'
+  });
+  const otherCampaign = await campaignService.createCampaign({
+    name: 'Keep Campaign',
+    safeUrl: 'https://safe.example',
+    moneyUrl: 'https://money.example',
+    redirectMode: 'redirect'
+  });
+  await accessLogRepository.create({
+    tenantId: campaign.tenantId,
+    campaignId: campaign.id,
+    ipAddress: '203.0.113.1',
+    userAgent: 'UA 1',
+    verdict: 'human',
+    action: 'money',
+    confidence: 0,
+    detectionReasons: []
+  });
+  await accessLogRepository.create({
+    tenantId: otherCampaign.tenantId,
+    campaignId: otherCampaign.id,
+    ipAddress: '203.0.113.2',
+    userAgent: 'UA 2',
+    verdict: 'bot',
+    action: 'safe',
+    confidence: 95,
+    detectionReasons: []
+  });
+  const app = createApp({ campaignService });
+
+  await new Promise((resolve) => app.listen(0, '127.0.0.1', resolve));
+  try {
+    const { port } = app.address();
+    const deleteResponse = await fetch(
+      `http://127.0.0.1:${port}/api/v1/campaigns/${campaign.id}/logs`,
+      {
+        method: 'DELETE',
+        headers: AUTH_HEADERS
+      }
+    );
+
+    assert.equal(deleteResponse.status, 200);
+    assert.deepEqual(await deleteResponse.json(), {
+      success: true,
+      data: { campaignId: campaign.id, deleted: 1 },
+      message: 'Access logs deleted'
+    });
+    assert.deepEqual(await accessLogRepository.findByCampaign(campaign.id, campaign.tenantId), []);
+    assert.equal((await accessLogRepository.findByCampaign(otherCampaign.id, otherCampaign.tenantId)).length, 1);
+  } finally {
+    await new Promise((resolve, reject) => {
+      app.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+});
+
 test('global logs API returns paginated access logs across campaigns', async () => {
   const campaignRepository = new InMemoryCampaignRepository();
   const accessLogRepository = new InMemoryAccessLogRepository();

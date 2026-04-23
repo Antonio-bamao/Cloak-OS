@@ -26,6 +26,7 @@ test('README documents startup, tests, env vars, and available API routes', asyn
   assert.match(readme, /PUT \/api\/v1\/campaigns\/:id/);
   assert.match(readme, /DELETE \/api\/v1\/campaigns\/:id/);
   assert.match(readme, /GET \/api\/v1\/campaigns\/:id\/logs/);
+  assert.match(readme, /DELETE \/api\/v1\/campaigns\/:id\/logs/);
   assert.match(readme, /GET \/api\/v1\/logs/);
   assert.match(readme, /GET \/api\/v1\/analytics\/overview/);
   assert.match(readme, /PostgresCampaignRepository/);

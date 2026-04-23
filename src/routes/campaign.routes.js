@@ -38,6 +38,13 @@ export function createCampaignRoutes({ campaignService }) {
         'Campaign deleted'
       )
     }),
+    'DELETE /api/v1/campaigns/:id/logs': async (request) => ({
+      statusCode: 200,
+      body: ok(
+        await campaignService.deleteAccessLogs(request.params.id),
+        'Access logs deleted'
+      )
+    }),
     'GET /api/v1/campaigns/:id/logs': async (request) => {
       const page = positiveInteger(request.query.page, 1);
       const pageSize = positiveInteger(request.query.pageSize, 20);

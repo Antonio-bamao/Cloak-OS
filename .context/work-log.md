@@ -388,3 +388,21 @@
 - 结果：Admin smoke 会启动真实 app，检查 `/admin` shell、`/admin/styles.css`、`/admin/app.js`，再用 Bearer token 访问 `/api/v1/campaigns`、`/api/v1/logs`、`/api/v1/analytics/overview`；真实 `cloak-postgres` 测试库验证输出 Admin page status 200、Campaign count 2、Log count 1、Total visits 1。
 - 验证：运行 `node --test test/postgres-admin-smoke-check.test.js test/docs.test.js`，7 个测试全部通过；运行 `node src/database/run-postgres-admin-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak`，输出 `PostgreSQL admin smoke check passed`；运行 `node --test`，127 个测试全部通过。
 - 下一步：若继续数据库方向，可补 smoke cleanup 或 `/health` 探测；若回到管理台方向，可补空状态、错误态和移动端细节。
+
+## 2026-04-24 00:26 CST - 补齐 API smoke cleanup
+
+- 时间：2026-04-24 00:26 CST
+- 目标：避免反复运行 PostgreSQL API smoke 时持续留下测试 Campaign，同时保留手动排查时留样本的能力。
+- 动作：先扩展 `test/postgres-api-smoke-check.test.js`，确认默认 cleanup、`--keep-campaign` 和摘要输出缺失；随后在 `src/database/run-postgres-api-smoke-check.js` 中新增 `--keep-campaign` 参数、默认 DELETE cleanup、失败路径尽力 cleanup，并更新 README。
+- 结果：API smoke 成功完成后会默认调用 `DELETE /api/v1/campaigns/:id` 删除本次创建的测试 Campaign；如果需要保留样本，可追加 `--keep-campaign`，摘要会输出 `Cleanup: kept`。
+- 验证：运行 `node --test test/postgres-api-smoke-check.test.js`，6 个测试全部通过；运行 `node --test test/docs.test.js`，2 个测试全部通过；运行真实 `node src/database/run-postgres-api-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak`，输出 `Cleanup: deleted`；随后运行 admin smoke，Campaign count 仍为 2；运行 `node --test`，129 个测试全部通过。
+- 下一步：若继续数据库方向，可补访问日志 cleanup/保留策略，或把 smoke-check 增加可选 `/health` 探测。
+
+## 2026-04-24 00:36 CST - 补齐 API smoke 访问日志 cleanup
+
+- 时间：2026-04-24 00:36 CST
+- 目标：避免反复运行 PostgreSQL API smoke 时 `access_logs` 持续增长，同时保持 Campaign 删除不隐式清历史日志。
+- 动作：先补失败测试，覆盖 InMemory / PostgreSQL access log 仓储按 Campaign 删除、管理 API `DELETE /api/v1/campaigns/:id/logs`、API smoke 默认先删日志再删 Campaign；再实现 `deleteByCampaign()`、`CampaignService.deleteAccessLogs()`、受保护 DELETE route，并更新 README / docs 测试。
+- 结果：API smoke 成功后会默认调用 `DELETE /api/v1/campaigns/:id/logs` 清理本次访问日志，再调用 `DELETE /api/v1/campaigns/:id` 清理测试 Campaign；`--keep-campaign` 会同时保留 Campaign 和日志样本。
+- 验证：运行 `node --test`，132 个测试全部通过；运行真实 `node src/database/run-postgres-api-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak`，输出 `Cleanup: logs deleted, campaign deleted`；随后运行真实 admin smoke，Campaign count 2、Log count 2、Total visits 2，确认本轮 smoke 未继续增长持久化日志。
+- 下一步：若继续工具链方向，可给 smoke-check 增加可选 `/health` HTTP 探测；若回到管理台方向，可补空状态、错误态和 PostgreSQL 模式下的 UI 联调细节。

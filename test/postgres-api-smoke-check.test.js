@@ -17,17 +17,28 @@ test('parsePostgresApiSmokeCheckArgs reads database-url and admin-token override
     {
       databaseUrl: 'postgres://cloak:secret@127.0.0.1:55432/cloak',
       adminToken: 'secret-token',
+      keepCampaign: false,
       help: false
     }
   );
 });
 
-test('formatPostgresApiSmokeCheckSummary includes campaign, redirect, logs, and analytics', () => {
+test('parsePostgresApiSmokeCheckArgs can keep the created campaign for manual inspection', () => {
+  assert.deepEqual(parsePostgresApiSmokeCheckArgs(['--keep-campaign']), {
+    databaseUrl: undefined,
+    adminToken: undefined,
+    keepCampaign: true,
+    help: false
+  });
+});
+
+test('formatPostgresApiSmokeCheckSummary includes campaign, redirect, logs, analytics, and cleanup', () => {
   const summary = formatPostgresApiSmokeCheckSummary({
     campaignId: 'campaign-1',
     redirectStatus: 302,
     logCount: 1,
-    totalVisits: 1
+    totalVisits: 1,
+    cleanup: 'logs deleted, campaign deleted'
   });
 
   assert.match(summary, /PostgreSQL API smoke check passed/);
@@ -35,9 +46,10 @@ test('formatPostgresApiSmokeCheckSummary includes campaign, redirect, logs, and 
   assert.match(summary, /Redirect status: 302/);
   assert.match(summary, /Log count: 1/);
   assert.match(summary, /Total visits: 1/);
+  assert.match(summary, /Cleanup: logs deleted, campaign deleted/);
 });
 
-test('runPostgresApiSmokeCheck starts postgres app, exercises APIs, and closes server', async () => {
+test('runPostgresApiSmokeCheck starts postgres app, exercises APIs, cleans up, and closes server', async () => {
   const calls = [];
   const server = {
     address() {
@@ -95,6 +107,20 @@ test('runPostgresApiSmokeCheck starts postgres app, exercises APIs, and closes s
         });
       }
 
+      if (url.endsWith('/api/v1/campaigns/campaign-1/logs') && options.method === 'DELETE') {
+        return jsonResponse(200, {
+          success: true,
+          data: { campaignId: 'campaign-1', deleted: 1 }
+        });
+      }
+
+      if (url.endsWith('/api/v1/campaigns/campaign-1') && options.method === 'DELETE') {
+        return jsonResponse(200, {
+          success: true,
+          data: { id: 'campaign-1' }
+        });
+      }
+
       throw new Error(`Unexpected URL: ${url}`);
     }
   });
@@ -102,7 +128,73 @@ test('runPostgresApiSmokeCheck starts postgres app, exercises APIs, and closes s
   assert.equal(result.exitCode, 0);
   assert.equal(calls[0].type, 'start');
   assert.equal(calls.at(-1).type, 'close');
+  assert.ok(calls.some((call) => call.type === 'fetch' && call.url.endsWith('/api/v1/campaigns/campaign-1/logs') && call.options.method === 'DELETE'));
+  assert.ok(calls.some((call) => call.type === 'fetch' && call.url.endsWith('/api/v1/campaigns/campaign-1') && call.options.method === 'DELETE'));
   assert.ok(calls.some((call) => call.type === 'stdout' && call.message.includes('PostgreSQL API smoke check passed')));
+});
+
+test('runPostgresApiSmokeCheck skips cleanup when --keep-campaign is present', async () => {
+  const calls = [];
+  const server = {
+    address() {
+      return { address: '127.0.0.1', port: 3111 };
+    },
+    close(callback) {
+      calls.push({ type: 'close' });
+      callback();
+    }
+  };
+
+  const result = await runPostgresApiSmokeCheck({
+    argv: ['--keep-campaign'],
+    stdout: { write(message) { calls.push({ type: 'stdout', message }); } },
+    stderr: { write(message) { calls.push({ type: 'stderr', message }); } },
+    startServer: async () => server,
+    fetch: async (url, options = {}) => {
+      calls.push({ type: 'fetch', url, options });
+
+      if (url.endsWith('/api/v1/campaigns') && options.method === 'POST') {
+        return jsonResponse(201, {
+          success: true,
+          data: {
+            id: 'campaign-1',
+            name: 'Postgres Smoke Campaign'
+          }
+        });
+      }
+
+      if (url.endsWith('/c/campaign-1')) {
+        return {
+          status: 302,
+          headers: new Headers({ location: 'https://money.example/smoke' }),
+          json: async () => ({})
+        };
+      }
+
+      if (url.includes('/api/v1/logs')) {
+        return jsonResponse(200, {
+          success: true,
+          data: [{ id: 'log-1' }],
+          pagination: { total: 1 }
+        });
+      }
+
+      if (url.endsWith('/api/v1/analytics/overview')) {
+        return jsonResponse(200, {
+          success: true,
+          data: {
+            totalVisits: 1
+          }
+        });
+      }
+
+      throw new Error(`Unexpected URL: ${url}`);
+    }
+  });
+
+  assert.equal(result.exitCode, 0);
+  assert.ok(!calls.some((call) => call.type === 'fetch' && call.options.method === 'DELETE'));
+  assert.ok(calls.some((call) => call.type === 'stdout' && call.message.includes('Cleanup: kept')));
 });
 
 test('runPostgresApiSmokeCheck closes server and reports errors when a request fails', async () => {
