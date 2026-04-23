@@ -10,13 +10,13 @@ test('IpDetector flags configured bot IPs without hardcoding data in business lo
   assert.deepEqual(await detector.detect({ ip: '66.249.66.1' }), {
     isBot: true,
     confidence: 95,
-    reason: 'IP matched configured bot list'
+    reason: 'IP matched configured bot source'
   });
 
   assert.deepEqual(await detector.detect({ ip: '203.0.113.10' }), {
     isBot: false,
     confidence: 0,
-    reason: 'IP not found in bot list'
+    reason: 'IP not found in bot source'
   });
 });
 

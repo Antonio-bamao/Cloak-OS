@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 
 import { createInitialMigrationSql } from '../src/database/migrations.js';
 
@@ -16,4 +17,10 @@ test('initial migration SQL creates campaign and access log tables with indexes'
   assert.match(sql, /CREATE INDEX idx_campaigns_tenant_created/);
   assert.match(sql, /CREATE INDEX idx_access_logs_campaign_created/);
   assert.match(sql, /CREATE INDEX idx_access_logs_ip/);
+});
+
+test('checked-in initial migration matches generated SQL', async () => {
+  const migration = await readFile('migrations/001_initial.sql', 'utf8');
+
+  assert.equal(migration.trim(), createInitialMigrationSql().trim());
 });

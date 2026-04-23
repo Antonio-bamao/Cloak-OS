@@ -1,14 +1,16 @@
 import { randomUUID } from 'node:crypto';
 
 import { DEFAULT_TENANT_ID } from '../config/index.js';
+import { cloneRecord, cloneRecords } from './clone.js';
 
 export class InMemoryCampaignRepository {
-  constructor() {
+  constructor({ now = () => new Date().toISOString() } = {}) {
     this.campaigns = new Map();
+    this.now = now;
   }
 
   async create(input) {
-    const now = new Date().toISOString();
+    const now = input.createdAt ?? this.now();
     const campaign = {
       id: randomUUID(),
       tenantId: input.tenantId ?? DEFAULT_TENANT_ID,
@@ -20,8 +22,8 @@ export class InMemoryCampaignRepository {
       updatedAt: now
     };
 
-    this.campaigns.set(campaign.id, campaign);
-    return campaign;
+    this.campaigns.set(campaign.id, cloneRecord(campaign));
+    return cloneRecord(campaign);
   }
 
   async findById(id, tenantId = DEFAULT_TENANT_ID) {
@@ -31,12 +33,14 @@ export class InMemoryCampaignRepository {
       return null;
     }
 
-    return campaign;
+    return cloneRecord(campaign);
   }
 
   async findAll(tenantId = DEFAULT_TENANT_ID) {
-    return [...this.campaigns.values()].filter(
+    const campaigns = [...this.campaigns.values()].filter(
       (campaign) => campaign.tenantId === tenantId
     );
+
+    return cloneRecords(campaigns);
   }
 }

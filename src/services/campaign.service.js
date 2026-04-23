@@ -64,7 +64,7 @@ export class CampaignService {
 
   async listAccessLogs(
     campaignId,
-    { page = 1, pageSize = 20 } = {},
+    { page = 1, pageSize = 20, filters = {} } = {},
     tenantId = DEFAULT_TENANT_ID
   ) {
     await this.getCampaign(campaignId, tenantId);
@@ -80,7 +80,8 @@ export class CampaignService {
 
     return this.accessLogRepository.findPageByCampaign(campaignId, tenantId, {
       page,
-      pageSize
+      pageSize,
+      filters
     });
   }
 

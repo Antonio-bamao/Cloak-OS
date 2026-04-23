@@ -97,3 +97,76 @@ test('campaign logs API returns paginated access logs for a campaign', async () 
     });
   }
 });
+
+test('campaign logs API filters by verdict, action, IP, and time range', async () => {
+  const campaignRepository = new InMemoryCampaignRepository();
+  const accessLogRepository = new InMemoryAccessLogRepository();
+  const campaignService = new CampaignService({
+    repository: campaignRepository,
+    accessLogRepository
+  });
+  const campaign = await campaignService.createCampaign({
+    name: 'Filtered Logs',
+    safeUrl: 'https://safe.example',
+    moneyUrl: 'https://money.example',
+    redirectMode: 'redirect'
+  });
+  await accessLogRepository.create({
+    tenantId: campaign.tenantId,
+    campaignId: campaign.id,
+    ipAddress: '203.0.113.1',
+    userAgent: 'UA 1',
+    verdict: 'human',
+    action: 'money',
+    confidence: 0,
+    detectionReasons: [],
+    createdAt: '2026-04-23T09:00:00.000Z'
+  });
+  const matchingLog = await accessLogRepository.create({
+    tenantId: campaign.tenantId,
+    campaignId: campaign.id,
+    ipAddress: '66.249.66.1',
+    userAgent: 'Googlebot/2.1',
+    verdict: 'bot',
+    action: 'safe',
+    confidence: 95,
+    detectionReasons: ['ip: matched'],
+    createdAt: '2026-04-23T10:00:00.000Z'
+  });
+  await accessLogRepository.create({
+    tenantId: campaign.tenantId,
+    campaignId: campaign.id,
+    ipAddress: '66.249.66.1',
+    userAgent: 'Googlebot/2.1',
+    verdict: 'bot',
+    action: 'safe',
+    confidence: 95,
+    detectionReasons: ['ip: matched'],
+    createdAt: '2026-04-24T10:00:00.000Z'
+  });
+  const app = createApp({ campaignService });
+
+  await new Promise((resolve) => app.listen(0, '127.0.0.1', resolve));
+  try {
+    const { port } = app.address();
+    const response = await fetch(
+      `http://127.0.0.1:${port}/api/v1/campaigns/${campaign.id}/logs?verdict=bot&action=safe&ipAddress=66.249.66.1&from=2026-04-23T00%3A00%3A00.000Z&to=2026-04-23T23%3A59%3A59.999Z`
+    );
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), {
+      success: true,
+      data: [matchingLog],
+      message: 'Access logs fetched',
+      pagination: {
+        page: 1,
+        pageSize: 20,
+        total: 1
+      }
+    });
+  } finally {
+    await new Promise((resolve, reject) => {
+      app.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+});

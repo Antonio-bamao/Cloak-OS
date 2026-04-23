@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { DEFAULT_TENANT_ID } from '../config/index.js';
+import { cloneRecord, cloneRecords } from './clone.js';
 
 export class InMemoryAccessLogRepository {
   constructor({ now = () => new Date().toISOString() } = {}) {
@@ -9,7 +10,7 @@ export class InMemoryAccessLogRepository {
   }
 
   async create(input) {
-    const now = this.now();
+    const now = input.createdAt ?? this.now();
     const log = {
       id: randomUUID(),
       tenantId: input.tenantId ?? DEFAULT_TENANT_ID,
@@ -24,31 +25,67 @@ export class InMemoryAccessLogRepository {
       updatedAt: now
     };
 
-    this.logs.push(log);
-    return log;
+    this.logs.push(cloneRecord(log));
+    return cloneRecord(log);
   }
 
   async findByCampaign(campaignId, tenantId = DEFAULT_TENANT_ID) {
-    return this.logs.filter(
+    const logs = this.logs.filter(
       (log) => log.campaignId === campaignId && log.tenantId === tenantId
     );
+
+    return cloneRecords(logs);
   }
 
   async findPageByCampaign(
     campaignId,
     tenantId = DEFAULT_TENANT_ID,
-    { page = 1, pageSize = 20 } = {}
+    {
+      page = 1,
+      pageSize = 20,
+      filters = {}
+    } = {}
   ) {
-    const allLogs = (await this.findByCampaign(campaignId, tenantId)).sort(
-      (left, right) => right.createdAt.localeCompare(left.createdAt)
-    );
-    const start = (page - 1) * pageSize;
+    const normalizedPage = positiveInteger(page, 1);
+    const normalizedPageSize = positiveInteger(pageSize, 20);
+    const allLogs = (await this.findByCampaign(campaignId, tenantId))
+      .filter((log) => matchesFilters(log, filters))
+      .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+    const start = (normalizedPage - 1) * normalizedPageSize;
 
     return {
-      items: allLogs.slice(start, start + pageSize),
+      items: allLogs.slice(start, start + normalizedPageSize),
       total: allLogs.length,
-      page,
-      pageSize
+      page: normalizedPage,
+      pageSize: normalizedPageSize
     };
   }
+}
+
+function positiveInteger(value, fallback) {
+  return Number.isInteger(value) && value > 0 ? value : fallback;
+}
+
+function matchesFilters(log, filters) {
+  if (filters.verdict && log.verdict !== filters.verdict) {
+    return false;
+  }
+
+  if (filters.action && log.action !== filters.action) {
+    return false;
+  }
+
+  if (filters.ipAddress && log.ipAddress !== filters.ipAddress) {
+    return false;
+  }
+
+  if (filters.from && log.createdAt < filters.from) {
+    return false;
+  }
+
+  if (filters.to && log.createdAt > filters.to) {
+    return false;
+  }
+
+  return true;
 }

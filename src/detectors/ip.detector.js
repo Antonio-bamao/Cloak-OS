@@ -1,9 +1,10 @@
 import { BaseDetector } from './base.detector.js';
+import { createBotIpSource } from './bot-ip-source.js';
 
 export class IpDetector extends BaseDetector {
-  constructor({ botIps = [] } = {}) {
+  constructor({ botIps = [], botIpSource } = {}) {
     super();
-    this.botIps = new Set(botIps);
+    this.botIpSource = botIpSource ?? createBotIpSource({ botIps });
   }
 
   get name() {
@@ -11,18 +12,18 @@ export class IpDetector extends BaseDetector {
   }
 
   async detect(ctx) {
-    if (this.botIps.has(ctx.ip)) {
+    if (await this.botIpSource.has(ctx.ip)) {
       return {
         isBot: true,
         confidence: 95,
-        reason: 'IP matched configured bot list'
+        reason: 'IP matched configured bot source'
       };
     }
 
     return {
       isBot: false,
       confidence: 0,
-      reason: 'IP not found in bot list'
+      reason: 'IP not found in bot source'
     };
   }
 }

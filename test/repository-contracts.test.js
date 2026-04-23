@@ -1,0 +1,139 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+import { InMemoryAccessLogRepository } from '../src/repositories/access-log.repo.js';
+import { InMemoryCampaignRepository } from '../src/repositories/campaign.repo.js';
+
+function campaignRepositoryContract(name, createRepository) {
+  test(`${name}: creates tenant-scoped campaigns with deterministic timestamps`, async () => {
+    const repository = createRepository({
+      now: () => '2026-04-23T10:00:00.000Z'
+    });
+
+    const campaign = await repository.create({
+      tenantId: 'tenant-1',
+      name: 'Contract Campaign',
+      safeUrl: 'https://safe.example',
+      moneyUrl: 'https://money.example',
+      redirectMode: 'iframe'
+    });
+
+    assert.equal(campaign.tenantId, 'tenant-1');
+    assert.equal(campaign.createdAt, '2026-04-23T10:00:00.000Z');
+    assert.equal(campaign.updatedAt, '2026-04-23T10:00:00.000Z');
+    assert.deepEqual(await repository.findById(campaign.id, 'tenant-1'), campaign);
+    assert.equal(await repository.findById(campaign.id, 'tenant-2'), null);
+  });
+
+  test(`${name}: does not expose mutable stored campaign objects`, async () => {
+    const repository = createRepository();
+    const campaign = await repository.create({
+      tenantId: 'tenant-1',
+      name: 'Original Name',
+      safeUrl: 'https://safe.example',
+      moneyUrl: 'https://money.example'
+    });
+
+    campaign.name = 'Mutated Outside';
+
+    const stored = await repository.findById(campaign.id, 'tenant-1');
+    assert.equal(stored.name, 'Original Name');
+  });
+
+  test(`${name}: lists campaigns by tenant in created order`, async () => {
+    const repository = createRepository();
+    const first = await repository.create({
+      tenantId: 'tenant-1',
+      name: 'First',
+      safeUrl: 'https://safe.example',
+      moneyUrl: 'https://money.example'
+    });
+    await repository.create({
+      tenantId: 'tenant-2',
+      name: 'Other Tenant',
+      safeUrl: 'https://safe.example',
+      moneyUrl: 'https://money.example'
+    });
+    const second = await repository.create({
+      tenantId: 'tenant-1',
+      name: 'Second',
+      safeUrl: 'https://safe.example',
+      moneyUrl: 'https://money.example'
+    });
+
+    assert.deepEqual(await repository.findAll('tenant-1'), [first, second]);
+  });
+}
+
+function accessLogRepositoryContract(name, createRepository) {
+  test(`${name}: stores tenant-scoped logs and returns immutable copies`, async () => {
+    const repository = createRepository({
+      now: () => '2026-04-23T10:00:00.000Z'
+    });
+    const log = await repository.create({
+      tenantId: 'tenant-1',
+      campaignId: 'campaign-1',
+      ipAddress: '203.0.113.10',
+      userAgent: 'Mozilla/5.0',
+      verdict: 'human',
+      action: 'money',
+      confidence: 0,
+      detectionReasons: []
+    });
+
+    log.verdict = 'bot';
+
+    const logs = await repository.findByCampaign('campaign-1', 'tenant-1');
+    assert.equal(logs[0].verdict, 'human');
+    assert.deepEqual(await repository.findByCampaign('campaign-1', 'tenant-2'), []);
+  });
+
+  test(`${name}: paginates with normalized positive page values`, async () => {
+    const repository = createRepository();
+    const first = await repository.create({
+      tenantId: 'tenant-1',
+      campaignId: 'campaign-1',
+      ipAddress: '203.0.113.1',
+      userAgent: 'UA 1',
+      verdict: 'human',
+      action: 'money',
+      confidence: 0,
+      detectionReasons: [],
+      createdAt: '2026-04-23T10:00:00.000Z'
+    });
+    const second = await repository.create({
+      tenantId: 'tenant-1',
+      campaignId: 'campaign-1',
+      ipAddress: '203.0.113.2',
+      userAgent: 'UA 2',
+      verdict: 'bot',
+      action: 'safe',
+      confidence: 95,
+      detectionReasons: [],
+      createdAt: '2026-04-23T10:01:00.000Z'
+    });
+
+    assert.deepEqual(
+      await repository.findPageByCampaign('campaign-1', 'tenant-1', {
+        page: 0,
+        pageSize: -5
+      }),
+      {
+        items: [second, first],
+        total: 2,
+        page: 1,
+        pageSize: 20
+      }
+    );
+  });
+}
+
+campaignRepositoryContract(
+  'InMemoryCampaignRepository',
+  (options) => new InMemoryCampaignRepository(options)
+);
+
+accessLogRepositoryContract(
+  'InMemoryAccessLogRepository',
+  (options) => new InMemoryAccessLogRepository(options)
+);

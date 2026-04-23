@@ -29,7 +29,8 @@ export function createCampaignRoutes({ campaignService }) {
       const pageSize = positiveInteger(request.query.pageSize, 20);
       const result = await campaignService.listAccessLogs(request.params.id, {
         page,
-        pageSize
+        pageSize,
+        filters: accessLogFilters(request.query)
       });
 
       return {
@@ -52,4 +53,14 @@ function positiveInteger(value, fallback) {
   }
 
   return parsed;
+}
+
+function accessLogFilters(query) {
+  return {
+    verdict: query.verdict,
+    action: query.action,
+    ipAddress: query.ipAddress,
+    from: query.from,
+    to: query.to
+  };
 }

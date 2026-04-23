@@ -35,6 +35,15 @@
    - 将访问日志写入接入 `CampaignService.handleVisit`。
    - 增加 `/api/v1/campaigns/:id/logs` 分页查询。
    - 增加初始 SQL migration 生成器。
+   - 增加访问日志 verdict/action/IP/时间范围过滤。
+   - 落地 `migrations/001_initial.sql`，并测试与生成器一致。
+   - 增加 Repository contract 测试。
+   - 修复内存仓储可变引用泄漏。
+   - 增加仓储时间源注入和分页参数归一化。
+   - 增加 Bot IP 数据源抽象。
+   - 调整 `IpDetector` 依赖 bot IP source contract。
+   - 增加默认 DetectionPipeline 工厂。
+   - 增加默认 CampaignService 工厂，集中 app 运行时装配。
    - 准备替换内存 Repository 的数据库接口。
 
 ## 依赖关系
@@ -48,4 +57,9 @@
 - `startServer` 只负责配置化监听和启动日志，不承载业务装配以外的逻辑。
 - 访问日志通过 `accessLogRepository` 可选依赖接入 Service，未来替换数据库实现不需要改检测或跳转逻辑。
 - 初始 migration SQL 从 schema 约束映射，避免表字段说明与实现漂移。
+- 访问日志查询过滤在 Repository 层执行，Route 仅将 query 参数转为过滤条件。
+- Repository 实现必须返回数据副本，避免调用方 mutation 污染存储状态。
+- Repository contract 测试作为未来 PostgreSQL 实现的共享行为基线。
+- Detector 依赖数据源接口，不直接拥有可变外部数据；未来 Redis/数据库数据源可替换 `botIpSource`。
+- 默认 app 装配必须使用真实检测管道，不使用空 Pipeline。
 - 数据库和 Redis 尚未接入，当前 Repository 使用内存实现以降低 Phase 1 阻塞。

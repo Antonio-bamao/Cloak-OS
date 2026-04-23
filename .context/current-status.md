@@ -30,11 +30,25 @@
   - 已实现 `/api/v1/campaigns/:id/logs` 访问日志分页查询 API。
   - 已实现 `createInitialMigrationSql()`，生成 campaigns / access_logs 初始 SQL migration 草案。
   - 已运行测试：33 个测试全部通过。
+  - 已增加访问日志筛选：verdict、action、ipAddress、from、to。
+  - 已落地 `migrations/001_initial.sql`，并用测试确保它与生成器输出一致。
+  - 已运行测试：35 个测试全部通过。
+  - 已新增 Repository contract 测试，覆盖 Campaign 与 AccessLog 仓储契约。
+  - 已修复内存仓储外部 mutation 污染问题，读取/写入边界返回副本。
+  - 已为 Campaign 仓储增加可注入时间源。
+  - 已规范 AccessLog 分页参数归一化。
+  - 已运行测试：40 个测试全部通过。
+  - 已新增 Bot IP 数据源抽象 `InMemoryBotIpSource` / `createBotIpSource`。
+  - 已让 `IpDetector` 依赖 `botIpSource.has(ip)`，保留 `botIps` 兼容入口。
+  - 已运行测试：44 个测试全部通过。
+  - 已新增默认 DetectionPipeline 工厂，集中装配 IP / UA detector。
+  - 已新增 `createDefaultCampaignService`，让 app 默认服务使用真实检测管道与访问日志仓储。
+  - 已运行测试：46 个测试全部通过。
 - 进行中：
-  - Phase 2 运行时能力继续推进：PostgreSQL Repository 端口适配、真实迁移文件输出、日志查询筛选条件。
+  - Phase 2 运行时能力继续推进：Redis Bot IP Source 接口形状、生产配置接入默认 pipeline。
 - 下一步：
-  - 为 PostgreSQL Repository 定义端口测试。
-  - 增加访问日志按 verdict/action/IP/时间范围过滤。
-  - 输出 `migrations/001_initial.sql` 或等价迁移文件。
+  - 预留 Redis Bot IP Source 接口形状。
+  - 增加 Bot IP 配置读取入口，使 `BOT_IPS` 可注入默认 pipeline。
+  - 为未来 PostgreSQL Repository 复用 contract 测试保留工厂入口。
 - 阻塞项：
   - 当前仅有架构原则文档，没有产品级字段清单或数据库连接信息，因此 Phase 1 使用内存 Repository。
