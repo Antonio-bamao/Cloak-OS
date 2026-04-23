@@ -73,3 +73,12 @@
 - 结果：`campaigns` 与 `access_logs` schema 草案包含 tenant/audit 字段、索引和访问日志月分区策略；访问日志按 Campaign 和 tenant 查询；Service 不依赖具体存储实现。
 - 验证：运行 `node --test`，31 个测试全部通过；运行 `.context` 校验，返回 `context is valid`。
 - 下一步：增加访问日志查询 API 和 SQL migration 草案。
+
+## 2026-04-23 19:05 CST - 完成访问日志查询 API 与 migration 草案
+
+- 时间：2026-04-23 19:05 CST
+- 目标：让管理侧可查询访问日志，并把 schema 映射到初始 SQL。
+- 动作：先新增访问日志 API 与 migration 测试并确认失败；随后实现分页查询、`/api/v1/campaigns/:id/logs` route 和 `createInitialMigrationSql()`。
+- 结果：访问日志 API 支持 page/pageSize 分页并返回统一 pagination；migration SQL 包含 campaigns、access_logs、索引和 access_logs 分区声明。
+- 验证：运行 `node --test`，33 个测试全部通过；运行 `.context` 校验，返回 `context is valid`。
+- 下一步：增加日志筛选条件和迁移文件落地。

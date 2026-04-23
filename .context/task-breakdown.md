@@ -33,6 +33,8 @@
    - 明确 AccessLog schema 草案。
    - 增加内存版 AccessLog Repository。
    - 将访问日志写入接入 `CampaignService.handleVisit`。
+   - 增加 `/api/v1/campaigns/:id/logs` 分页查询。
+   - 增加初始 SQL migration 生成器。
    - 准备替换内存 Repository 的数据库接口。
 
 ## 依赖关系
@@ -45,4 +47,5 @@
 - `/api/v1/campaigns` route 只调用 `CampaignService`，不直接访问 Repository。
 - `startServer` 只负责配置化监听和启动日志，不承载业务装配以外的逻辑。
 - 访问日志通过 `accessLogRepository` 可选依赖接入 Service，未来替换数据库实现不需要改检测或跳转逻辑。
+- 初始 migration SQL 从 schema 约束映射，避免表字段说明与实现漂移。
 - 数据库和 Redis 尚未接入，当前 Repository 使用内存实现以降低 Phase 1 阻塞。

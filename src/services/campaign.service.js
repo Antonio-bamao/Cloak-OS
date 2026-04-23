@@ -62,6 +62,28 @@ export class CampaignService {
     };
   }
 
+  async listAccessLogs(
+    campaignId,
+    { page = 1, pageSize = 20 } = {},
+    tenantId = DEFAULT_TENANT_ID
+  ) {
+    await this.getCampaign(campaignId, tenantId);
+
+    if (!this.accessLogRepository) {
+      return {
+        items: [],
+        total: 0,
+        page,
+        pageSize
+      };
+    }
+
+    return this.accessLogRepository.findPageByCampaign(campaignId, tenantId, {
+      page,
+      pageSize
+    });
+  }
+
   async recordAccessLog({ campaign, ctx, decision }) {
     if (!this.accessLogRepository) {
       return null;

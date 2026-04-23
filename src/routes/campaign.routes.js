@@ -23,6 +23,33 @@ export function createCampaignRoutes({ campaignService }) {
         await campaignService.getCampaign(request.params.id),
         'Campaign fetched'
       )
-    })
+    }),
+    'GET /api/v1/campaigns/:id/logs': async (request) => {
+      const page = positiveInteger(request.query.page, 1);
+      const pageSize = positiveInteger(request.query.pageSize, 20);
+      const result = await campaignService.listAccessLogs(request.params.id, {
+        page,
+        pageSize
+      });
+
+      return {
+        statusCode: 200,
+        body: ok(result.items, 'Access logs fetched', {
+          page: result.page,
+          pageSize: result.pageSize,
+          total: result.total
+        })
+      };
+    }
   };
+}
+
+function positiveInteger(value, fallback) {
+  const parsed = Number(value);
+
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    return fallback;
+  }
+
+  return parsed;
 }

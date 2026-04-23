@@ -33,4 +33,22 @@ export class InMemoryAccessLogRepository {
       (log) => log.campaignId === campaignId && log.tenantId === tenantId
     );
   }
+
+  async findPageByCampaign(
+    campaignId,
+    tenantId = DEFAULT_TENANT_ID,
+    { page = 1, pageSize = 20 } = {}
+  ) {
+    const allLogs = (await this.findByCampaign(campaignId, tenantId)).sort(
+      (left, right) => right.createdAt.localeCompare(left.createdAt)
+    );
+    const start = (page - 1) * pageSize;
+
+    return {
+      items: allLogs.slice(start, start + pageSize),
+      total: allLogs.length,
+      page,
+      pageSize
+    };
+  }
 }
