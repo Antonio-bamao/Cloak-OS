@@ -55,3 +55,12 @@
 - 结果：`/api/v1/campaigns` 支持创建、列表、按 ID 获取；无效 JSON 返回统一错误；logger 输出结构化字段。
 - 验证：运行 `node --test`，23 个测试全部通过；运行 `.context` 校验，返回 `context is valid`。
 - 下一步：添加配置化启动入口和请求完成日志。
+
+## 2026-04-23 18:35 CST - 完成配置化启动和请求日志
+
+- 时间：2026-04-23 18:35 CST
+- 目标：让后端从可测试装配推进到可直接启动运行。
+- 动作：先新增 `server-start` 测试和 HTTP 请求日志测试并确认失败；随后实现 `getConfig`、`startServer`、`npm start` 和 HTTP server 请求完成日志。
+- 结果：服务可读取 `HOST` / `PORT` 启动；每个请求完成后记录 method、path、statusCode、latencyMs；启动成功后记录监听 host 和 port。
+- 验证：运行 `node --test`，26 个测试全部通过；运行 `.context` 校验，返回 `context is valid`。
+- 下一步：定义 Campaign / AccessLog schema 草案和持久化接口边界。

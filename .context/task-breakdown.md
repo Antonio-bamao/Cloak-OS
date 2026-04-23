@@ -28,6 +28,7 @@
    - 增加 `/api/v1/campaigns` route。
    - 增加 JSON body 解析与动态 route 参数。
    - 增加结构化 logger。
+   - 增加配置化启动入口和请求完成日志。
    - 明确 Campaign schema 草案。
    - 准备替换内存 Repository 的数据库接口。
 
@@ -39,4 +40,5 @@
 - Route 层只依赖 Service。
 - HTTP server 只做协议适配和统一响应，不写业务逻辑。
 - `/api/v1/campaigns` route 只调用 `CampaignService`，不直接访问 Repository。
+- `startServer` 只负责配置化监听和启动日志，不承载业务装配以外的逻辑。
 - 数据库和 Redis 尚未接入，当前 Repository 使用内存实现以降低 Phase 1 阻塞。

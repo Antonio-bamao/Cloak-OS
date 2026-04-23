@@ -6,11 +6,13 @@ import { createHttpServer } from './http-server.js';
 
 export function createApp({
   version,
+  logger,
   campaignService = new CampaignService({
     repository: new InMemoryCampaignRepository()
   })
 } = {}) {
   return createHttpServer({
+    logger,
     routes: {
       'GET /health': createHealthRoute({ version }),
       ...createCampaignRoutes({ campaignService })

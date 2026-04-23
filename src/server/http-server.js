@@ -3,8 +3,15 @@ import http from 'node:http';
 import { fail } from '../utils/api-response.js';
 import { AppError } from '../utils/errors.js';
 
-export function createHttpServer({ routes }) {
+export function createHttpServer({
+  routes,
+  logger,
+  now = Date.now
+}) {
   return http.createServer(async (request, response) => {
+    const startedAt = now();
+    let statusCode = 500;
+
     try {
       const matchedRoute = matchRoute(routes, request);
 
@@ -15,10 +22,13 @@ export function createHttpServer({ routes }) {
       const routeResponse = await matchedRoute.handler(
         await toRouteRequest(request, matchedRoute.params)
       );
-      sendJson(response, routeResponse.statusCode ?? 200, routeResponse.body);
+      statusCode = routeResponse.statusCode ?? 200;
+      sendJson(response, statusCode, routeResponse.body);
     } catch (error) {
-      const statusCode = error instanceof AppError ? error.statusCode : 500;
+      statusCode = error instanceof AppError ? error.statusCode : 500;
       sendJson(response, statusCode, fail(error));
+    } finally {
+      logRequest({ logger, request, statusCode, latencyMs: now() - startedAt });
     }
   });
 }
@@ -126,4 +136,18 @@ function sendJson(response, statusCode, body) {
     'Content-Type': 'application/json; charset=utf-8'
   });
   response.end(JSON.stringify(body));
+}
+
+function logRequest({ logger, request, statusCode, latencyMs }) {
+  if (!logger?.info) {
+    return;
+  }
+
+  const url = new URL(request.url, 'http://localhost');
+  logger.info('HTTP request completed', {
+    method: request.method,
+    path: url.pathname,
+    statusCode,
+    latencyMs
+  });
 }

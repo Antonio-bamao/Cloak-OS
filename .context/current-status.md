@@ -19,11 +19,15 @@
   - 已实现 HTTP server 的 JSON body 解析、`:id` 路由参数匹配、无效 JSON 统一错误响应。
   - 已实现可注入 sink 的结构化 logger。
   - 已运行测试：23 个测试全部通过。
+  - 已实现配置化启动入口 `src/server/start.js`。
+  - 已给 HTTP server 接入请求完成日志：method、path、statusCode、latencyMs。
+  - 已扩展配置读取：`HOST`、`PORT`、检测阈值。
+  - 已运行测试：26 个测试全部通过。
 - 进行中：
-  - Phase 2 运行时能力继续推进：配置化启动入口、Campaign schema 草案、访问日志记录。
+  - Phase 2 运行时能力继续推进：Campaign schema 草案、持久化 Repository 边界、访问日志模型。
 - 下一步：
-  - 增加 `src/server/index.js` 或等价 CLI 启动入口，读取 `PORT` / `HOST`。
-  - 给 HTTP server 接入请求完成日志。
   - 将内存 Repository 的接口映射到数据库 schema 草案。
+  - 定义访问日志表与基础 Repository 契约。
+  - 为未来 PostgreSQL/Redis 替换准备端口接口。
 - 阻塞项：
   - 当前仅有架构原则文档，没有产品级字段清单或数据库连接信息，因此 Phase 1 使用内存 Repository。

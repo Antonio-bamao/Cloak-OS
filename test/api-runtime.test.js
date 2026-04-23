@@ -72,6 +72,47 @@ test('HTTP server adapts route responses to JSON over Node http', async () => {
   }
 });
 
+test('HTTP server logs completed requests with method, path, status, and latency', async () => {
+  const entries = [];
+  const server = createHttpServer({
+    logger: {
+      info(message, context) {
+        entries.push({ message, ...context });
+      }
+    },
+    now: (() => {
+      const times = [1000, 1037];
+      return () => times.shift() ?? 1037;
+    })(),
+    routes: {
+      'GET /health': async () => ({
+        statusCode: 200,
+        body: ok({ status: 'ok' }, 'ok')
+      })
+    }
+  });
+
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const { port } = server.address();
+    await fetch(`http://127.0.0.1:${port}/health`);
+
+    assert.deepEqual(entries, [
+      {
+        message: 'HTTP request completed',
+        method: 'GET',
+        path: '/health',
+        statusCode: 200,
+        latencyMs: 37
+      }
+    ]);
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+});
+
 test('HTTP server converts AppError exceptions to unified error responses', async () => {
   const server = createHttpServer({
     routes: {
