@@ -9,6 +9,7 @@ npm test
 npm run migrate
 npm run migrate:dry-run
 npm run migrate:status
+npm run smoke:postgres
 npm start
 ```
 
@@ -16,6 +17,7 @@ npm start
 `npm run migrate` 会在 `REPOSITORY_DRIVER=postgres` / `DATABASE_URL` 配置下执行 `migrations/*.sql`，并把已执行文件记录到 `schema_migrations`。
 `npm run migrate:dry-run` 会读取当前 migration 状态，并告诉你“如果现在执行 migrate，会应用哪些文件”，但不会真正执行 SQL。
 `npm run migrate:status` 会连接 PostgreSQL 并输出当前已知、已执行和 pending 的 migration 文件列表，适合联调前先做 smoke check。
+`npm run smoke:postgres` 会做一套 readonly PostgreSQL smoke check：连接数据库、输出 migration status、再输出 dry-run 预演摘要，但不会执行 migration。
 
 也可以直接通过 CLI 覆盖连接信息或 migration 目录：
 
@@ -24,6 +26,7 @@ node src/database/run-migrations.js --status --database-url postgres://cloak:sec
 node src/database/run-migrations.js --dry-run --database-url postgres://cloak:secret@127.0.0.1:5432/cloak
 node src/database/run-migrations.js --database-url postgres://cloak:secret@127.0.0.1:5432/cloak --migrations-dir migrations
 node src/database/run-migrations.js --help
+node src/database/run-postgres-smoke-check.js --database-url postgres://cloak:secret@127.0.0.1:5432/cloak
 ```
 
 ## Environment
@@ -150,6 +153,7 @@ migrations/001_initial.sql
 建议真实 PostgreSQL 联调时按这个 smoke-check 顺序执行：
 
 1. 先确认 `DATABASE_URL` 指向测试库，而不是生产库。
-2. 先运行 `npm run migrate:status` 或 `node src/database/run-migrations.js --status --database-url <url>`，检查 pending migration 是否符合预期。
-3. 再运行 `npm run migrate` 或带 `--database-url` 的 migrate 命令执行 schema 初始化。
-4. 最后再以 `REPOSITORY_DRIVER=postgres` 启动服务，验证 `/health` 和管理 API。
+2. 先运行 `npm run smoke:postgres`，或运行 `node src/database/run-postgres-smoke-check.js --database-url <url>` 做一次 readonly 联调。
+3. 如需更细看 pending migration，再运行 `npm run migrate:status` 或 `node src/database/run-migrations.js --status --database-url <url>`。
+4. 再运行 `npm run migrate` 或带 `--database-url` 的 migrate 命令执行 schema 初始化。
+5. 最后再以 `REPOSITORY_DRIVER=postgres` 启动服务，验证 `/health` 和管理 API。

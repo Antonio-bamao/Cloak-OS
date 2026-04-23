@@ -352,3 +352,12 @@
 - 结果：migration CLI 现在有一个稳定、可注入 stdout/stderr 与命令执行器的调度层，后续如果要补子进程级集成测试或额外 CLI 模式，会更容易扩展。
 - 验证：运行 `node --test test/run-migrations-command.test.js`，16 个测试全部通过；运行 `node --test`，110 个测试全部通过。
 - 下一步：若继续数据库方向，可直接做真实 PostgreSQL smoke-check，或补子进程级 CLI 集成测试；否则回到管理台空状态 / 错误态打磨。
+
+## 2026-04-23 22:54 CST - 新增 readonly PostgreSQL smoke-check 命令
+
+- 时间：2026-04-23 22:54 CST
+- 目标：把 README 里的 PostgreSQL 联调步骤收敛成一个可直接执行的只读命令，降低拿到真实 `DATABASE_URL` 后的试错成本。
+- 动作：先新增 `test/postgres-smoke-check.test.js` 和 docs 失败测试；随后实现 `src/database/run-postgres-smoke-check.js`，提供 `parsePostgresSmokeCheckArgs()`、`formatPostgresSmokeCheckSummary()`、`formatPostgresSmokeCheckHelp()` 和 `runPostgresSmokeCheck()`；最后在 `package.json` 中新增 `npm run smoke:postgres`，并更新 `README.md` 说明用法。
+- 结果：现在可以通过 `npm run smoke:postgres` 或 `node src/database/run-postgres-smoke-check.js --database-url <url>` 执行 readonly PostgreSQL smoke check，它会连接数据库、读取 migration 状态、输出 status/dry-run 摘要，但不会真正执行 migration。
+- 验证：运行 `node --test test/postgres-smoke-check.test.js test/docs.test.js`，9 个测试全部通过；运行 `node --test`，117 个测试全部通过。
+- 下一步：若继续数据库方向，可直接用真实 `DATABASE_URL` 做 smoke-check；若继续打磨工具链，可补子进程级 CLI 集成测试或加入可选 HTTP 健康检查。

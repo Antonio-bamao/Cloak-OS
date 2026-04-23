@@ -155,6 +155,11 @@
 - 已将 migration 直跑入口抽成可测试的 `runMigrationCli()` 调度层：
   - `runMigrationCli()` 统一负责参数解析、模式分发、stdout/stderr 输出与 exitCode 计算。
   - 已为 help、dry-run、migrate、错误退出补齐单测，不再依赖真实子进程才能覆盖 CLI 行为。
+- 已新增只读 PostgreSQL 联调命令：
+  - 新增 `src/database/run-postgres-smoke-check.js`。
+  - 新增脚本 `npm run smoke:postgres`，默认执行只读 smoke check。
+  - smoke-check 会复用现有 PostgreSQL 连接装配，输出 migration status 与 dry-run 摘要，但不会执行 migration。
+  - 已补 `parsePostgresSmokeCheckArgs()`、help、错误退出和只读摘要测试。
 - 已运行定向验证：`node --test test/create-postgres-client.test.js test/server-start.test.js test/docs.test.js`，13 个测试全部通过。
 - 已运行定向验证：`node --test test/migration-runner.test.js test/run-migrations-command.test.js test/docs.test.js`，5 个测试全部通过。
 - 已运行定向验证：`node --test test/migration-runner.test.js test/run-migrations-command.test.js`，6 个测试全部通过。
@@ -162,11 +167,13 @@
 - 已运行定向验证：`node --test test/run-migrations-command.test.js test/docs.test.js`，11 个测试全部通过。
 - 已运行定向验证：`node --test test/run-migrations-command.test.js test/docs.test.js`，14 个测试全部通过。
 - 已运行定向验证：`node --test test/run-migrations-command.test.js`，16 个测试全部通过。
-- 已运行全量验证：`node --test`，110 个测试全部通过。
+- 已运行定向验证：`node --test test/postgres-smoke-check.test.js test/docs.test.js`，9 个测试全部通过。
+- 已运行全量验证：`node --test`，117 个测试全部通过。
 - 进行中：
   - Phase 2/3 收尾：PostgreSQL 运行时装配和 migration 入口已落地，等待下一步决定是接真实库联调还是回到管理台空/错误态打磨。
 - 下一步：
-  - 若继续数据库方向：可以直接做真实 PostgreSQL smoke-check，或继续补子进程级 CLI 集成测试。
+  - 若继续数据库方向：现在可以直接用 `npm run smoke:postgres` 或 `node src/database/run-postgres-smoke-check.js --database-url <url>` 做真实联调。
+  - 若继续打磨工具链：可补子进程级 CLI 集成测试或把 smoke-check 扩展为可选 `/health` HTTP 探测。
   - 若回到管理台方向：补空状态、错误态和 PostgreSQL 模式下的联调检查。
 - 阻塞项：
   - 当前没有提供真实 PostgreSQL 连接信息，因此还未做实库联调，只完成了驱动与启动装配层落地。
