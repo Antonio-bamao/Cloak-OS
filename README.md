@@ -21,6 +21,7 @@ PORT=3000
 MIN_CONFIDENCE=60
 BOT_CONFIDENCE=80
 BOT_IPS=66.249.66.1,66.249.66.2
+ADMIN_TOKEN=dev-admin-token
 ```
 
 - `HOST`：HTTP server 监听地址。
@@ -28,10 +29,15 @@ BOT_IPS=66.249.66.1,66.249.66.2
 - `MIN_CONFIDENCE`：进入 suspicious 判定的最低置信度，范围 `1-100`。
 - `BOT_CONFIDENCE`：进入 bot 判定的最低置信度，范围 `1-100`。
 - `BOT_IPS`：逗号分隔的 Bot IP 列表，进入默认 IP 检测数据源。
+- `ADMIN_TOKEN`：管理 API Bearer token。生产环境必须替换示例值。
 
 ## API
 
-所有管理 API 使用统一响应格式。
+所有管理 API 使用统一响应格式，并要求：
+
+```http
+Authorization: Bearer <ADMIN_TOKEN>
+```
 
 ### Health
 

@@ -5,6 +5,8 @@ import { createApp } from '../src/server/app.js';
 import { CampaignService } from '../src/services/campaign.service.js';
 import { InMemoryCampaignRepository } from '../src/repositories/campaign.repo.js';
 
+const AUTH_HEADERS = { Authorization: 'Bearer dev-admin-token' };
+
 test('campaign API creates and lists campaigns with unified responses', async () => {
   const app = createApp({
     campaignService: new CampaignService({
@@ -17,7 +19,7 @@ test('campaign API creates and lists campaigns with unified responses', async ()
     const { port } = app.address();
     const createResponse = await fetch(`http://127.0.0.1:${port}/api/v1/campaigns`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...AUTH_HEADERS, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: 'Launch Campaign',
         safeUrl: 'https://safe.example',
@@ -33,7 +35,9 @@ test('campaign API creates and lists campaigns with unified responses', async ()
     assert.equal(created.data.name, 'Launch Campaign');
     assert.ok(created.data.id);
 
-    const listResponse = await fetch(`http://127.0.0.1:${port}/api/v1/campaigns`);
+    const listResponse = await fetch(`http://127.0.0.1:${port}/api/v1/campaigns`, {
+      headers: AUTH_HEADERS
+    });
 
     assert.equal(listResponse.status, 200);
     assert.deepEqual(await listResponse.json(), {
@@ -63,7 +67,9 @@ test('campaign API fetches a single campaign through a route param', async () =>
   await new Promise((resolve) => app.listen(0, '127.0.0.1', resolve));
   try {
     const { port } = app.address();
-    const response = await fetch(`http://127.0.0.1:${port}/api/v1/campaigns/${campaign.id}`);
+    const response = await fetch(`http://127.0.0.1:${port}/api/v1/campaigns/${campaign.id}`, {
+      headers: AUTH_HEADERS
+    });
 
     assert.equal(response.status, 200);
     assert.deepEqual(await response.json(), {
@@ -90,7 +96,7 @@ test('campaign API rejects invalid JSON with a unified error response', async ()
     const { port } = app.address();
     const response = await fetch(`http://127.0.0.1:${port}/api/v1/campaigns`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...AUTH_HEADERS, 'Content-Type': 'application/json' },
       body: '{not-json'
     });
 
@@ -126,7 +132,7 @@ test('campaign API updates and deletes a campaign through REST routes', async ()
     const { port } = app.address();
     const updateResponse = await fetch(`http://127.0.0.1:${port}/api/v1/campaigns/${campaign.id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...AUTH_HEADERS, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: 'After Update',
         redirectMode: 'iframe'
@@ -142,7 +148,8 @@ test('campaign API updates and deletes a campaign through REST routes', async ()
     assert.equal(updated.data.safeUrl, 'https://safe.example');
 
     const deleteResponse = await fetch(`http://127.0.0.1:${port}/api/v1/campaigns/${campaign.id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: AUTH_HEADERS
     });
 
     assert.equal(deleteResponse.status, 200);
@@ -152,9 +159,39 @@ test('campaign API updates and deletes a campaign through REST routes', async ()
       message: 'Campaign deleted'
     });
 
-    const getDeletedResponse = await fetch(`http://127.0.0.1:${port}/api/v1/campaigns/${campaign.id}`);
+    const getDeletedResponse = await fetch(`http://127.0.0.1:${port}/api/v1/campaigns/${campaign.id}`, {
+      headers: AUTH_HEADERS
+    });
 
     assert.equal(getDeletedResponse.status, 404);
+  } finally {
+    await new Promise((resolve, reject) => {
+      app.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+});
+
+test('campaign API rejects missing admin authorization', async () => {
+  const app = createApp({
+    campaignService: new CampaignService({
+      repository: new InMemoryCampaignRepository()
+    })
+  });
+
+  await new Promise((resolve) => app.listen(0, '127.0.0.1', resolve));
+  try {
+    const { port } = app.address();
+    const response = await fetch(`http://127.0.0.1:${port}/api/v1/campaigns`);
+
+    assert.equal(response.status, 401);
+    assert.equal(response.headers.get('www-authenticate'), 'Bearer');
+    assert.deepEqual(await response.json(), {
+      success: false,
+      error: {
+        code: 'AUTH_REQUIRED',
+        message: 'Authentication required'
+      }
+    });
   } finally {
     await new Promise((resolve, reject) => {
       app.close((error) => (error ? reject(error) : resolve()));

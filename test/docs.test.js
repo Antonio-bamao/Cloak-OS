@@ -10,6 +10,7 @@ test('README documents startup, tests, env vars, and available API routes', asyn
   assert.match(readme, /HOST/);
   assert.match(readme, /PORT/);
   assert.match(readme, /BOT_IPS/);
+  assert.match(readme, /ADMIN_TOKEN/);
   assert.match(readme, /GET \/health/);
   assert.match(readme, /GET \/c\/:campaignId/);
   assert.match(readme, /POST \/api\/v1\/campaigns/);
@@ -26,7 +27,8 @@ test('.env.example lists every runtime env var consumed by config', async () => 
     'PORT=',
     'MIN_CONFIDENCE=',
     'BOT_CONFIDENCE=',
-    'BOT_IPS='
+    'BOT_IPS=',
+    'ADMIN_TOKEN='
   ]) {
     assert.match(envExample, new RegExp(`^${key}`, 'm'));
   }

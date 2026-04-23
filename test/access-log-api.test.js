@@ -6,6 +6,8 @@ import { InMemoryCampaignRepository } from '../src/repositories/campaign.repo.js
 import { CampaignService } from '../src/services/campaign.service.js';
 import { createApp } from '../src/server/app.js';
 
+const AUTH_HEADERS = { Authorization: 'Bearer dev-admin-token' };
+
 test('campaign logs API returns paginated access logs for a campaign', async () => {
   const campaignRepository = new InMemoryCampaignRepository();
   const accessLogRepository = new InMemoryAccessLogRepository({
@@ -70,7 +72,8 @@ test('campaign logs API returns paginated access logs for a campaign', async () 
   try {
     const { port } = app.address();
     const response = await fetch(
-      `http://127.0.0.1:${port}/api/v1/campaigns/${campaign.id}/logs?page=1&pageSize=1`
+      `http://127.0.0.1:${port}/api/v1/campaigns/${campaign.id}/logs?page=1&pageSize=1`,
+      { headers: AUTH_HEADERS }
     );
 
     assert.equal(response.status, 200);
@@ -86,7 +89,8 @@ test('campaign logs API returns paginated access logs for a campaign', async () 
     });
 
     const secondPageResponse = await fetch(
-      `http://127.0.0.1:${port}/api/v1/campaigns/${campaign.id}/logs?page=2&pageSize=1`
+      `http://127.0.0.1:${port}/api/v1/campaigns/${campaign.id}/logs?page=2&pageSize=1`,
+      { headers: AUTH_HEADERS }
     );
     const secondPage = await secondPageResponse.json();
 
@@ -150,7 +154,8 @@ test('campaign logs API filters by verdict, action, IP, and time range', async (
   try {
     const { port } = app.address();
     const response = await fetch(
-      `http://127.0.0.1:${port}/api/v1/campaigns/${campaign.id}/logs?verdict=bot&action=safe&ipAddress=66.249.66.1&from=2026-04-23T00%3A00%3A00.000Z&to=2026-04-23T23%3A59%3A59.999Z`
+      `http://127.0.0.1:${port}/api/v1/campaigns/${campaign.id}/logs?verdict=bot&action=safe&ipAddress=66.249.66.1&from=2026-04-23T00%3A00%3A00.000Z&to=2026-04-23T23%3A59%3A59.999Z`,
+      { headers: AUTH_HEADERS }
     );
 
     assert.equal(response.status, 200);

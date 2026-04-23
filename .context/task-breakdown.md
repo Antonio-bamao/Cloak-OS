@@ -56,6 +56,8 @@
    - 扩展 Repository contract 覆盖 Campaign CRUD。
    - 增加公网斗篷入口 rate limiting。
    - 增加 AppError 响应头支持，用于 `Retry-After`。
+   - 增加管理 API Bearer token 鉴权。
+   - 保持 health 和公网 cloak 入口无需认证。
    - 准备替换内存 Repository 的数据库接口。
 
 ## 依赖关系
@@ -81,4 +83,6 @@
 - 公网斗篷入口返回跳转策略的原始 HTTP 响应；管理 API 才使用统一 JSON 响应。
 - Campaign CRUD 必须经 Route -> Service -> Repository 分层，不允许 Route 直接访问 Repository。
 - 公网 rate limiting 必须作为 route wrapper 接入，不进入 Detector 或 CampaignService。
+- 管理 API 鉴权必须作为 route wrapper 接入，不进入 CampaignService 或 Repository。
+- 公网斗篷入口和健康检查不使用管理 API 鉴权。
 - 数据库和 Redis 尚未接入，当前 Repository 使用内存实现以降低 Phase 1 阻塞。

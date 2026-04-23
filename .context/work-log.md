@@ -181,3 +181,12 @@
 - 结果：公网斗篷入口超限时返回 429 JSON 错误与 `Retry-After` 头；正常 redirect/HTML 响应不受影响。
 - 验证：运行 `node --test`，61 个测试全部通过；运行 `.context` 校验，返回 `context is valid`。
 - 下一步：继续后端阶段完成检查，重点看鉴权边界和进入 UI 前的后端依赖。
+
+## 2026-04-23 22:05 CST - 完成管理 API 鉴权边界
+
+- 时间：2026-04-23 22:05 CST
+- 目标：落实管理后台 API 需要认证、公网斗篷入口无需认证的安全边界。
+- 动作：先新增 auth service、authenticated route wrapper、Campaign API 401 和文档测试并确认失败；随后实现 Bearer token 鉴权并包住 `/api/v1/*` routes。
+- 结果：管理 API 需要 `Authorization: Bearer <ADMIN_TOKEN>`；`GET /health` 和 `GET /c/:campaignId` 保持公开。
+- 验证：运行 `node --test`，65 个测试全部通过；运行 `.context` 校验，返回 `context is valid`。
+- 下一步：继续后端阶段完成检查，确认是否可以进入 UI 管理台阶段。

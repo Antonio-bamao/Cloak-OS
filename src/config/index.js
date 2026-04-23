@@ -12,6 +12,9 @@ export function getConfig(env = process.env) {
       suspiciousThreshold: Number(env.MIN_CONFIDENCE ?? 60),
       botThreshold: Number(env.BOT_CONFIDENCE ?? 80),
       botIps: parseCsv(env.BOT_IPS)
+    },
+    auth: {
+      adminToken: env.ADMIN_TOKEN ?? 'dev-admin-token'
     }
   };
 }
@@ -37,6 +40,10 @@ export function validateConfig(runtimeConfig) {
     errors.push('detection.botThreshold must be between 1 and 100');
   }
 
+  if (!runtimeConfig.auth?.adminToken) {
+    errors.push('auth.adminToken is required');
+  }
+
   if (errors.length > 0) {
     throw new AppError(errors.join('; '), 500, 'CONFIG_INVALID');
   }
@@ -55,6 +62,10 @@ export function mergeConfig(baseConfig, overrideConfig = {}) {
     detection: {
       ...baseConfig.detection,
       ...overrideConfig.detection
+    },
+    auth: {
+      ...baseConfig.auth,
+      ...overrideConfig.auth
     }
   };
 }

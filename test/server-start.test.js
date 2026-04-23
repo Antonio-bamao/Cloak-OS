@@ -10,7 +10,8 @@ test('getConfig reads host and port from an injected env object', () => {
     PORT: '4321',
     MIN_CONFIDENCE: '55',
     BOT_CONFIDENCE: '88',
-    BOT_IPS: '66.249.66.1, 66.249.66.2,,'
+    BOT_IPS: '66.249.66.1, 66.249.66.2,,',
+    ADMIN_TOKEN: 'dev-admin-token'
   });
 
   assert.deepEqual(config.server, {
@@ -21,6 +22,9 @@ test('getConfig reads host and port from an injected env object', () => {
     suspiciousThreshold: 55,
     botThreshold: 88,
     botIps: ['66.249.66.1', '66.249.66.2']
+  });
+  assert.deepEqual(config.auth, {
+    adminToken: 'dev-admin-token'
   });
 });
 

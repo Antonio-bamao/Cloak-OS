@@ -68,6 +68,11 @@
   - 已新增 `createRateLimitedRoute`，仅在 app 装配层包住公网 `GET /c/:campaignId`。
   - 已让 AppError 支持响应头，限流返回 `Retry-After`。
   - 已运行测试：61 个测试全部通过。
+- 已新增 `BearerTokenAuthService` 和 `createAuthenticatedRoutes`。
+- 已将管理 API `/api/v1/*` 包上 Bearer token 鉴权。
+- 已保持 `GET /health` 与 `GET /c/:campaignId` 公开。
+- 已新增 `ADMIN_TOKEN` 配置与文档。
+- 已运行测试：65 个测试全部通过。
 - 进行中：
   - Phase 2 运行时能力继续推进：生产运行边界收尾、后端阶段完成检查。
 - 下一步：
