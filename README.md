@@ -11,6 +11,7 @@ npm run migrate:dry-run
 npm run migrate:status
 npm run smoke:postgres
 npm run smoke:postgres-api
+npm run smoke:postgres-admin
 npm start
 ```
 
@@ -20,6 +21,7 @@ npm start
 `npm run migrate:status` 会连接 PostgreSQL 并输出当前已知、已执行和 pending 的 migration 文件列表，适合联调前先做 smoke check。
 `npm run smoke:postgres` 会做一套 readonly PostgreSQL smoke check：连接数据库、输出 migration status、再输出 dry-run 预演摘要，但不会执行 migration。
 `npm run smoke:postgres-api` 会在 PostgreSQL 模式下启动真实 app，通过 HTTP 创建 Campaign、访问公网入口并检查日志与 Analytics。
+`npm run smoke:postgres-admin` 会在 PostgreSQL 模式下启动真实 app，加载管理台页面/CSS/JS，并检查 Campaign、Logs、Analytics 管理 API。
 
 也可以直接通过 CLI 覆盖连接信息或 migration 目录：
 
@@ -30,6 +32,7 @@ node src/database/run-migrations.js --database-url postgres://cloak:secret@127.0
 node src/database/run-migrations.js --help
 node src/database/run-postgres-smoke-check.js --database-url postgres://cloak:secret@127.0.0.1:5432/cloak
 node src/database/run-postgres-api-smoke-check.js --database-url postgres://cloak:secret@127.0.0.1:5432/cloak
+node src/database/run-postgres-admin-smoke-check.js --database-url postgres://cloak:secret@127.0.0.1:5432/cloak
 ```
 
 ## Environment
@@ -159,4 +162,5 @@ migrations/001_initial.sql
 2. 先运行 `npm run smoke:postgres`，或运行 `node src/database/run-postgres-smoke-check.js --database-url <url>` 做一次 readonly 联调。
 3. 如需更细看 pending migration，再运行 `npm run migrate:status` 或 `node src/database/run-migrations.js --status --database-url <url>`。
 4. 再运行 `npm run migrate` 或带 `--database-url` 的 migrate 命令执行 schema 初始化。
-5. 最后运行 `npm run smoke:postgres-api`，或运行 `node src/database/run-postgres-api-smoke-check.js --database-url <url>`，验证创建 Campaign、访问日志写入和 Analytics 查询。
+5. 再运行 `npm run smoke:postgres-api`，或运行 `node src/database/run-postgres-api-smoke-check.js --database-url <url>`，验证创建 Campaign、访问日志写入和 Analytics 查询。
+6. 最后运行 `npm run smoke:postgres-admin`，或运行 `node src/database/run-postgres-admin-smoke-check.js --database-url <url>`，验证管理台页面、静态资源和管理 API 都能在 PostgreSQL 模式下工作。

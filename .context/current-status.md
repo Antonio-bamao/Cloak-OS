@@ -178,6 +178,12 @@
   - 根因：`access_logs` 是按 `created_at` 分区的 partitioned table，但 `001_initial.sql` 没有创建任何分区，导致访问日志 insert 没有落点。
   - 新增 `migrations/002_access_logs_default_partition.sql`，创建 `access_logs_default` 默认分区。
   - 已将 `002` migration 应用到 `cloak-postgres`，再次运行 API smoke 成功。
+- 已新增 PostgreSQL Admin smoke-check：
+  - 新增 `src/database/run-postgres-admin-smoke-check.js`。
+  - 新增脚本 `npm run smoke:postgres-admin`。
+  - smoke-check 会在 PostgreSQL 模式下启动真实 app，加载 `/admin`、`/admin/styles.css`、`/admin/app.js`，并检查 Campaign、Logs、Analytics 管理 API。
+  - 已补 `test/postgres-admin-smoke-check.test.js`，覆盖参数解析、help、成功流程和错误关闭。
+  - 已在真实 `cloak-postgres` 测试库运行成功：Admin page status 200，Campaign count 2，Log count 1，Total visits 1。
 - 已运行定向验证：`node --test test/create-postgres-client.test.js test/server-start.test.js test/docs.test.js`，13 个测试全部通过。
 - 已运行定向验证：`node --test test/migration-runner.test.js test/run-migrations-command.test.js test/docs.test.js`，5 个测试全部通过。
 - 已运行定向验证：`node --test test/migration-runner.test.js test/run-migrations-command.test.js`，6 个测试全部通过。
@@ -189,10 +195,13 @@
 - 已运行定向验证：`node --test test/postgres-api-smoke-check.test.js test/docs.test.js`，6 个测试全部通过。
 - 已运行定向验证：`node --test test/migration.test.js`，3 个测试全部通过。
 - 已运行全量验证：`node --test`，122 个测试全部通过。
+- 已运行定向验证：`node --test test/postgres-admin-smoke-check.test.js test/docs.test.js`，7 个测试全部通过。
+- 已运行真实验证：`node src/database/run-postgres-admin-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak`，PostgreSQL admin smoke check 通过。
+- 已运行全量验证：`node --test`，127 个测试全部通过。
 - 进行中：
-  - Phase 2/3 收尾：PostgreSQL 运行时装配、migration、真实 Docker PostgreSQL smoke-check 和 API smoke flow 已完成。
+  - Phase 2/3 收尾：PostgreSQL 运行时装配、migration、真实 Docker PostgreSQL smoke-check、API smoke flow 和 admin UI smoke flow 已完成。
 - 下一步：
-  - 若继续数据库方向：可补 PostgreSQL API smoke 的 cleanup 能力，或增加真实库下 admin UI 联调。
+  - 若继续数据库方向：可补 PostgreSQL API smoke 的 cleanup 能力，避免反复联调留下测试 Campaign。
   - 若继续打磨工具链：可补子进程级 CLI 集成测试或把 smoke-check 扩展为可选 `/health` HTTP 探测。
   - 若回到管理台方向：补空状态、错误态和 PostgreSQL 模式下的联调检查。
 - 阻塞项：

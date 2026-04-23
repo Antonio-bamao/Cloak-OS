@@ -379,3 +379,12 @@
 - 结果：真实 PostgreSQL API smoke 成功通过，创建 Campaign、302 redirect、访问日志写入、`GET /api/v1/logs` 与 `GET /api/v1/analytics/overview` 全部走通；`access_logs` 现在通过默认分区具备安全插入落点。
 - 验证：运行 `node --test test/postgres-api-smoke-check.test.js test/docs.test.js`，6 个测试全部通过；运行 `node --test test/migration.test.js`，3 个测试全部通过；运行 `node src/database/run-migrations.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak`，应用 `002_access_logs_default_partition.sql`；运行 `node src/database/run-postgres-api-smoke-check.js --database-url ...`，输出 `PostgreSQL API smoke check passed`；运行 `node --test`，122 个测试全部通过。
 - 下一步：若继续数据库方向，可补 API smoke cleanup 或真实库下 admin UI 联调；否则回到管理台空状态 / 错误态打磨。
+
+## 2026-04-23 23:49 CST - 完成真实 PostgreSQL Admin smoke flow
+
+- 时间：2026-04-23 23:49 CST
+- 目标：在真实 PostgreSQL 模式下验证管理台页面、静态资源和管理 API 都能加载，不只停留在后端 API smoke。
+- 动作：先新增 `test/postgres-admin-smoke-check.test.js` 和 docs 失败测试；随后实现 `src/database/run-postgres-admin-smoke-check.js`，新增脚本 `npm run smoke:postgres-admin`，并更新 README 的联调命令和 smoke-check 顺序。
+- 结果：Admin smoke 会启动真实 app，检查 `/admin` shell、`/admin/styles.css`、`/admin/app.js`，再用 Bearer token 访问 `/api/v1/campaigns`、`/api/v1/logs`、`/api/v1/analytics/overview`；真实 `cloak-postgres` 测试库验证输出 Admin page status 200、Campaign count 2、Log count 1、Total visits 1。
+- 验证：运行 `node --test test/postgres-admin-smoke-check.test.js test/docs.test.js`，7 个测试全部通过；运行 `node src/database/run-postgres-admin-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak`，输出 `PostgreSQL admin smoke check passed`；运行 `node --test`，127 个测试全部通过。
+- 下一步：若继续数据库方向，可补 smoke cleanup 或 `/health` 探测；若回到管理台方向，可补空状态、错误态和移动端细节。
