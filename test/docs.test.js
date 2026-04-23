@@ -31,6 +31,8 @@ test('README documents startup, tests, env vars, and available API routes', asyn
   assert.match(readme, /连接池|Pool/);
   assert.match(readme, /schema_migrations/);
   assert.match(readme, /pending/i);
+  assert.match(readme, /smoke-check|联调/i);
+  assert.match(readme, /--database-url/);
 });
 
 test('.env.example lists every runtime env var consumed by config', async () => {

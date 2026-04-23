@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   formatMigrationStatusSummary,
   formatMigrationSummary,
+  parseMigrationCliArgs,
   runMigrationStatusCommand,
   runMigrationsCommand
 } from '../src/database/run-migrations.js';
@@ -130,6 +131,42 @@ test('runMigrationStatusCommand creates a postgres client, collects status, and 
   ]);
 });
 
+test('runMigrationStatusCommand accepts a databaseUrl override when postgres config has no inline databaseUrl', async () => {
+  const calls = [];
+  const postgresClient = {
+    async end() {
+      calls.push('end');
+    }
+  };
+
+  await runMigrationStatusCommand({
+    config: {
+      repository: {
+        driver: 'postgres',
+        databaseUrl: ''
+      }
+    },
+    databaseUrl: 'postgres://cloak:secret@127.0.0.1:5432/cloak',
+    createPostgresClient: async (databaseUrl) => {
+      calls.push({ type: 'create', databaseUrl });
+      return postgresClient;
+    },
+    getMigrationStatus: async () => ({
+      allMigrations: [],
+      appliedMigrations: [],
+      pendingMigrations: []
+    })
+  });
+
+  assert.deepEqual(calls, [
+    {
+      type: 'create',
+      databaseUrl: 'postgres://cloak:secret@127.0.0.1:5432/cloak'
+    },
+    'end'
+  ]);
+});
+
 test('formatMigrationStatusSummary lists all, applied, and pending migration filenames', () => {
   const summary = formatMigrationStatusSummary({
     allMigrations: ['001_initial.sql', '002_access.sql'],
@@ -140,5 +177,36 @@ test('formatMigrationStatusSummary lists all, applied, and pending migration fil
   assert.equal(
     summary,
     'Known 2 migrations: 001_initial.sql, 002_access.sql\nApplied 1 migrations: 001_initial.sql\nPending 1 migrations: 002_access.sql'
+  );
+});
+
+test('parseMigrationCliArgs defaults to migrate mode without overrides', () => {
+  assert.deepEqual(parseMigrationCliArgs([]), {
+    mode: 'migrate',
+    databaseUrl: undefined,
+    migrationsDir: undefined
+  });
+});
+
+test('parseMigrationCliArgs reads status mode and optional overrides', () => {
+  assert.deepEqual(
+    parseMigrationCliArgs([
+      '--status',
+      '--database-url',
+      'postgres://cloak:secret@127.0.0.1:5432/cloak',
+      '--migrations-dir=custom-migrations'
+    ]),
+    {
+      mode: 'status',
+      databaseUrl: 'postgres://cloak:secret@127.0.0.1:5432/cloak',
+      migrationsDir: 'custom-migrations'
+    }
+  );
+});
+
+test('parseMigrationCliArgs rejects flags that are missing a value', () => {
+  assert.throws(
+    () => parseMigrationCliArgs(['--database-url']),
+    /requires a value/
   );
 });

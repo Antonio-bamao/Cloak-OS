@@ -325,3 +325,12 @@
 - 结果：现在可以通过 `npm run migrate:status` 查看全部 migration、已执行 migration 和 pending migration；`runMigrations()` 也改为复用状态收集逻辑，减少重复路径。
 - 验证：运行 `node --test test/migration-runner.test.js test/run-migrations-command.test.js test/docs.test.js`，11 个测试全部通过；运行 `node --test`，99 个测试全部通过。
 - 下一步：若继续数据库方向，补 CLI 参数级测试或真实 PostgreSQL smoke-check 流程；否则回到管理台空状态 / 错误态打磨。
+
+## 2026-04-23 22:42 CST - 补齐 migration CLI 参数与 smoke-check 文档
+
+- 时间：2026-04-23 22:42 CST
+- 目标：让真实 PostgreSQL 联调在没有预先写入环境变量的情况下也能安全、明确地执行 status/migrate 流程。
+- 动作：先为 `parseMigrationCliArgs()`、`--database-url` 覆盖行为和 README smoke-check 文档写失败测试；随后在 `src/database/run-migrations.js` 中新增统一 CLI 参数解析，并让 direct-run 路径支持 `--status`、`--database-url`、`--migrations-dir`；最后在 `README.md` 中补充真实 PostgreSQL 的 smoke-check 顺序和命令示例。
+- 结果：现在可以直接运行 `node src/database/run-migrations.js --status --database-url <url>` 或带 `--migrations-dir` 的 migrate 命令；即使配置文件里的 postgres `databaseUrl` 为空，也能通过 CLI 覆盖完成联调。
+- 验证：运行 `node --test test/run-migrations-command.test.js test/docs.test.js`，11 个测试全部通过；运行 `node --test`，103 个测试全部通过。
+- 下一步：若继续数据库方向，可以直接做真实 PostgreSQL smoke-check，或继续补 `--help` / dry-run 能力；否则回到管理台空状态 / 错误态打磨。

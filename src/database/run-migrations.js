@@ -18,8 +18,14 @@ export async function runMigrationsCommand({
   migrationsDir = path.resolve(process.cwd(), 'migrations')
 } = {}) {
   const runtimeConfig = mergeConfig(defaultConfig, config);
-  validateConfig(runtimeConfig);
   const resolvedDatabaseUrl = databaseUrl ?? runtimeConfig.repository.databaseUrl;
+  const validatedConfig = mergeConfig(runtimeConfig, {
+    repository: {
+      databaseUrl: resolvedDatabaseUrl
+    }
+  });
+
+  validateConfig(validatedConfig);
   const client = await createPostgresClient(resolvedDatabaseUrl);
 
   try {
@@ -40,8 +46,14 @@ export async function runMigrationStatusCommand({
   migrationsDir = path.resolve(process.cwd(), 'migrations')
 } = {}) {
   const runtimeConfig = mergeConfig(defaultConfig, config);
-  validateConfig(runtimeConfig);
   const resolvedDatabaseUrl = databaseUrl ?? runtimeConfig.repository.databaseUrl;
+  const validatedConfig = mergeConfig(runtimeConfig, {
+    repository: {
+      databaseUrl: resolvedDatabaseUrl
+    }
+  });
+
+  validateConfig(validatedConfig);
   const client = await createPostgresClient(resolvedDatabaseUrl);
 
   try {
@@ -76,6 +88,49 @@ export function formatMigrationStatusSummary({
   ].join('\n');
 }
 
+export function parseMigrationCliArgs(argv = process.argv.slice(2)) {
+  const parsed = {
+    mode: 'migrate',
+    databaseUrl: undefined,
+    migrationsDir: undefined
+  };
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const argument = argv[index];
+
+    if (argument === '--status') {
+      parsed.mode = 'status';
+      continue;
+    }
+
+    if (argument === '--database-url') {
+      parsed.databaseUrl = requireCliValue(argv, index, '--database-url');
+      index += 1;
+      continue;
+    }
+
+    if (argument.startsWith('--database-url=')) {
+      parsed.databaseUrl = argument.slice('--database-url='.length);
+      continue;
+    }
+
+    if (argument === '--migrations-dir') {
+      parsed.migrationsDir = requireCliValue(argv, index, '--migrations-dir');
+      index += 1;
+      continue;
+    }
+
+    if (argument.startsWith('--migrations-dir=')) {
+      parsed.migrationsDir = argument.slice('--migrations-dir='.length);
+      continue;
+    }
+
+    throw new Error(`Unknown argument: ${argument}`);
+  }
+
+  return parsed;
+}
+
 export function isDirectRun(moduleUrl, entryPath = process.argv[1]) {
   if (!entryPath) {
     return false;
@@ -85,10 +140,13 @@ export function isDirectRun(moduleUrl, entryPath = process.argv[1]) {
 }
 
 if (isDirectRun(import.meta.url)) {
-  const mode = process.argv.includes('--status') ? 'status' : 'migrate';
+  const cliArgs = parseMigrationCliArgs(process.argv.slice(2));
+  const mode = cliArgs.mode;
   const command =
     mode === 'status'
       ? runMigrationStatusCommand({
+          databaseUrl: cliArgs.databaseUrl,
+          migrationsDir: cliArgs.migrationsDir,
           config: {
             repository: {
               driver: 'postgres'
@@ -98,6 +156,8 @@ if (isDirectRun(import.meta.url)) {
           console.log(formatMigrationStatusSummary(result));
         })
       : runMigrationsCommand({
+          databaseUrl: cliArgs.databaseUrl,
+          migrationsDir: cliArgs.migrationsDir,
           config: {
             repository: {
               driver: 'postgres'
@@ -115,4 +175,14 @@ if (isDirectRun(import.meta.url)) {
 
 function formatMigrationList(filenames) {
   return filenames.length > 0 ? filenames.join(', ') : '(none)';
+}
+
+function requireCliValue(argv, index, flagName) {
+  const value = argv[index + 1];
+
+  if (!value || value.startsWith('--')) {
+    throw new Error(`Flag ${flagName} requires a value.`);
+  }
+
+  return value;
 }
