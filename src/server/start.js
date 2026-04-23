@@ -8,22 +8,27 @@ import {
 } from '../config/index.js';
 import { AppError } from '../utils/errors.js';
 import { createLogger } from '../utils/logger.js';
+import { createPostgresClientFactory } from '../infrastructure/postgres/create-postgres-client.js';
 import { createApp } from './app.js';
+
+const createDefaultPostgresClient = createPostgresClientFactory();
 
 export async function startServer({
   config = {},
   logger = createLogger(),
   createApp: appFactory = createApp,
+  createDefaultPostgresClient: defaultPostgresClientFactory = createDefaultPostgresClient,
   createPostgresClient,
   postgresClient,
   app
 } = {}) {
   const runtimeConfig = mergeConfig(defaultConfig, config);
   validateConfig(runtimeConfig);
-  const resolvedPostgresClient = await resolvePostgresClient({
+  const { postgresClient: resolvedPostgresClient, shouldDispose } = await resolvePostgresClient({
     config: runtimeConfig,
     postgresClient,
-    createPostgresClient
+    createPostgresClient,
+    createDefaultPostgresClient: defaultPostgresClientFactory
   });
   const server = app ?? appFactory({
     logger,
@@ -43,7 +48,10 @@ export async function startServer({
     port: address.port
   });
 
-  return server;
+  return attachPostgresClientDisposer(server, {
+    postgresClient: resolvedPostgresClient,
+    shouldDispose
+  });
 }
 
 export function isDirectRun(moduleUrl, entryPath = process.argv[1]) {
@@ -57,18 +65,35 @@ export function isDirectRun(moduleUrl, entryPath = process.argv[1]) {
 async function resolvePostgresClient({
   config,
   postgresClient,
-  createPostgresClient
+  createPostgresClient,
+  createDefaultPostgresClient
 }) {
   if (config.repository?.driver !== 'postgres') {
-    return postgresClient;
+    return {
+      postgresClient,
+      shouldDispose: false
+    };
   }
 
   if (postgresClient) {
-    return postgresClient;
+    return {
+      postgresClient,
+      shouldDispose: false
+    };
   }
 
   if (createPostgresClient) {
-    return createPostgresClient(config.repository.databaseUrl);
+    return {
+      postgresClient: await createPostgresClient(config.repository.databaseUrl),
+      shouldDispose: false
+    };
+  }
+
+  if (createDefaultPostgresClient) {
+    return {
+      postgresClient: await createDefaultPostgresClient(config.repository.databaseUrl),
+      shouldDispose: true
+    };
   }
 
   throw new AppError(
@@ -76,6 +101,36 @@ async function resolvePostgresClient({
     500,
     'POSTGRES_CLIENT_REQUIRED'
   );
+}
+
+function attachPostgresClientDisposer(server, { postgresClient, shouldDispose }) {
+  if (!shouldDispose || typeof postgresClient?.end !== 'function') {
+    return server;
+  }
+
+  const originalClose = server.close?.bind(server);
+
+  if (!originalClose) {
+    return server;
+  }
+
+  server.close = (callback) => {
+    return originalClose(async (error) => {
+      if (error) {
+        callback?.(error);
+        return;
+      }
+
+      try {
+        await postgresClient.end();
+        callback?.();
+      } catch (disposeError) {
+        callback?.(disposeError);
+      }
+    });
+  };
+
+  return server;
 }
 
 if (isDirectRun(import.meta.url)) {

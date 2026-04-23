@@ -271,3 +271,48 @@
 - 结果：`REPOSITORY_DRIVER=postgres` 时必须提供 `DATABASE_URL`；`startServer()` 现在可以直接接收 `postgresClient`，也可以通过注入 `createPostgresClient(databaseUrl)` 在启动时创建 client，并传给 `createApp()`。
 - 验证：运行 `node --test test/server-start.test.js`，7 个测试全部通过；运行 `node --test test/server-start.test.js test/repository-factory.test.js test/docs.test.js`，12 个测试全部通过；运行 `node --test`，85 个测试全部通过。
 - 下一步：继续接入真实 PostgreSQL 驱动依赖，或回到管理台空状态 / 错误态打磨。
+
+## 2026-04-23 23:48 CST - 完成 PostgreSQL 真实驱动接入设计
+
+- 时间：2026-04-23 23:48 CST
+- 目标：在实现前确认真实 PostgreSQL 驱动接入方案，避免破坏现有仓储和业务边界。
+- 动作：梳理当前 `startServer()`、仓储工厂和 PostgreSQL 仓储现状；与用户确认走“内置官方 `pg` + `pg.Pool`”方案；新增设计文档 `docs/superpowers/specs/2026-04-23-postgres-runtime-design.md` 并提交。
+- 结果：设计明确真实 PostgreSQL 驱动只进入基础设施和启动装配层，要求启动前连通性校验、内部 pool 优雅释放、Repository/Service/Route 接口保持不变。
+- 验证：人工自检 spec 无占位符、无边界冲突；运行 `git commit -m "docs: add postgres runtime design"`，得到提交 `e13399e`。
+- 下一步：等待用户 review spec 后，按 TDD 先写 failing tests，再实现真实 PostgreSQL 驱动装配。
+
+## 2026-04-23 22:26 CST - 完成 PostgreSQL 运行时驱动装配
+
+- 时间：2026-04-23 22:26 CST
+- 目标：让项目在 `REPOSITORY_DRIVER=postgres` 时无需外部注入即可使用官方 PostgreSQL 驱动启动，同时保持现有仓储边界不变。
+- 动作：先新增 `test/create-postgres-client.test.js` 和 `test/server-start.test.js` / `test/docs.test.js` 中的失败测试；随后实现 `src/infrastructure/postgres/create-postgres-client.js`、给 `startServer()` 接入默认 `pg.Pool` factory 与内部 client 生命周期释放，并更新 `package.json`、`README.md`、`.env.example`；最后运行 `pnpm install` 安装 `pg`。
+- 结果：postgres 模式下服务现在会默认创建内置 `pg.Pool`，先执行 `SELECT 1` 连通性校验，再继续监听 HTTP；若该 pool 是启动流程内部创建，则在 `server.close()` 时自动执行 `end()` 释放连接；外部注入 client 的行为保持不变。
+- 验证：运行 `node --test test/create-postgres-client.test.js test/server-start.test.js test/docs.test.js`，13 个测试全部通过；运行 `node --test`，89 个测试全部通过。
+- 下一步：若继续数据库方向，接真实 PostgreSQL 联调或补 migration 执行入口；否则回到管理台空状态 / 错误态打磨。
+
+## 2026-04-23 22:29 CST - 修复 Git 工作区被依赖目录淹没
+
+- 时间：2026-04-23 22:29 CST
+- 目标：恢复可读的 Git 工作区状态，消除 `pnpm install` 后 `node_modules/` 被 Git 统计为大量未跟踪文件的问题。
+- 动作：定位到仓库缺少 `.gitignore`；先新增 `test/gitignore.test.js` 复现缺失忽略规则的失败，再创建 `.gitignore`，仅加入 `node_modules/` 和 `.pnpm-store/`。
+- 结果：Git 不再把依赖目录当作待跟踪文件，工作区恢复为只显示真实源码和文档改动。
+- 验证：运行 `node --test test/gitignore.test.js`，1 个测试通过；运行 `node --test`，90 个测试全部通过；`git status --short` 不再出现 `node_modules/` 或 `.pnpm-store/`。
+- 下一步：继续真实 PostgreSQL 联调或回到管理台空状态 / 错误态打磨。
+
+## 2026-04-23 22:33 CST - 完成 PostgreSQL migration runner
+
+- 时间：2026-04-23 22:33 CST
+- 目标：让项目不仅能连接 PostgreSQL，还能通过已有 `migrations/001_initial.sql` 真正初始化数据库 schema。
+- 动作：先新增 `test/migration-runner.test.js`、`test/run-migrations-command.test.js` 和 docs 失败测试；随后实现 `src/database/migration-runner.js`、`src/database/run-migrations.js`，并在 `package.json` 中新增 `npm run migrate`；最后更新 `README.md` 说明 `schema_migrations` 与 migration 执行方式。
+- 结果：系统现在会按文件名顺序执行 `migrations/*.sql`，把已执行文件写入 `schema_migrations`，并在下次执行时自动跳过；命令入口会创建 PostgreSQL client、运行 migration，然后释放连接。
+- 验证：运行 `node --test test/migration-runner.test.js test/run-migrations-command.test.js test/docs.test.js`，5 个测试全部通过；运行 `node --test`，93 个测试全部通过。
+- 下一步：若继续数据库方向，补真实 PostgreSQL 联调与 smoke-check；否则回到管理台空状态 / 错误态打磨。
+
+## 2026-04-23 22:36 CST - 补强 migration 失败路径与 CLI 输出
+
+- 时间：2026-04-23 22:36 CST
+- 目标：让 PostgreSQL migration 流程在失败时也保持事务和资源释放安全，并提升 CLI 反馈可读性。
+- 动作：先为 `runMigrations()` 增加失败时回滚/释放 session 的测试，再为 `runMigrationsCommand()` 增加失败时关闭 client 的测试；随后在 `src/database/run-migrations.js` 中新增 `formatMigrationSummary()`，并让 CLI 输出 applied/skipped 的具体文件名。
+- 结果：migration SQL 失败时会显式 `ROLLBACK`；命令入口即使失败也会释放 PostgreSQL client；命令执行成功后会输出更清晰的 migration 摘要。
+- 验证：运行 `node --test test/migration-runner.test.js test/run-migrations-command.test.js`，6 个测试全部通过；运行 `node --test`，96 个测试全部通过。
+- 下一步：若继续数据库方向，补真实 PostgreSQL smoke-check / 联调说明；否则回到管理台空状态 / 错误态打磨。

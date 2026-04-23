@@ -179,6 +179,98 @@ test('startServer creates and passes a postgres client when postgres repository 
   }
 });
 
+test('startServer uses the built-in postgres client factory when postgres mode is enabled', async () => {
+  const postgresClient = {
+    query() {},
+    async end() {}
+  };
+  const calls = [];
+  const server = await startServer({
+    config: {
+      server: { host: '127.0.0.1', port: 0 },
+      repository: {
+        driver: 'postgres',
+        databaseUrl: 'postgres://cloak:secret@127.0.0.1:5432/cloak'
+      }
+    },
+    createDefaultPostgresClient: async (databaseUrl) => {
+      calls.push({ type: 'client', databaseUrl });
+      return postgresClient;
+    },
+    createApp: ({ postgresClient: receivedClient }) => {
+      calls.push({ type: 'app', postgresClient: receivedClient });
+      return createFakeServer();
+    }
+  });
+
+  try {
+    assert.deepEqual(calls, [
+      {
+        type: 'client',
+        databaseUrl: 'postgres://cloak:secret@127.0.0.1:5432/cloak'
+      },
+      {
+        type: 'app',
+        postgresClient
+      }
+    ]);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('startServer closes an internally created postgres client when the server closes', async () => {
+  const calls = [];
+  const postgresClient = {
+    query() {},
+    async end() {
+      calls.push('end');
+    }
+  };
+
+  const server = await startServer({
+    config: {
+      server: { host: '127.0.0.1', port: 0 },
+      repository: {
+        driver: 'postgres',
+        databaseUrl: 'postgres://cloak:secret@127.0.0.1:5432/cloak'
+      }
+    },
+    createDefaultPostgresClient: async () => postgresClient,
+    createApp: () => createFakeServer()
+  });
+
+  await closeServer(server);
+
+  assert.deepEqual(calls, ['end']);
+});
+
+test('startServer does not close an injected postgres client when the server closes', async () => {
+  const calls = [];
+  const postgresClient = {
+    query() {},
+    async end() {
+      calls.push('end');
+    }
+  };
+
+  const server = await startServer({
+    config: {
+      server: { host: '127.0.0.1', port: 0 },
+      repository: {
+        driver: 'postgres',
+        databaseUrl: 'postgres://cloak:secret@127.0.0.1:5432/cloak'
+      }
+    },
+    postgresClient,
+    createApp: () => createFakeServer()
+  });
+
+  await closeServer(server);
+
+  assert.deepEqual(calls, []);
+});
+
 test('isDirectRun compares file URLs and filesystem paths safely', () => {
   const entryPath = 'C:\\Users\\m1591\\Desktop\\斗篷cloak\\src\\server\\start.js';
 

@@ -114,9 +114,38 @@
 - 已让 `startServer()` 支持注入 `postgresClient`，或注入 `createPostgresClient(databaseUrl)` 按启动配置创建 PostgreSQL client。
 - 已新增 `test/server-start.test.js` 覆盖 postgres 模式下 `DATABASE_URL` 校验和 client 透传。
 - 已运行 `node --test`：85 个测试全部通过。
+- 已完成真实 PostgreSQL 运行时接入设计说明：
+  - 新增 spec `docs/superpowers/specs/2026-04-23-postgres-runtime-design.md`。
+  - 设计明确采用官方 `pg` + `pg.Pool`，并将驱动依赖限制在基础设施/启动装配层。
+  - 设计明确要求启动前连通性校验、内部 pool 优雅释放、业务层边界不变。
+  - 已提交设计文档：`e13399e docs: add postgres runtime design`。
+- 已新增内置 PostgreSQL client factory：`src/infrastructure/postgres/create-postgres-client.js`。
+- 已引入官方 `pg` 依赖，并通过 `pnpm install` 安装到项目。
+- 已让 `startServer()` 在 `repository.driver=postgres` 且未显式注入 client 时，默认使用内置 `pg.Pool` 装配。
+- 已让内置 PostgreSQL 启动路径在监听 HTTP 端口前执行 `SELECT 1` 连通性校验。
+- 已让 `startServer()` 只在内部创建 PostgreSQL client 时接管关闭生命周期，并在 `server.close()` 时调用 `end()` 释放连接池。
+- 已保留现有外部注入 `postgresClient` / `createPostgresClient(databaseUrl)` 扩展点，不改变 Repository / Service / Route 边界。
+- 已更新 `README.md`、`.env.example` 和文档测试，说明内置 `pg`、`DATABASE_URL` 示例和启动前连通性校验。
+- 已新增 `test/create-postgres-client.test.js`，并扩展 `test/server-start.test.js` 覆盖默认 postgres 装配和连接池释放生命周期。
+- 已新增 `.gitignore`，忽略 `node_modules/` 和 `.pnpm-store/`，修复 `pnpm install` 后 Git 工作区被依赖目录淹没的问题。
+- 已新增 `test/gitignore.test.js`，锁定依赖目录忽略规则。
+- 已新增 `src/database/migration-runner.js`，支持按文件名顺序执行 `migrations/*.sql`，并通过 `schema_migrations` 表跳过已执行 migration。
+- 已新增 `src/database/run-migrations.js` 和脚本 `npm run migrate`，复用现有 PostgreSQL client 装配来执行数据库初始化。
+- migration runner 在可用时会使用 `client.connect()` 获取单连接，并用 `BEGIN/COMMIT` 包住单个 migration 文件与记录写入。
+- 已新增 `test/migration-runner.test.js` 与 `test/run-migrations-command.test.js`，覆盖 migration 顺序、跳过已执行文件、命令入口创建/释放 postgres client。
+- 已更新 `README.md`，记录 `npm run migrate` 与 `schema_migrations` 行为。
+- 已补强 migration failure-path：
+  - `runMigrations()` 在 migration SQL 执行失败时会执行 `ROLLBACK` 并释放 session。
+  - `runMigrationsCommand()` 在 migration 失败时仍会关闭 postgres client。
+  - 已新增 `formatMigrationSummary()`，CLI 输出会明确列出 applied/skipped migration 文件名。
+- 已运行定向验证：`node --test test/create-postgres-client.test.js test/server-start.test.js test/docs.test.js`，13 个测试全部通过。
+- 已运行定向验证：`node --test test/migration-runner.test.js test/run-migrations-command.test.js test/docs.test.js`，5 个测试全部通过。
+- 已运行定向验证：`node --test test/migration-runner.test.js test/run-migrations-command.test.js`，6 个测试全部通过。
+- 已运行全量验证：`node --test`，96 个测试全部通过。
 - 进行中：
-  - Phase 2/3 收尾：数据库仓储装配准备与管理台联调。
+  - Phase 2/3 收尾：PostgreSQL 运行时装配和 migration 入口已落地，等待下一步决定是接真实库联调还是回到管理台空/错误态打磨。
 - 下一步：
-  - 继续接真实 PostgreSQL 驱动实现，或回到管理台空/错误态打磨。
+  - 若继续数据库方向：补真实 PostgreSQL 联调说明与 smoke-check 流程，或增加 CLI 级别的 dry-run / status 能力。
+  - 若回到管理台方向：补空状态、错误态和 PostgreSQL 模式下的联调检查。
 - 阻塞项：
-  - 当前没有真实 PostgreSQL 驱动依赖或连接信息，因此 `postgres` 模式仍需外部注入 client。
+  - 当前没有提供真实 PostgreSQL 连接信息，因此还未做实库联调，只完成了驱动与启动装配层落地。

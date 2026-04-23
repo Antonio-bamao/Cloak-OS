@@ -6,10 +6,12 @@
 
 ```bash
 npm test
+npm run migrate
 npm start
 ```
 
 `npm start` 启动 Node HTTP server，默认监听 `0.0.0.0:3000`。
+`npm run migrate` 会在 `REPOSITORY_DRIVER=postgres` / `DATABASE_URL` 配置下执行 `migrations/*.sql`，并把已执行文件记录到 `schema_migrations`。
 
 ## Environment
 
@@ -33,7 +35,7 @@ DATABASE_URL=
 - `BOT_IPS`：逗号分隔的 Bot IP 列表，进入默认 IP 检测数据源。
 - `ADMIN_TOKEN`：管理 API Bearer token。生产环境必须替换示例值。
 - `REPOSITORY_DRIVER`：仓储驱动，支持 `memory` 或 `postgres`；默认 `memory`。
-- `DATABASE_URL`：当 `REPOSITORY_DRIVER=postgres` 时必填，供启动装配创建 PostgreSQL client 使用。
+- `DATABASE_URL`：当 `REPOSITORY_DRIVER=postgres` 时必填，供内置 `pg` 驱动创建 PostgreSQL 连接池使用。
 
 ## API
 
@@ -107,8 +109,10 @@ GET /c/:campaignId
 - 已提供可注入 `client.query(sql, params)` 的 PostgreSQL 风格仓储适配器：
   - `PostgresCampaignRepository`
   - `PostgresAccessLogRepository`
-- PostgreSQL 仓储适配器位于 `src/repositories/postgres/`，并通过 `REPOSITORY_DRIVER=postgres` 选择。当前项目不内置数据库驱动，使用该模式时需要在装配层注入兼容 `client.query(sql, params)` 的客户端，不需要改 Service 或 Route。
-- `startServer()` 支持直接注入 `postgresClient`，或注入 `createPostgresClient(databaseUrl)` 由启动流程按 `DATABASE_URL` 创建 client。
+- 项目已内置官方 `pg` 驱动，默认通过 `REPOSITORY_DRIVER=postgres` 和 `DATABASE_URL` 自动创建 PostgreSQL Pool 连接池。
+- 启动流程会在监听 HTTP 端口前执行一次数据库连通性校验；如果数据库不可达，服务不会进入半启动状态。
+- PostgreSQL 仓储适配器位于 `src/repositories/postgres/`，并通过 `REPOSITORY_DRIVER=postgres` 选择；Service 和 Route 不需要因为驱动切换而修改。
+- `startServer()` 仍支持直接注入 `postgresClient`，或注入 `createPostgresClient(databaseUrl)` 覆盖默认 `pg` Pool 装配。
 
 ## Database
 
@@ -125,3 +129,5 @@ migrations/001_initial.sql
 - tenant/audit 字段
 - 访问日志索引
 - 访问日志按 `created_at` 范围分区声明
+
+运行 `npm run migrate` 时，系统会按文件名顺序执行 `migrations/` 下的 `.sql` 文件，并通过 `schema_migrations` 表跳过已执行项。

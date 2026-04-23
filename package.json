@@ -3,7 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "dependencies": {
+    "pg": "^8.16.3"
+  },
   "scripts": {
+    "migrate": "node src/database/run-migrations.js",
     "start": "node src/server/start.js",
     "test": "node --test"
   },
