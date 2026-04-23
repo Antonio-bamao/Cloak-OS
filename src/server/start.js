@@ -6,6 +6,7 @@ import {
   mergeConfig,
   validateConfig
 } from '../config/index.js';
+import { AppError } from '../utils/errors.js';
 import { createLogger } from '../utils/logger.js';
 import { createApp } from './app.js';
 
@@ -13,11 +14,22 @@ export async function startServer({
   config = {},
   logger = createLogger(),
   createApp: appFactory = createApp,
+  createPostgresClient,
+  postgresClient,
   app
 } = {}) {
   const runtimeConfig = mergeConfig(defaultConfig, config);
   validateConfig(runtimeConfig);
-  const server = app ?? appFactory({ logger, config: runtimeConfig });
+  const resolvedPostgresClient = await resolvePostgresClient({
+    config: runtimeConfig,
+    postgresClient,
+    createPostgresClient
+  });
+  const server = app ?? appFactory({
+    logger,
+    config: runtimeConfig,
+    postgresClient: resolvedPostgresClient
+  });
   const { host, port } = runtimeConfig.server;
 
   await new Promise((resolve, reject) => {
@@ -40,6 +52,30 @@ export function isDirectRun(moduleUrl, entryPath = process.argv[1]) {
   }
 
   return path.resolve(fileURLToPath(moduleUrl)) === path.resolve(entryPath);
+}
+
+async function resolvePostgresClient({
+  config,
+  postgresClient,
+  createPostgresClient
+}) {
+  if (config.repository?.driver !== 'postgres') {
+    return postgresClient;
+  }
+
+  if (postgresClient) {
+    return postgresClient;
+  }
+
+  if (createPostgresClient) {
+    return createPostgresClient(config.repository.databaseUrl);
+  }
+
+  throw new AppError(
+    'repository.driver=postgres requires postgresClient or createPostgresClient',
+    500,
+    'POSTGRES_CLIENT_REQUIRED'
+  );
 }
 
 if (isDirectRun(import.meta.url)) {

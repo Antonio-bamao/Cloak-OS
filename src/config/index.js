@@ -15,6 +15,10 @@ export function getConfig(env = process.env) {
     },
     auth: {
       adminToken: env.ADMIN_TOKEN ?? 'dev-admin-token'
+    },
+    repository: {
+      driver: env.REPOSITORY_DRIVER ?? 'memory',
+      databaseUrl: env.DATABASE_URL ?? ''
     }
   };
 }
@@ -44,6 +48,14 @@ export function validateConfig(runtimeConfig) {
     errors.push('auth.adminToken is required');
   }
 
+  if (!['memory', 'postgres'].includes(runtimeConfig.repository?.driver)) {
+    errors.push('repository.driver must be memory or postgres');
+  }
+
+  if (runtimeConfig.repository?.driver === 'postgres' && !runtimeConfig.repository?.databaseUrl) {
+    errors.push('repository.databaseUrl is required when repository.driver is postgres');
+  }
+
   if (errors.length > 0) {
     throw new AppError(errors.join('; '), 500, 'CONFIG_INVALID');
   }
@@ -66,6 +78,10 @@ export function mergeConfig(baseConfig, overrideConfig = {}) {
     auth: {
       ...baseConfig.auth,
       ...overrideConfig.auth
+    },
+    repository: {
+      ...baseConfig.repository,
+      ...overrideConfig.repository
     }
   };
 }

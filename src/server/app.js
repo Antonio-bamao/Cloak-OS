@@ -10,8 +10,7 @@ import { BearerTokenAuthService } from '../auth/bearer-token-auth.service.js';
 import { CampaignService } from '../services/campaign.service.js';
 import { AnalyticsService } from '../services/analytics.service.js';
 import { AccessLogService } from '../services/access-log.service.js';
-import { InMemoryCampaignRepository } from '../repositories/campaign.repo.js';
-import { InMemoryAccessLogRepository } from '../repositories/access-log.repo.js';
+import { createRepositories } from '../repositories/factory.js';
 import { createDefaultDetectionPipeline } from '../core/pipeline-factory.js';
 import { InMemoryRateLimiter } from '../utils/rate-limiter.js';
 import { config as defaultConfig } from '../config/index.js';
@@ -21,9 +20,11 @@ export function createApp({
   version,
   logger,
   config = defaultConfig,
+  postgresClient,
+  repositories,
   cloakRateLimiter = new InMemoryRateLimiter({ limit: 120, windowMs: 60_000 }),
   adminAuthService = new BearerTokenAuthService({ token: config.auth.adminToken }),
-  campaignService = createDefaultCampaignService({ config }),
+  campaignService = createDefaultCampaignService({ config, repositories, postgresClient }),
   analyticsService = createDefaultAnalyticsService({ campaignService }),
   accessLogService = createDefaultAccessLogService({ campaignService })
 } = {}) {
@@ -53,8 +54,10 @@ export function createApp({
 
 export function createDefaultCampaignService({
   config,
-  repository = new InMemoryCampaignRepository(),
-  accessLogRepository = new InMemoryAccessLogRepository(),
+  postgresClient,
+  repositories = createRepositories({ config, postgresClient }),
+  repository = repositories.campaignRepository,
+  accessLogRepository = repositories.accessLogRepository,
   botIps = config?.detection?.botIps ?? [],
   botIpSource
 } = {}) {

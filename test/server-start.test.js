@@ -12,6 +12,8 @@ test('getConfig reads host and port from an injected env object', () => {
     MIN_CONFIDENCE: '55',
     BOT_CONFIDENCE: '88',
     BOT_IPS: '66.249.66.1, 66.249.66.2,,',
+    REPOSITORY_DRIVER: 'postgres',
+    DATABASE_URL: 'postgres://cloak:secret@127.0.0.1:5432/cloak',
     ADMIN_TOKEN: 'dev-admin-token'
   });
 
@@ -26,6 +28,10 @@ test('getConfig reads host and port from an injected env object', () => {
   });
   assert.deepEqual(config.auth, {
     adminToken: 'dev-admin-token'
+  });
+  assert.deepEqual(config.repository, {
+    driver: 'postgres',
+    databaseUrl: 'postgres://cloak:secret@127.0.0.1:5432/cloak'
   });
 });
 
@@ -70,6 +76,10 @@ test('validateConfig rejects invalid runtime values before startup', () => {
         suspiciousThreshold: 0,
         botThreshold: 120,
         botIps: []
+      },
+      repository: {
+        driver: 'sqlite',
+        databaseUrl: ''
       }
     }),
     (error) => {
@@ -78,6 +88,7 @@ test('validateConfig rejects invalid runtime values before startup', () => {
       assert.match(error.message, /server.port/);
       assert.match(error.message, /detection.suspiciousThreshold/);
       assert.match(error.message, /detection.botThreshold/);
+      assert.match(error.message, /repository.driver/);
       return true;
     }
   );
@@ -94,6 +105,10 @@ test('startServer validates config before creating the app', async () => {
           suspiciousThreshold: 60,
           botThreshold: 80,
           botIps: []
+        },
+        repository: {
+          driver: 'memory',
+          databaseUrl: ''
         }
       },
       createApp: () => {
@@ -106,9 +121,93 @@ test('startServer validates config before creating the app', async () => {
   assert.equal(appCreated, false);
 });
 
+test('validateConfig requires databaseUrl when repository driver is postgres', () => {
+  assert.throws(
+    () => validateConfig({
+      server: { host: '127.0.0.1', port: 3000 },
+      detection: {
+        suspiciousThreshold: 60,
+        botThreshold: 80,
+        botIps: []
+      },
+      auth: {
+        adminToken: 'dev-admin-token'
+      },
+      repository: {
+        driver: 'postgres',
+        databaseUrl: ''
+      }
+    }),
+    /repository.databaseUrl/
+  );
+});
+
+test('startServer creates and passes a postgres client when postgres repository mode is enabled', async () => {
+  const postgresClient = { query() {} };
+  const calls = [];
+  const server = await startServer({
+    config: {
+      server: { host: '127.0.0.1', port: 0 },
+      repository: {
+        driver: 'postgres',
+        databaseUrl: 'postgres://cloak:secret@127.0.0.1:5432/cloak'
+      }
+    },
+    createPostgresClient: async (databaseUrl) => {
+      calls.push({ type: 'client', databaseUrl });
+      return postgresClient;
+    },
+    createApp: ({ postgresClient: receivedClient }) => {
+      calls.push({ type: 'app', postgresClient: receivedClient });
+      return createFakeServer();
+    }
+  });
+
+  try {
+    assert.deepEqual(calls, [
+      {
+        type: 'client',
+        databaseUrl: 'postgres://cloak:secret@127.0.0.1:5432/cloak'
+      },
+      {
+        type: 'app',
+        postgresClient
+      }
+    ]);
+  } finally {
+    await closeServer(server);
+  }
+});
+
 test('isDirectRun compares file URLs and filesystem paths safely', () => {
   const entryPath = 'C:\\Users\\m1591\\Desktop\\斗篷cloak\\src\\server\\start.js';
 
   assert.equal(isDirectRun(pathToFileURL(entryPath).href, entryPath), true);
   assert.equal(isDirectRun(pathToFileURL(entryPath).href, 'C:\\other\\start.js'), false);
 });
+
+function createFakeServer() {
+  const listeners = new Map();
+
+  return {
+    once(event, handler) {
+      listeners.set(event, handler);
+    },
+    listen(port, host, callback) {
+      this._address = { address: host, port: port || 3100 };
+      callback();
+    },
+    address() {
+      return this._address;
+    },
+    close(callback) {
+      callback();
+    }
+  };
+}
+
+function closeServer(server) {
+  return new Promise((resolve, reject) => {
+    server.close((error) => (error ? reject(error) : resolve()));
+  });
+}

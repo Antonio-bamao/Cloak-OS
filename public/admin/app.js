@@ -1,6 +1,24 @@
 const TOKEN_KEY = 'cloak-admin-token';
 const DEFAULT_TOKEN = 'dev-admin-token';
 
+const REDIRECT_MODE_LABELS = {
+  redirect: '直接跳转',
+  iframe: '内嵌页',
+  loading: '加载页'
+};
+
+const VERDICT_LABELS = {
+  human: '正常访客',
+  bot: '机器人',
+  suspicious: '可疑访问'
+};
+
+const ACTION_LABELS = {
+  money: '收益页',
+  safe: '安全页',
+  block: '拦截'
+};
+
 const state = {
   token: localStorage.getItem(TOKEN_KEY) || DEFAULT_TOKEN,
   overview: null,
@@ -18,6 +36,7 @@ const elements = {
   tokenForm: document.querySelector('#token-form'),
   tokenInput: document.querySelector('#admin-token'),
   refreshButton: document.querySelector('#refresh-button'),
+  statusVisits: document.querySelector('#status-visits'),
   campaignForm: document.querySelector('#campaign-form'),
   campaignId: document.querySelector('#campaign-id'),
   campaignName: document.querySelector('#campaign-name'),
@@ -32,6 +51,12 @@ const elements = {
   filterVerdict: document.querySelector('#filter-verdict'),
   filterAction: document.querySelector('#filter-action'),
   filterIp: document.querySelector('#filter-ip'),
+  donutTotal: document.querySelector('#donut-total'),
+  donutChart: document.querySelector('#donut-chart'),
+  successModal: document.querySelector('#success-modal'),
+  successMessage: document.querySelector('#success-message'),
+  modalClose: document.querySelector('#modal-close'),
+  modalOk: document.querySelector('#modal-ok'),
   toast: document.querySelector('#toast')
 };
 
@@ -70,13 +95,13 @@ elements.campaignForm.addEventListener('submit', async (event) => {
       method: 'PUT',
       body: JSON.stringify(payload)
     });
-    showToast('活动已更新');
+    showSuccessModal('活动已更新，新的分流规则已生效。');
   } else {
     await api('/api/v1/campaigns', {
       method: 'POST',
       body: JSON.stringify(payload)
     });
-    showToast('活动已创建');
+    showSuccessModal('活动已创建，已加入当前看板。');
   }
 
   resetCampaignForm();
@@ -84,6 +109,13 @@ elements.campaignForm.addEventListener('submit', async (event) => {
 });
 
 elements.resetCampaignForm.addEventListener('click', resetCampaignForm);
+elements.modalClose.addEventListener('click', closeSuccessModal);
+elements.modalOk.addEventListener('click', closeSuccessModal);
+elements.successModal.addEventListener('click', (event) => {
+  if (event.target === elements.successModal) {
+    closeSuccessModal();
+  }
+});
 
 document.addEventListener('click', async (event) => {
   const editButton = event.target.closest('[data-edit-campaign]');
@@ -172,16 +204,31 @@ function renderOverview() {
   setText('#metric-visits', overview.totalVisits);
   setText('#metric-bots', overview.verdicts.bot);
   setText('#metric-money', overview.actions.money);
+  elements.statusVisits.textContent = String(overview.totalVisits);
+  renderDonut(overview);
   renderVerdictBars(overview);
   renderActionStrip(overview);
+}
+
+function renderDonut(overview) {
+  const total = Math.max(overview.totalVisits, 1);
+  const human = Math.round((overview.verdicts.human / total) * 100);
+  const bot = Math.round((overview.verdicts.bot / total) * 100);
+  const suspicious = Math.max(0, 100 - human - bot);
+  const humanEnd = human;
+  const botEnd = human + bot;
+  const suspiciousEnd = botEnd + suspicious;
+
+  elements.donutTotal.textContent = `${overview.totalVisits > 0 ? 100 : 0}%`;
+  elements.donutChart.style.background = `conic-gradient(from -30deg, #7c3aed 0 ${humanEnd}%, #fb4d67 ${humanEnd}% ${botEnd}%, #f0b429 ${botEnd}% ${suspiciousEnd}%, #e5e7eb ${suspiciousEnd}% 100%)`;
 }
 
 function renderVerdictBars(overview) {
   const total = Math.max(overview.totalVisits, 1);
   const rows = [
-    ['Human', 'human', overview.verdicts.human],
-    ['Bot', 'bot', overview.verdicts.bot],
-    ['Suspicious', 'suspicious', overview.verdicts.suspicious]
+    ['正常访客', 'human', overview.verdicts.human],
+    ['机器人', 'bot', overview.verdicts.bot],
+    ['可疑访问', 'suspicious', overview.verdicts.suspicious]
   ];
 
   document.querySelector('#verdict-bars').innerHTML = rows.map(([label, key, value]) => {
@@ -198,13 +245,13 @@ function renderVerdictBars(overview) {
 
 function renderActionStrip(overview) {
   const actions = [
-    ['Money', overview.actions.money],
-    ['Safe', overview.actions.safe],
-    ['Block', overview.actions.block]
+    ['收益页', 'money', overview.actions.money],
+    ['安全页', 'safe', overview.actions.safe],
+    ['拦截', 'block', overview.actions.block]
   ];
 
-  document.querySelector('#action-strip').innerHTML = actions.map(([label, value]) => `
-    <div class="action-tile">
+  document.querySelector('#action-strip').innerHTML = actions.map(([label, key, value]) => `
+    <div class="action-tile is-${key}">
       <span>${label}</span>
       <strong>${value}</strong>
     </div>
@@ -219,8 +266,13 @@ function renderCampaigns() {
 
   elements.campaignsTable.innerHTML = state.campaigns.map((campaign) => `
     <tr>
-      <td><strong>${escapeHtml(campaign.name)}</strong></td>
-      <td><span class="pill">${escapeHtml(campaign.redirectMode)}</span></td>
+      <td>
+        <span class="campaign-name">
+          <span class="avatar-dot">${escapeHtml(campaignInitial(campaign.name))}</span>
+          <span>${escapeHtml(campaign.name)}</span>
+        </span>
+      </td>
+      <td><span class="pill">${escapeHtml(formatRedirectMode(campaign.redirectMode))}</span></td>
       <td class="mono">${escapeHtml(campaign.safeUrl)}</td>
       <td class="mono">${escapeHtml(campaign.moneyUrl)}</td>
       <td>
@@ -248,8 +300,8 @@ function renderLogs() {
       <td class="mono">${formatDate(log.createdAt)}</td>
       <td class="mono">${escapeHtml(shortId(log.campaignId))}</td>
       <td class="mono">${escapeHtml(log.ipAddress)}</td>
-      <td><span class="pill is-${escapeHtml(log.verdict)}">${escapeHtml(log.verdict)}</span></td>
-      <td><span class="pill is-${escapeHtml(log.action)}">${escapeHtml(log.action)}</span></td>
+      <td><span class="pill is-${escapeHtml(log.verdict)}">${escapeHtml(formatVerdict(log.verdict))}</span></td>
+      <td><span class="pill is-${escapeHtml(log.action)}">${escapeHtml(formatAction(log.action))}</span></td>
       <td class="mono">${log.confidence ?? 0}</td>
     </tr>
   `).join('');
@@ -274,7 +326,7 @@ function editCampaign(campaignId) {
 
 async function deleteCampaign(campaignId) {
   await api(`/api/v1/campaigns/${campaignId}`, { method: 'DELETE' });
-  showToast('活动已删除');
+  showSuccessModal('活动已删除，已从分流表移除。');
   await refreshAll();
 }
 
@@ -320,6 +372,18 @@ function shortId(value) {
   return value ? value.slice(0, 8) : '-';
 }
 
+function formatRedirectMode(value) {
+  return REDIRECT_MODE_LABELS[value] || value || '-';
+}
+
+function formatVerdict(value) {
+  return VERDICT_LABELS[value] || value || '-';
+}
+
+function formatAction(value) {
+  return ACTION_LABELS[value] || value || '-';
+}
+
 function showToast(message) {
   elements.toast.textContent = message;
   elements.toast.classList.add('is-visible');
@@ -327,6 +391,20 @@ function showToast(message) {
   showToast.timeout = window.setTimeout(() => {
     elements.toast.classList.remove('is-visible');
   }, 3200);
+}
+
+function showSuccessModal(message) {
+  elements.successMessage.textContent = message;
+  elements.successModal.hidden = false;
+}
+
+function closeSuccessModal() {
+  elements.successModal.hidden = true;
+}
+
+function campaignInitial(name) {
+  const text = String(name || 'C').trim();
+  return text.slice(0, 2).toUpperCase();
 }
 
 function escapeHtml(value) {

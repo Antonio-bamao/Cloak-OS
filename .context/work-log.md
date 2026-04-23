@@ -226,3 +226,48 @@
 - 结果：服务已在 `http://127.0.0.1:3100/admin` 启动，PID `16708`；`/admin` 返回 200，analytics API 返回统一 JSON 响应。
 - 验证：运行 `node --test`，76 个测试全部通过；运行 `.context` 校验，返回 `context is valid`。
 - 下一步：继续管理台 UI 交互细节与移动端检查。
+
+## 2026-04-23 23:25 CST - 按参考图重做暗色管理台仪表盘
+
+- 时间：2026-04-23 23:25 CST
+- 目标：将管理台视觉从普通浅色后台重做为用户参考图中的暗色霓虹运营仪表盘风格。
+- 动作：使用 `ui-ux-pro-max` 重新生成并持久化 `Cloak Dark Console` 设计系统；先更新 admin UI 测试锁定顶部状态栏、环形图、成功弹窗和暗色 elevated token；随后重写 `public/admin/index.html`、`styles.css` 和 `app.js`。
+- 结果：管理台现在包含暗色左侧导航、顶部状态组件、紧凑 KPI 卡、主 Campaign 表格、右侧 conic 环形图、动作分布卡、全局日志表和成功弹窗；现有同源 API 交互保持不变。
+- 验证：运行 `node --check public/admin/app.js`；运行 `node --test`，76 个测试全部通过；扫描 `public/admin` 未发现 `radial-gradient`、viewport 字号或 emoji 图标。
+- 下一步：让用户刷新 `/admin` 进行视觉确认，再根据反馈继续微调密度、色彩和布局。
+
+## 2026-04-23 20:52 CST - 管理台去 SaaS 化并统一中文文案
+
+- 时间：2026-04-23 20:52 CST
+- 目标：移除自用后台中不合适的 Premium/SaaS 推广内容，并把管理台可见文案统一为中文。
+- 动作：删除侧栏 `Go Premium` 卡片及对应样式；将导航、顶部状态、KPI、表格、筛选、表单、弹窗和图表标签改为中文；新增运行时枚举格式化函数，让 `redirect/human/money` 等内部值只在 API 层保留，界面展示中文。
+- 结果：管理台不再出现 Premium/SaaS 风格内容；自用后台语气更一致，活动模式、判定、动作等动态数据也以中文呈现。
+- 验证：运行 `node --check public/admin/app.js`；运行 `node --test test/admin-ui.test.js`；运行 `node --test`，76 个测试全部通过；扫描 `public/admin` 未发现 `premium-card`、`Go Premium`、`Live shield insights` 等旧内容。
+- 下一步：刷新 `/admin` 检查视觉效果；继续补空状态、错误态、筛选细节和移动端检查。
+
+## 2026-04-23 21:34 CST - 新增 PostgreSQL 仓储适配器
+
+- 时间：2026-04-23 21:34 CST
+- 目标：继续推进计划中的数据库 Repository 替换准备，但不要求当前阶段接入真实数据库服务。
+- 动作：先新增 `test/postgres-repository.test.js` 并确认缺少模块导致失败；随后实现 `PostgresCampaignRepository`、`PostgresAccessLogRepository` 和集中行映射 `row-mappers.js`。
+- 结果：新增仓储只依赖注入的 `client.query(sql, params)`，使用参数化 SQL；Campaign 与 AccessLog Service / Route 不需要修改，未来可在装配层替换内存仓储。
+- 验证：运行 `node --test test/postgres-repository.test.js`，4 个测试全部通过；运行 `node --test`，80 个测试全部通过；测试覆盖 tenant 隔离、更新/删除、日志筛选分页、LIMIT/OFFSET 和返回副本。
+- 下一步：继续做数据库运行时配置开关，或回到管理台空状态/错误态打磨。
+
+## 2026-04-23 22:00 CST - 完成仓储运行时配置开关
+
+- 时间：2026-04-23 22:00 CST
+- 目标：让默认装配不再把内存仓储写死在 app 中，为未来接入真实 PostgreSQL 做配置切换入口。
+- 动作：先新增 `test/repository-factory.test.js` 和 `test/server-start.test.js` 的配置断言并确认失败；随后实现 `src/repositories/factory.js`、`config.repository.driver`、`REPOSITORY_DRIVER` 文档和 `createApp()` / `createDefaultCampaignService()` 的仓储工厂装配。
+- 结果：系统现在可以通过 `config.repository.driver` 在 `memory` / `postgres` 之间切换；`postgres` 模式在未注入 `postgresClient` 时会以明确的 `REPOSITORY_CLIENT_REQUIRED` 失败，不会半启动。
+- 验证：运行 `node --test test/server-start.test.js test/repository-factory.test.js test/docs.test.js`，10 个测试全部通过；运行 `node --test`，83 个测试全部通过。
+- 下一步：继续接入真实 PostgreSQL client 装配，或回到管理台空状态 / 错误态打磨。
+
+## 2026-04-23 22:02 CST - 完成 PostgreSQL 启动装配入口
+
+- 时间：2026-04-23 22:02 CST
+- 目标：让 `postgres` 仓储模式真正进入启动流程，但仍保持不绑定具体数据库驱动。
+- 动作：先扩展 `test/server-start.test.js`，为 `DATABASE_URL` 校验和 `createPostgresClient(databaseUrl)` 透传写失败测试；随后实现 `config.repository.databaseUrl`、`startServer()` 的 postgres client 解析与透传。
+- 结果：`REPOSITORY_DRIVER=postgres` 时必须提供 `DATABASE_URL`；`startServer()` 现在可以直接接收 `postgresClient`，也可以通过注入 `createPostgresClient(databaseUrl)` 在启动时创建 client，并传给 `createApp()`。
+- 验证：运行 `node --test test/server-start.test.js`，7 个测试全部通过；运行 `node --test test/server-start.test.js test/repository-factory.test.js test/docs.test.js`，12 个测试全部通过；运行 `node --test`，85 个测试全部通过。
+- 下一步：继续接入真实 PostgreSQL 驱动依赖，或回到管理台空状态 / 错误态打磨。

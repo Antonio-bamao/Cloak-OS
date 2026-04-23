@@ -11,6 +11,8 @@ test('README documents startup, tests, env vars, and available API routes', asyn
   assert.match(readme, /PORT/);
   assert.match(readme, /BOT_IPS/);
   assert.match(readme, /ADMIN_TOKEN/);
+  assert.match(readme, /REPOSITORY_DRIVER/);
+  assert.match(readme, /DATABASE_URL/);
   assert.match(readme, /GET \/health/);
   assert.match(readme, /GET \/admin/);
   assert.match(readme, /GET \/c\/:campaignId/);
@@ -20,6 +22,8 @@ test('README documents startup, tests, env vars, and available API routes', asyn
   assert.match(readme, /GET \/api\/v1\/campaigns\/:id\/logs/);
   assert.match(readme, /GET \/api\/v1\/logs/);
   assert.match(readme, /GET \/api\/v1\/analytics\/overview/);
+  assert.match(readme, /PostgresCampaignRepository/);
+  assert.match(readme, /PostgresAccessLogRepository/);
 });
 
 test('.env.example lists every runtime env var consumed by config', async () => {
@@ -31,7 +35,9 @@ test('.env.example lists every runtime env var consumed by config', async () => 
     'MIN_CONFIDENCE=',
     'BOT_CONFIDENCE=',
     'BOT_IPS=',
-    'ADMIN_TOKEN='
+    'ADMIN_TOKEN=',
+    'REPOSITORY_DRIVER=',
+    'DATABASE_URL='
   ]) {
     assert.match(envExample, new RegExp(`^${key}`, 'm'));
   }

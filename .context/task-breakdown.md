@@ -64,7 +64,11 @@
    - 增加 `AccessLogService`，独立提供管理台全局日志查询。
    - 增加 `/api/v1/logs` 受保护管理 API，支持分页和筛选。
    - 扩展 AccessLog Repository contract，覆盖按 tenant 分页日志查询。
-   - 准备替换内存 Repository 的数据库接口。
+   - 新增可注入 SQL client 的 PostgreSQL 风格 Campaign / AccessLog Repository 适配器。
+   - 使用 fake PG client 测试数据库仓储行为，避免当前阶段依赖真实数据库服务。
+   - 通过 `REPOSITORY_DRIVER` 和仓储工厂统一切换 memory / postgres。
+   - 通过 `startServer` 的 `postgresClient` / `createPostgresClient(databaseUrl)` 接入真实 PostgreSQL client。
+   - 准备未来接入真实 PostgreSQL 驱动依赖。
 7. Phase 3：前端管理台与分析
    - 使用 `ui-ux-pro-max` 生成 Cloak Admin 设计系统。
    - 增加 `/admin` 静态管理台入口。
@@ -103,4 +107,6 @@
 - 全局日志 route 只调用 AccessLogService，并通过管理 API 鉴权 wrapper 接入。
 - Admin UI 静态资源由独立 route 托管，不进入业务 Service。
 - Admin UI 只通过公开的管理 API 读写数据，不直接访问 Repository。
-- 数据库和 Redis 尚未接入，当前 Repository 使用内存实现以降低 Phase 1 阻塞。
+- PostgreSQL 仓储适配器只依赖注入的 `client.query(sql, params)`，不直接耦合具体驱动。
+- 默认运行时仍使用内存 Repository；未来切换数据库只应改装配层，不改 Service / Route。
+- Redis 尚未接入真实服务，当前 Redis Bot IP Source 仅预留适配器接口。

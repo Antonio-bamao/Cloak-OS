@@ -93,9 +93,30 @@
 - 已在本地启动服务：`http://127.0.0.1:3100/admin`，PID `16708`。
 - 已验证 `/admin` 返回 200，`/api/v1/analytics/overview` 返回统一响应。
 - 已运行测试：76 个测试全部通过。
+- 已根据用户参考图重做管理台 UI 为暗色霓虹运营仪表盘风格。
+- 已新增并持久化 `design-system/cloak-dark-console/MASTER.md`。
+- 已将管理台结构调整为：暗色左侧栏、顶部状态栏、KPI 卡片、主表格、右侧环形图、动作分布卡和成功弹窗。
+- 已更新 admin UI 测试，覆盖顶部状态栏、环形图、成功弹窗、暗色 elevated token 与 conic chart。
+- 已运行 `node --check public/admin/app.js`，并运行 `node --test`：76 个测试全部通过。
+- 已移除管理台侧栏中的 `Go Premium` / Premium 推广卡，后台定位调整为自用工具，不写 SaaS 营销内容。
+- 已将管理台可见文案、本地状态、筛选项、表单、弹窗、图表标签和运行时枚举展示统一改为中文。
+- 已扩展 admin UI 测试，防止 Premium/SaaS/英文营销文案回流。
+- 已运行 `node --check public/admin/app.js`、`node --test test/admin-ui.test.js`、`node --test`：76 个测试全部通过。
+- 已新增 `PostgresCampaignRepository` 与 `PostgresAccessLogRepository`，通过注入 `client.query(sql, params)` 使用 PostgreSQL 风格参数化 SQL。
+- 已新增 `src/repositories/postgres/row-mappers.js`，集中处理 snake_case 行到领域对象的映射。
+- 已新增 `test/postgres-repository.test.js`，用 fake PG client 覆盖 tenant 隔离、更新/删除、日志筛选分页和返回副本。
+- 默认运行时仍使用内存 Repository，未来接入真实 PostgreSQL 时只需要调整装配层。
+- 已运行 `node --test test/postgres-repository.test.js`：4 个测试全部通过。
+- 已新增 `createRepositories()` 仓储工厂，根据 `config.repository.driver` 在 memory / postgres 之间切换。
+- 已新增 `REPOSITORY_DRIVER` / `DATABASE_URL` 配置读取、校验、`.env.example` 和 README 文档说明。
+- 已让 `createApp()` / `createDefaultCampaignService()` 通过仓储工厂完成默认装配，避免直接散落内存仓储实例化。
+- 已新增 `test/repository-factory.test.js`，覆盖 memory/postgres 切换和 postgres 缺少 client 的失败路径。
+- 已让 `startServer()` 支持注入 `postgresClient`，或注入 `createPostgresClient(databaseUrl)` 按启动配置创建 PostgreSQL client。
+- 已新增 `test/server-start.test.js` 覆盖 postgres 模式下 `DATABASE_URL` 校验和 client 透传。
+- 已运行 `node --test`：85 个测试全部通过。
 - 进行中：
-  - Phase 3 管理台 UI 基础体验打磨与后端联调。
+  - Phase 2/3 收尾：数据库仓储装配准备与管理台联调。
 - 下一步：
-  - 继续补管理台细节：空状态、错误态、更多筛选和移动端检查。
+  - 继续接真实 PostgreSQL 驱动实现，或回到管理台空/错误态打磨。
 - 阻塞项：
-  - 当前仅有架构原则文档，没有产品级字段清单或数据库连接信息，因此 Phase 1 使用内存 Repository。
+  - 当前没有真实 PostgreSQL 驱动依赖或连接信息，因此 `postgres` 模式仍需外部注入 client。
