@@ -23,11 +23,15 @@
   - 已给 HTTP server 接入请求完成日志：method、path、statusCode、latencyMs。
   - 已扩展配置读取：`HOST`、`PORT`、检测阈值。
   - 已运行测试：26 个测试全部通过。
+  - 已定义代码化数据库 schema 草案：`campaigns`、`access_logs`。
+  - 已实现 `InMemoryAccessLogRepository`。
+  - 已将访问日志记录接入 `CampaignService.handleVisit`，通过可选 Repository 依赖保持解耦。
+  - 已运行测试：31 个测试全部通过。
 - 进行中：
-  - Phase 2 运行时能力继续推进：Campaign schema 草案、持久化 Repository 边界、访问日志模型。
+  - Phase 2 运行时能力继续推进：PostgreSQL Repository 端口适配、数据库迁移草案、访问日志查询 API。
 - 下一步：
-  - 将内存 Repository 的接口映射到数据库 schema 草案。
-  - 定义访问日志表与基础 Repository 契约。
-  - 为未来 PostgreSQL/Redis 替换准备端口接口。
+  - 增加访问日志查询 Service / API。
+  - 生成 SQL migration 草案。
+  - 为 PostgreSQL Repository 定义端口测试。
 - 阻塞项：
   - 当前仅有架构原则文档，没有产品级字段清单或数据库连接信息，因此 Phase 1 使用内存 Repository。

@@ -7,6 +7,7 @@ import { getRedirectStrategy } from '../strategies/index.js';
 export class CampaignService {
   constructor({
     repository,
+    accessLogRepository,
     pipeline = new DetectionPipeline(),
     decisionEngine = new DecisionEngine()
   } = {}) {
@@ -15,6 +16,7 @@ export class CampaignService {
     }
 
     this.repository = repository;
+    this.accessLogRepository = accessLogRepository;
     this.pipeline = pipeline;
     this.decisionEngine = decisionEngine;
   }
@@ -50,12 +52,31 @@ export class CampaignService {
     const strategy = getRedirectStrategy(campaign.redirectMode);
     const response = await strategy.execute(targetUrl);
 
+    await this.recordAccessLog({ campaign, ctx, decision });
+
     return {
       campaign,
       detections,
       decision,
       response
     };
+  }
+
+  async recordAccessLog({ campaign, ctx, decision }) {
+    if (!this.accessLogRepository) {
+      return null;
+    }
+
+    return this.accessLogRepository.create({
+      tenantId: campaign.tenantId,
+      campaignId: campaign.id,
+      ipAddress: ctx.ip,
+      userAgent: ctx.userAgent ?? '',
+      verdict: decision.verdict,
+      action: decision.action,
+      confidence: decision.confidence,
+      detectionReasons: decision.reasons
+    });
   }
 }
 

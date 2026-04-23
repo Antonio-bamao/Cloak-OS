@@ -64,3 +64,12 @@
 - 结果：服务可读取 `HOST` / `PORT` 启动；每个请求完成后记录 method、path、statusCode、latencyMs；启动成功后记录监听 host 和 port。
 - 验证：运行 `node --test`，26 个测试全部通过；运行 `.context` 校验，返回 `context is valid`。
 - 下一步：定义 Campaign / AccessLog schema 草案和持久化接口边界。
+
+## 2026-04-23 18:50 CST - 完成 schema 草案与访问日志仓储
+
+- 时间：2026-04-23 18:50 CST
+- 目标：为未来 PostgreSQL 持久化建立稳定端口，同时记录斗篷访问日志。
+- 动作：先新增 schema 与 access-log 测试并确认失败；随后实现 `databaseSchema`、`InMemoryAccessLogRepository`，并把访问日志写入接入 `CampaignService.handleVisit`。
+- 结果：`campaigns` 与 `access_logs` schema 草案包含 tenant/audit 字段、索引和访问日志月分区策略；访问日志按 Campaign 和 tenant 查询；Service 不依赖具体存储实现。
+- 验证：运行 `node --test`，31 个测试全部通过；运行 `.context` 校验，返回 `context is valid`。
+- 下一步：增加访问日志查询 API 和 SQL migration 草案。

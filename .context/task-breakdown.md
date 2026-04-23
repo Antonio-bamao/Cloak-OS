@@ -30,6 +30,9 @@
    - 增加结构化 logger。
    - 增加配置化启动入口和请求完成日志。
    - 明确 Campaign schema 草案。
+   - 明确 AccessLog schema 草案。
+   - 增加内存版 AccessLog Repository。
+   - 将访问日志写入接入 `CampaignService.handleVisit`。
    - 准备替换内存 Repository 的数据库接口。
 
 ## 依赖关系
@@ -41,4 +44,5 @@
 - HTTP server 只做协议适配和统一响应，不写业务逻辑。
 - `/api/v1/campaigns` route 只调用 `CampaignService`，不直接访问 Repository。
 - `startServer` 只负责配置化监听和启动日志，不承载业务装配以外的逻辑。
+- 访问日志通过 `accessLogRepository` 可选依赖接入 Service，未来替换数据库实现不需要改检测或跳转逻辑。
 - 数据库和 Redis 尚未接入，当前 Repository 使用内存实现以降低 Phase 1 阻塞。
