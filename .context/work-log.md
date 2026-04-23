@@ -127,3 +127,30 @@
 - 结果：`BOT_IPS=66.249.66.1,66.249.66.2` 会进入默认 `IpDetector` 的 Bot IP source。
 - 验证：运行 `node --test`，47 个测试全部通过；运行 `.context` 校验，返回 `context is valid`。
 - 下一步：增加运行时配置校验，避免无效端口或阈值进入服务。
+
+## 2026-04-23 20:35 CST - 完成运行时配置校验
+
+- 时间：2026-04-23 20:35 CST
+- 目标：在服务启动前阻止无效配置进入运行时。
+- 动作：先新增配置校验和启动前校验测试并确认失败；随后实现 `validateConfig`、`mergeConfig`，并让 `startServer` 创建 app 前完成校验。
+- 结果：无效 host、port、检测阈值会以 `CONFIG_INVALID` 阻断启动；局部配置覆盖会与默认配置合并后再校验。
+- 验证：运行 `node --test`，49 个测试全部通过；运行 `.context` 校验，返回 `context is valid`。
+- 下一步：增加运行说明 / `.env.example`，并预留 Redis Bot IP Source 接口形状。
+
+## 2026-04-23 20:50 CST - 完成运行文档收尾
+
+- 时间：2026-04-23 20:50 CST
+- 目标：补齐后端当前能力的启动与配置说明。
+- 动作：先新增 README / `.env.example` 校验测试并确认失败；随后创建 `README.md` 和 `.env.example`。
+- 结果：文档覆盖 `npm start`、`npm test`、运行时环境变量、健康检查、Campaign API、访问日志 API、架构说明和 migration 位置。
+- 验证：运行 `node --test`，51 个测试全部通过；运行 `.context` 校验，返回 `context is valid`。
+- 下一步：预留 Redis Bot IP Source 接口形状。
+
+## 2026-04-23 21:05 CST - 完成 Redis Bot IP Source 适配器
+
+- 时间：2026-04-23 21:05 CST
+- 目标：预留 Redis Set 查询 Bot IP 的数据源接口，同时保持 Detector 单一职责。
+- 动作：先新增 Redis Bot IP source 测试并确认失败；随后实现 `RedisBotIpSource` 和 `createBotIpSource({ type: 'redis' })` 分支。
+- 结果：Redis-like client 通过 `sIsMember` 查询 IP，`load()` 可用 `del` / `sAdd` 刷新集合；`IpDetector` 无需修改即可使用 Redis 数据源。
+- 验证：运行 `node --test`，54 个测试全部通过；运行 `.context` 校验，返回 `context is valid`。
+- 下一步：执行后端阶段完成检查，确认进入 UI 前还缺什么。

@@ -1,3 +1,5 @@
+import { AppError } from '../utils/errors.js';
+
 export const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000000';
 
 export function getConfig(env = process.env) {
@@ -16,9 +18,54 @@ export function getConfig(env = process.env) {
 
 export const config = getConfig();
 
+export function validateConfig(runtimeConfig) {
+  const errors = [];
+
+  if (!runtimeConfig.server?.host) {
+    errors.push('server.host is required');
+  }
+
+  if (!Number.isInteger(runtimeConfig.server?.port) || runtimeConfig.server.port < 0 || runtimeConfig.server.port > 65535) {
+    errors.push('server.port must be an integer between 0 and 65535');
+  }
+
+  if (!isPercentage(runtimeConfig.detection?.suspiciousThreshold)) {
+    errors.push('detection.suspiciousThreshold must be between 1 and 100');
+  }
+
+  if (!isPercentage(runtimeConfig.detection?.botThreshold)) {
+    errors.push('detection.botThreshold must be between 1 and 100');
+  }
+
+  if (errors.length > 0) {
+    throw new AppError(errors.join('; '), 500, 'CONFIG_INVALID');
+  }
+
+  return runtimeConfig;
+}
+
+export function mergeConfig(baseConfig, overrideConfig = {}) {
+  return {
+    ...baseConfig,
+    ...overrideConfig,
+    server: {
+      ...baseConfig.server,
+      ...overrideConfig.server
+    },
+    detection: {
+      ...baseConfig.detection,
+      ...overrideConfig.detection
+    }
+  };
+}
+
 function parseCsv(value = '') {
   return value
     .split(',')
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function isPercentage(value) {
+  return Number.isInteger(value) && value >= 1 && value <= 100;
 }

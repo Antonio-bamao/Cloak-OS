@@ -45,6 +45,11 @@
    - 增加默认 DetectionPipeline 工厂。
    - 增加默认 CampaignService 工厂，集中 app 运行时装配。
    - 增加 `BOT_IPS` 配置解析并接入默认 pipeline。
+   - 增加运行时配置校验。
+   - 增加配置合并，支持局部覆盖。
+   - 增加 README 运行说明和 `.env.example`。
+   - 增加文档校验测试，覆盖命令、环境变量和 API 路径。
+   - 增加 Redis Bot IP Source 适配器接口形状。
    - 准备替换内存 Repository 的数据库接口。
 
 ## 依赖关系
@@ -64,4 +69,7 @@
 - Detector 依赖数据源接口，不直接拥有可变外部数据；未来 Redis/数据库数据源可替换 `botIpSource`。
 - 默认 app 装配必须使用真实检测管道，不使用空 Pipeline。
 - `startServer` 默认 app 必须在读取 config 后创建，确保环境配置进入运行时装配。
+- 启动前必须校验运行时配置；局部覆盖配置必须与默认配置合并后再校验。
+- README 和 `.env.example` 必须由测试覆盖关键命令、环境变量和 API 路径。
+- 新增 Bot IP 数据源必须作为独立 source 模块接入，不改变 `IpDetector` 判定职责。
 - 数据库和 Redis 尚未接入，当前 Repository 使用内存实现以降低 Phase 1 阻塞。

@@ -47,11 +47,20 @@
   - 已新增 `BOT_IPS` 配置解析，并接入默认 CampaignService / DetectionPipeline。
   - 已调整 `startServer` 默认 app 创建时机，使配置可进入运行时装配。
   - 已运行测试：47 个测试全部通过。
+  - 已新增运行时配置校验：host、port、检测阈值。
+  - 已新增配置合并，允许 `startServer` 局部覆盖配置。
+  - 已运行测试：49 个测试全部通过。
+  - 已新增 `README.md` 运行说明。
+  - 已新增 `.env.example`，覆盖当前所有运行时环境变量。
+  - 已新增文档校验测试，防止 README / env 示例与代码漂移。
+  - 已运行测试：51 个测试全部通过。
+  - 已新增 `RedisBotIpSource` 适配器接口形状，通过注入 Redis-like client 使用 Set 查询。
+  - 已让 `createBotIpSource({ type: 'redis' })` 创建 Redis 数据源，不改变 `IpDetector` 职责。
+  - 已运行测试：54 个测试全部通过。
 - 进行中：
-  - Phase 2 运行时能力继续推进：Redis Bot IP Source 接口形状、运行时配置校验、生产配置文档。
+  - Phase 2 运行时能力继续推进：生产运行边界收尾、后端阶段完成检查。
 - 下一步：
-  - 预留 Redis Bot IP Source 接口形状。
-  - 增加配置校验，避免无效 PORT / 阈值静默进入运行时。
+  - 执行后端阶段完成检查，梳理进入 UI 前剩余后端事项。
   - 为未来 PostgreSQL Repository 复用 contract 测试保留工厂入口。
 - 阻塞项：
   - 当前仅有架构原则文档，没有产品级字段清单或数据库连接信息，因此 Phase 1 使用内存 Repository。

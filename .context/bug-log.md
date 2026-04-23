@@ -56,3 +56,14 @@
 - 解决方案：新增 `cloneRecord` / `cloneRecords`，仓储写入和读取都返回副本。
 - 预防措施：通过 Repository contract 测试固定 mutation 隔离行为。
 - 状态：已解决。
+
+## 配置校验破坏局部覆盖启动
+
+- 标题：配置校验破坏局部覆盖启动
+- 现象：`startServer({ config: { server: { host, port } } })` 因缺少 detection 配置而失败。
+- 触发条件：新增 `validateConfig` 后直接校验调用方传入的局部配置。
+- 影响：测试和调用方无法只覆盖部分配置。
+- 根因：启动配置没有先与默认配置深度合并。
+- 解决方案：新增 `mergeConfig(defaultConfig, overrideConfig)`，`startServer` 合并后再校验。
+- 预防措施：配置校验测试同时覆盖完整配置和局部覆盖启动路径。
+- 状态：已解决。

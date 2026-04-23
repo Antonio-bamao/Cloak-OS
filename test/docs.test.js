@@ -1,0 +1,30 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+
+test('README documents startup, tests, env vars, and available API routes', async () => {
+  const readme = await readFile('README.md', 'utf8');
+
+  assert.match(readme, /npm start/);
+  assert.match(readme, /npm test/);
+  assert.match(readme, /HOST/);
+  assert.match(readme, /PORT/);
+  assert.match(readme, /BOT_IPS/);
+  assert.match(readme, /GET \/health/);
+  assert.match(readme, /POST \/api\/v1\/campaigns/);
+  assert.match(readme, /GET \/api\/v1\/campaigns\/:id\/logs/);
+});
+
+test('.env.example lists every runtime env var consumed by config', async () => {
+  const envExample = await readFile('.env.example', 'utf8');
+
+  for (const key of [
+    'HOST=',
+    'PORT=',
+    'MIN_CONFIDENCE=',
+    'BOT_CONFIDENCE=',
+    'BOT_IPS='
+  ]) {
+    assert.match(envExample, new RegExp(`^${key}`, 'm'));
+  }
+});

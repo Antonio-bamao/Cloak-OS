@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { getConfig } from '../src/config/index.js';
+import { getConfig, validateConfig } from '../src/config/index.js';
 import { startServer } from '../src/server/start.js';
 
 test('getConfig reads host and port from an injected env object', () => {
@@ -55,4 +55,48 @@ test('startServer listens using configured host and port and logs startup', asyn
       server.close((error) => (error ? reject(error) : resolve()));
     });
   }
+});
+
+test('validateConfig rejects invalid runtime values before startup', () => {
+  assert.throws(
+    () => validateConfig({
+      server: { host: '', port: Number.NaN },
+      detection: {
+        suspiciousThreshold: 0,
+        botThreshold: 120,
+        botIps: []
+      }
+    }),
+    (error) => {
+      assert.equal(error.errorCode, 'CONFIG_INVALID');
+      assert.match(error.message, /server.host/);
+      assert.match(error.message, /server.port/);
+      assert.match(error.message, /detection.suspiciousThreshold/);
+      assert.match(error.message, /detection.botThreshold/);
+      return true;
+    }
+  );
+});
+
+test('startServer validates config before creating the app', async () => {
+  let appCreated = false;
+
+  await assert.rejects(
+    () => startServer({
+      config: {
+        server: { host: '', port: Number.NaN },
+        detection: {
+          suspiciousThreshold: 60,
+          botThreshold: 80,
+          botIps: []
+        }
+      },
+      createApp: () => {
+        appCreated = true;
+      }
+    }),
+    /server.host/
+  );
+
+  assert.equal(appCreated, false);
 });

@@ -1,14 +1,21 @@
-import { config as defaultConfig } from '../config/index.js';
+import {
+  config as defaultConfig,
+  mergeConfig,
+  validateConfig
+} from '../config/index.js';
 import { createLogger } from '../utils/logger.js';
 import { createApp } from './app.js';
 
 export async function startServer({
-  config = defaultConfig,
+  config = {},
   logger = createLogger(),
+  createApp: appFactory = createApp,
   app
 } = {}) {
-  const server = app ?? createApp({ logger, config });
-  const { host, port } = config.server;
+  const runtimeConfig = mergeConfig(defaultConfig, config);
+  validateConfig(runtimeConfig);
+  const server = app ?? appFactory({ logger, config: runtimeConfig });
+  const { host, port } = runtimeConfig.server;
 
   await new Promise((resolve, reject) => {
     server.once('error', reject);
