@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  formatMigrationDryRunSummary,
+  formatMigrationHelp,
   formatMigrationStatusSummary,
   formatMigrationSummary,
   parseMigrationCliArgs,
@@ -184,7 +186,8 @@ test('parseMigrationCliArgs defaults to migrate mode without overrides', () => {
   assert.deepEqual(parseMigrationCliArgs([]), {
     mode: 'migrate',
     databaseUrl: undefined,
-    migrationsDir: undefined
+    migrationsDir: undefined,
+    help: false
   });
 });
 
@@ -199,7 +202,8 @@ test('parseMigrationCliArgs reads status mode and optional overrides', () => {
     {
       mode: 'status',
       databaseUrl: 'postgres://cloak:secret@127.0.0.1:5432/cloak',
-      migrationsDir: 'custom-migrations'
+      migrationsDir: 'custom-migrations',
+      help: false
     }
   );
 });
@@ -209,4 +213,35 @@ test('parseMigrationCliArgs rejects flags that are missing a value', () => {
     () => parseMigrationCliArgs(['--database-url']),
     /requires a value/
   );
+});
+
+test('parseMigrationCliArgs reads dry-run and help flags', () => {
+  assert.deepEqual(parseMigrationCliArgs(['--dry-run', '--help']), {
+    mode: 'dry-run',
+    databaseUrl: undefined,
+    migrationsDir: undefined,
+    help: true
+  });
+});
+
+test('formatMigrationDryRunSummary lists migrations that would run without executing them', () => {
+  const summary = formatMigrationDryRunSummary({
+    allMigrations: ['001_initial.sql', '002_access.sql'],
+    appliedMigrations: ['001_initial.sql'],
+    pendingMigrations: ['002_access.sql']
+  });
+
+  assert.equal(
+    summary,
+    'Known 2 migrations: 001_initial.sql, 002_access.sql\nAlready applied 1 migrations: 001_initial.sql\nWould apply 1 migrations: 002_access.sql'
+  );
+});
+
+test('formatMigrationHelp documents modes and key CLI flags', () => {
+  const help = formatMigrationHelp();
+
+  assert.match(help, /--status/);
+  assert.match(help, /--dry-run/);
+  assert.match(help, /--database-url/);
+  assert.match(help, /--migrations-dir/);
 });

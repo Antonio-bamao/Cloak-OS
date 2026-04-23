@@ -334,3 +334,12 @@
 - 结果：现在可以直接运行 `node src/database/run-migrations.js --status --database-url <url>` 或带 `--migrations-dir` 的 migrate 命令；即使配置文件里的 postgres `databaseUrl` 为空，也能通过 CLI 覆盖完成联调。
 - 验证：运行 `node --test test/run-migrations-command.test.js test/docs.test.js`，11 个测试全部通过；运行 `node --test`，103 个测试全部通过。
 - 下一步：若继续数据库方向，可以直接做真实 PostgreSQL smoke-check，或继续补 `--help` / dry-run 能力；否则回到管理台空状态 / 错误态打磨。
+
+## 2026-04-23 22:45 CST - 新增 migration dry-run 与 help 模式
+
+- 时间：2026-04-23 22:45 CST
+- 目标：让 PostgreSQL migration CLI 在真实联调前具备完整的只读预演和自说明能力。
+- 动作：先为 `--dry-run`、`--help`、dry-run 摘要和文档入口写失败测试；随后在 `src/database/run-migrations.js` 中新增 `formatMigrationDryRunSummary()`、`formatMigrationHelp()`，扩展 `parseMigrationCliArgs()` 支持 `--dry-run` / `--help`，并在 `package.json` / `README.md` 中加入 `npm run migrate:dry-run` 和 CLI help 用法。
+- 结果：现在可以用 `npm run migrate:dry-run` 或 `node src/database/run-migrations.js --dry-run --database-url <url>` 查看“如果执行 migrate，会应用哪些文件”；也可以用 `--help` 直接查看 CLI 模式和参数。
+- 验证：运行 `node --test test/run-migrations-command.test.js test/docs.test.js`，14 个测试全部通过；运行 `node --test`，106 个测试全部通过。
+- 下一步：若继续数据库方向，可直接做真实 PostgreSQL smoke-check，或继续补 CLI direct-run 行为测试；否则回到管理台空状态 / 错误态打磨。

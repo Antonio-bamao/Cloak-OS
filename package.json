@@ -8,6 +8,7 @@
   },
   "scripts": {
     "migrate": "node src/database/run-migrations.js",
+    "migrate:dry-run": "node src/database/run-migrations.js --dry-run",
     "migrate:status": "node src/database/run-migrations.js --status",
     "start": "node src/server/start.js",
     "test": "node --test"

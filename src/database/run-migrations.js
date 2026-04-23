@@ -88,18 +88,57 @@ export function formatMigrationStatusSummary({
   ].join('\n');
 }
 
+export function formatMigrationDryRunSummary({
+  allMigrations = [],
+  appliedMigrations = [],
+  pendingMigrations = []
+} = {}) {
+  return [
+    `Known ${allMigrations.length} migrations: ${formatMigrationList(allMigrations)}`,
+    `Already applied ${appliedMigrations.length} migrations: ${formatMigrationList(appliedMigrations)}`,
+    `Would apply ${pendingMigrations.length} migrations: ${formatMigrationList(pendingMigrations)}`
+  ].join('\n');
+}
+
+export function formatMigrationHelp() {
+  return [
+    'Migration CLI',
+    '',
+    'Modes:',
+    '  default               Run pending migrations',
+    '  --status              Show applied and pending migrations',
+    '  --dry-run             Show which migrations would run without executing them',
+    '',
+    'Flags:',
+    '  --database-url <url>  Override DATABASE_URL for this command',
+    '  --migrations-dir <dir> Override the migrations directory',
+    '  --help                Show this help text'
+  ].join('\n');
+}
+
 export function parseMigrationCliArgs(argv = process.argv.slice(2)) {
   const parsed = {
     mode: 'migrate',
     databaseUrl: undefined,
-    migrationsDir: undefined
+    migrationsDir: undefined,
+    help: false
   };
 
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
 
+    if (argument === '--help') {
+      parsed.help = true;
+      continue;
+    }
+
     if (argument === '--status') {
       parsed.mode = 'status';
+      continue;
+    }
+
+    if (argument === '--dry-run') {
+      parsed.mode = 'dry-run';
       continue;
     }
 
@@ -141,36 +180,44 @@ export function isDirectRun(moduleUrl, entryPath = process.argv[1]) {
 
 if (isDirectRun(import.meta.url)) {
   const cliArgs = parseMigrationCliArgs(process.argv.slice(2));
-  const mode = cliArgs.mode;
-  const command =
-    mode === 'status'
-      ? runMigrationStatusCommand({
-          databaseUrl: cliArgs.databaseUrl,
-          migrationsDir: cliArgs.migrationsDir,
-          config: {
-            repository: {
-              driver: 'postgres'
+  if (cliArgs.help) {
+    console.log(formatMigrationHelp());
+  } else {
+    const mode = cliArgs.mode;
+    const command =
+      mode === 'status' || mode === 'dry-run'
+        ? runMigrationStatusCommand({
+            databaseUrl: cliArgs.databaseUrl,
+            migrationsDir: cliArgs.migrationsDir,
+            config: {
+              repository: {
+                driver: 'postgres'
+              }
             }
-          }
-        }).then((result) => {
-          console.log(formatMigrationStatusSummary(result));
-        })
-      : runMigrationsCommand({
-          databaseUrl: cliArgs.databaseUrl,
-          migrationsDir: cliArgs.migrationsDir,
-          config: {
-            repository: {
-              driver: 'postgres'
+          }).then((result) => {
+            console.log(
+              mode === 'dry-run'
+                ? formatMigrationDryRunSummary(result)
+                : formatMigrationStatusSummary(result)
+            );
+          })
+        : runMigrationsCommand({
+            databaseUrl: cliArgs.databaseUrl,
+            migrationsDir: cliArgs.migrationsDir,
+            config: {
+              repository: {
+                driver: 'postgres'
+              }
             }
-          }
-        }).then((result) => {
-          console.log(formatMigrationSummary(result));
-        });
+          }).then((result) => {
+            console.log(formatMigrationSummary(result));
+          });
 
-  command.catch((error) => {
-    console.error(error.message);
-    process.exitCode = 1;
-  });
+    command.catch((error) => {
+      console.error(error.message);
+      process.exitCode = 1;
+    });
+  }
 }
 
 function formatMigrationList(filenames) {

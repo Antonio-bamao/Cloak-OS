@@ -147,16 +147,22 @@
   - `parseMigrationCliArgs()` 支持 `--status`、`--database-url`、`--migrations-dir`。
   - CLI 直跑模式现在支持用 `--database-url` 覆盖空的 postgres 配置并通过校验。
   - README 已补真实 PostgreSQL smoke-check 顺序与命令示例。
+- 已新增 migration dry-run / help 能力：
+  - `parseMigrationCliArgs()` 现支持 `--dry-run` 与 `--help`。
+  - 已新增 `formatMigrationDryRunSummary()`，可明确展示 would-apply 的 migration 列表。
+  - 已新增 `formatMigrationHelp()`，集中输出 CLI 模式和关键参数说明。
+  - 已新增脚本 `npm run migrate:dry-run`，便于在真实库联调前做只读预演。
 - 已运行定向验证：`node --test test/create-postgres-client.test.js test/server-start.test.js test/docs.test.js`，13 个测试全部通过。
 - 已运行定向验证：`node --test test/migration-runner.test.js test/run-migrations-command.test.js test/docs.test.js`，5 个测试全部通过。
 - 已运行定向验证：`node --test test/migration-runner.test.js test/run-migrations-command.test.js`，6 个测试全部通过。
 - 已运行定向验证：`node --test test/migration-runner.test.js test/run-migrations-command.test.js test/docs.test.js`，11 个测试全部通过。
 - 已运行定向验证：`node --test test/run-migrations-command.test.js test/docs.test.js`，11 个测试全部通过。
-- 已运行全量验证：`node --test`，103 个测试全部通过。
+- 已运行定向验证：`node --test test/run-migrations-command.test.js test/docs.test.js`，14 个测试全部通过。
+- 已运行全量验证：`node --test`，106 个测试全部通过。
 - 进行中：
   - Phase 2/3 收尾：PostgreSQL 运行时装配和 migration 入口已落地，等待下一步决定是接真实库联调还是回到管理台空/错误态打磨。
 - 下一步：
-  - 若继续数据库方向：可以直接做真实 PostgreSQL smoke-check，或继续增加 CLI 级别的 dry-run / `--help` 能力。
+  - 若继续数据库方向：可以直接做真实 PostgreSQL smoke-check，或继续增加 CLI 级别的 direct-run 行为测试。
   - 若回到管理台方向：补空状态、错误态和 PostgreSQL 模式下的联调检查。
 - 阻塞项：
   - 当前没有提供真实 PostgreSQL 连接信息，因此还未做实库联调，只完成了驱动与启动装配层落地。

@@ -7,19 +7,23 @@
 ```bash
 npm test
 npm run migrate
+npm run migrate:dry-run
 npm run migrate:status
 npm start
 ```
 
 `npm start` 启动 Node HTTP server，默认监听 `0.0.0.0:3000`。
 `npm run migrate` 会在 `REPOSITORY_DRIVER=postgres` / `DATABASE_URL` 配置下执行 `migrations/*.sql`，并把已执行文件记录到 `schema_migrations`。
+`npm run migrate:dry-run` 会读取当前 migration 状态，并告诉你“如果现在执行 migrate，会应用哪些文件”，但不会真正执行 SQL。
 `npm run migrate:status` 会连接 PostgreSQL 并输出当前已知、已执行和 pending 的 migration 文件列表，适合联调前先做 smoke check。
 
 也可以直接通过 CLI 覆盖连接信息或 migration 目录：
 
 ```bash
 node src/database/run-migrations.js --status --database-url postgres://cloak:secret@127.0.0.1:5432/cloak
+node src/database/run-migrations.js --dry-run --database-url postgres://cloak:secret@127.0.0.1:5432/cloak
 node src/database/run-migrations.js --database-url postgres://cloak:secret@127.0.0.1:5432/cloak --migrations-dir migrations
+node src/database/run-migrations.js --help
 ```
 
 ## Environment
@@ -140,6 +144,7 @@ migrations/001_initial.sql
 - 访问日志按 `created_at` 范围分区声明
 
 运行 `npm run migrate` 时，系统会按文件名顺序执行 `migrations/` 下的 `.sql` 文件，并通过 `schema_migrations` 表跳过已执行项。
+运行 `npm run migrate:dry-run` 时，系统不会执行 SQL，只会列出当前 would-apply 的 migration 列表。
 运行 `npm run migrate:status` 时，系统会列出全部 migration、已执行 migration 和 pending migration，便于在真实库联调前先确认状态。
 
 建议真实 PostgreSQL 联调时按这个 smoke-check 顺序执行：
