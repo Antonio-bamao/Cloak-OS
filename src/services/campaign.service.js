@@ -27,12 +27,22 @@ export class CampaignService {
     });
   }
 
-  async handleVisit(campaignId, ctx, tenantId = DEFAULT_TENANT_ID) {
+  async listCampaigns(tenantId = DEFAULT_TENANT_ID) {
+    return this.repository.findAll(tenantId);
+  }
+
+  async getCampaign(campaignId, tenantId = DEFAULT_TENANT_ID) {
     const campaign = await this.repository.findById(campaignId, tenantId);
 
     if (!campaign) {
       throw new AppError('Campaign not found', 404, 'CAMPAIGN_NOT_FOUND');
     }
+
+    return campaign;
+  }
+
+  async handleVisit(campaignId, ctx, tenantId = DEFAULT_TENANT_ID) {
+    const campaign = await this.getCampaign(campaignId, tenantId);
 
     const detections = await this.pipeline.execute(ctx);
     const decision = this.decisionEngine.decide(detections);

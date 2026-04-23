@@ -12,11 +12,18 @@
   - 已实现内存版 `CampaignRepository`、`CampaignService`、`cloak.routes.js`。
   - 已运行测试：14 个测试全部通过。
   - 已初始化 Git 仓库。
+  - 已提交首次核心骨架快照：`8f0d707 feat: implement core cloak engine with campaign management, detection pipeline, and multiple redirect strategies`。
+  - 已实现 Phase 2 首个运行时切片：统一 API 响应、健康检查 route、Node HTTP server、统一错误响应。
+  - 已运行测试：19 个测试全部通过。
+  - 已实现 `/api/v1/campaigns` 管理 API：创建、列表、按 ID 获取。
+  - 已实现 HTTP server 的 JSON body 解析、`:id` 路由参数匹配、无效 JSON 统一错误响应。
+  - 已实现可注入 sink 的结构化 logger。
+  - 已运行测试：23 个测试全部通过。
 - 进行中：
-  - 准备进入 Phase 2 的真实运行时能力设计：HTTP 服务入口、统一响应、错误中间件、结构化日志。
+  - Phase 2 运行时能力继续推进：配置化启动入口、Campaign schema 草案、访问日志记录。
 - 下一步：
-  - 创建首次提交，固定当前上下文与 Phase 1 核心骨架。
-  - 补充 API service 入口和健康检查。
+  - 增加 `src/server/index.js` 或等价 CLI 启动入口，读取 `PORT` / `HOST`。
+  - 给 HTTP server 接入请求完成日志。
   - 将内存 Repository 的接口映射到数据库 schema 草案。
 - 阻塞项：
   - 当前仅有架构原则文档，没有产品级字段清单或数据库连接信息，因此 Phase 1 使用内存 Repository。

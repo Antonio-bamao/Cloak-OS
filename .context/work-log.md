@@ -37,3 +37,21 @@
 - 结果：已在项目根目录创建 `.git/`。
 - 验证：`git init` 返回 `Initialized empty Git repository`；`git status --short` 显示当前项目文件均为未跟踪状态。
 - 下一步：创建首次提交。
+
+## 2026-04-23 18:05 CST - 完成 Phase 2 运行时基础切片
+
+- 时间：2026-04-23 18:05 CST
+- 目标：补充后端真实运行入口的最小基础能力。
+- 动作：先新增 `test/api-runtime.test.js` 并确认缺失模块导致失败；随后实现 `api-response`、`health.routes`、`http-server` 和 `app`。
+- 结果：系统现在具备统一成功/错误响应、`GET /health` route、Node HTTP server 适配层和 AppError 统一错误转换。
+- 验证：运行 `node --test`，19 个测试全部通过；运行 `.context` 校验，返回 `context is valid`。
+- 下一步：继续补 `/api/v1/campaigns` 管理 API route 和结构化 logger。
+
+## 2026-04-23 18:20 CST - 完成 Campaign 管理 API 与结构化日志
+
+- 时间：2026-04-23 18:20 CST
+- 目标：补齐 Phase 2 的管理 API 基础和 logger。
+- 动作：先新增 `campaign-api` 与 `logger` 测试并确认失败；随后实现 Campaign route、JSON body 解析、动态 route 参数、Repository 查询列表、Service 查询方法和结构化 logger。
+- 结果：`/api/v1/campaigns` 支持创建、列表、按 ID 获取；无效 JSON 返回统一错误；logger 输出结构化字段。
+- 验证：运行 `node --test`，23 个测试全部通过；运行 `.context` 校验，返回 `context is valid`。
+- 下一步：添加配置化启动入口和请求完成日志。

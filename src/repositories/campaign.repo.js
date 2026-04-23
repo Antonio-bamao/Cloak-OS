@@ -33,4 +33,10 @@ export class InMemoryCampaignRepository {
 
     return campaign;
   }
+
+  async findAll(tenantId = DEFAULT_TENANT_ID) {
+    return [...this.campaigns.values()].filter(
+      (campaign) => campaign.tenantId === tenantId
+    );
+  }
 }

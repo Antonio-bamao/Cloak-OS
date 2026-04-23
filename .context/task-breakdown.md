@@ -19,6 +19,17 @@
    - 运行 `node --test`。
    - 运行 `.context` 校验脚本。
    - 更新工作日志与当前状态。
+5. Phase 2：运行时 API 基础
+   - 测试并实现统一 API 响应 helper。
+   - 测试并实现健康检查 route。
+   - 测试并实现 Node HTTP server 适配层。
+   - 测试并实现 AppError 到统一错误响应的转换。
+6. Phase 2：管理 API 与持久化准备
+   - 增加 `/api/v1/campaigns` route。
+   - 增加 JSON body 解析与动态 route 参数。
+   - 增加结构化 logger。
+   - 明确 Campaign schema 草案。
+   - 准备替换内存 Repository 的数据库接口。
 
 ## 依赖关系
 
@@ -26,4 +37,6 @@
 - `DecisionEngine` 依赖标准 `DetectionResult[]`，不直接访问请求或数据库。
 - `CampaignService` 依赖 Repository、Pipeline、DecisionEngine 和跳转策略工厂。
 - Route 层只依赖 Service。
+- HTTP server 只做协议适配和统一响应，不写业务逻辑。
+- `/api/v1/campaigns` route 只调用 `CampaignService`，不直接访问 Repository。
 - 数据库和 Redis 尚未接入，当前 Repository 使用内存实现以降低 Phase 1 阻塞。
