@@ -24,3 +24,10 @@ test('checked-in initial migration matches generated SQL', async () => {
 
   assert.equal(migration.trim(), createInitialMigrationSql().trim());
 });
+
+test('access log default partition migration gives partitioned logs a safe insert target', async () => {
+  const migration = await readFile('migrations/002_access_logs_default_partition.sql', 'utf8');
+
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS access_logs_default/);
+  assert.match(migration, /PARTITION OF access_logs DEFAULT/);
+});

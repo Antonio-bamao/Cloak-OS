@@ -361,3 +361,21 @@
 - 结果：现在可以通过 `npm run smoke:postgres` 或 `node src/database/run-postgres-smoke-check.js --database-url <url>` 执行 readonly PostgreSQL smoke check，它会连接数据库、读取 migration 状态、输出 status/dry-run 摘要，但不会真正执行 migration。
 - 验证：运行 `node --test test/postgres-smoke-check.test.js test/docs.test.js`，9 个测试全部通过；运行 `node --test`，117 个测试全部通过。
 - 下一步：若继续数据库方向，可直接用真实 `DATABASE_URL` 做 smoke-check；若继续打磨工具链，可补子进程级 CLI 集成测试或加入可选 HTTP 健康检查。
+
+## 2026-04-23 23:03 CST - 完成真实 Docker PostgreSQL 联调
+
+- 时间：2026-04-23 23:03 CST
+- 目标：在不影响用户既有 Docker 项目数据的前提下，用真实 PostgreSQL 实例验证当前驱动、migration 和启动装配链路。
+- 动作：只读查看 Docker 容器，确认既有 `crossborder-db` 正在占用宿主机 `5432`；新建独立容器 `cloak-postgres`，映射宿主机 `55432` 到容器 `5432`；使用 `pg_isready` 检查 readiness；运行 readonly smoke-check、执行 migration、再次 smoke-check；最后用 `REPOSITORY_DRIVER=postgres` 启动并关闭 HTTP server。
+- 结果：没有修改或复用 `crossborder-db`；`cloak-postgres` 使用连接串 `postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak`；`001_initial.sql` 已成功应用；运行时服务可连接真实 PostgreSQL 并正常启动/关闭。
+- 验证：`node src/database/run-postgres-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak` 先显示 pending 1，执行 `node src/database/run-migrations.js --database-url ...` 后显示 applied 1 / pending 0；运行 postgres 模式 `startServer()` 输出 started/closed；运行 `node --test`，117 个测试全部通过。
+- 下一步：若继续数据库方向，可在真实 PostgreSQL 模式下做管理 API smoke flow，验证创建 Campaign、Analytics 查询和访问日志写入。
+
+## 2026-04-23 23:22 CST - 完成真实 PostgreSQL API smoke flow 并修复 access_logs 分区
+
+- 时间：2026-04-23 23:22 CST
+- 目标：在真实 PostgreSQL 模式下验证业务链路：创建 Campaign、公网访问写日志、查询 logs 与 Analytics。
+- 动作：先新增 `test/postgres-api-smoke-check.test.js` 与 docs 失败测试；实现 `src/database/run-postgres-api-smoke-check.js` 和脚本 `npm run smoke:postgres-api`；真实运行时发现 `/c/:id` 返回 500；通过 `docker exec cloak-postgres psql ... \d+ access_logs` 定位到 `access_logs` 分区表没有任何分区；新增 `migrations/002_access_logs_default_partition.sql` 并测试；将 002 migration 应用到 `cloak-postgres` 后重跑 API smoke。
+- 结果：真实 PostgreSQL API smoke 成功通过，创建 Campaign、302 redirect、访问日志写入、`GET /api/v1/logs` 与 `GET /api/v1/analytics/overview` 全部走通；`access_logs` 现在通过默认分区具备安全插入落点。
+- 验证：运行 `node --test test/postgres-api-smoke-check.test.js test/docs.test.js`，6 个测试全部通过；运行 `node --test test/migration.test.js`，3 个测试全部通过；运行 `node src/database/run-migrations.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak`，应用 `002_access_logs_default_partition.sql`；运行 `node src/database/run-postgres-api-smoke-check.js --database-url ...`，输出 `PostgreSQL API smoke check passed`；运行 `node --test`，122 个测试全部通过。
+- 下一步：若继续数据库方向，可补 API smoke cleanup 或真实库下 admin UI 联调；否则回到管理台空状态 / 错误态打磨。

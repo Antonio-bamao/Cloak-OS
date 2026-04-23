@@ -160,6 +160,24 @@
   - 新增脚本 `npm run smoke:postgres`，默认执行只读 smoke check。
   - smoke-check 会复用现有 PostgreSQL 连接装配，输出 migration status 与 dry-run 摘要，但不会执行 migration。
   - 已补 `parsePostgresSmokeCheckArgs()`、help、错误退出和只读摘要测试。
+- 已完成真实 Docker PostgreSQL 联调：
+  - 发现既有项目容器 `crossborder-db` 已占用宿主机 `5432`，未修改或复用该容器。
+  - 新建独立容器 `cloak-postgres`，使用宿主机端口 `55432`，避免影响既有项目数据。
+  - 当前测试库连接串：`postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak`。
+  - 已通过 `pg_isready` 确认容器内 PostgreSQL ready。
+  - 已运行只读 smoke-check，确认 `001_initial.sql` 初始为 pending。
+  - 已运行 migration，成功应用 `001_initial.sql`。
+  - 已再次运行只读 smoke-check，确认 pending 为 0，`001_initial.sql` 已 applied。
+  - 已用 `REPOSITORY_DRIVER=postgres` 和该 `DATABASE_URL` 启动服务并正常关闭，验证运行时可连接真实 PostgreSQL。
+- 已新增 PostgreSQL API smoke-check：
+  - 新增 `src/database/run-postgres-api-smoke-check.js`。
+  - 新增脚本 `npm run smoke:postgres-api`。
+  - smoke-check 会在 PostgreSQL 模式下启动真实 app，通过 HTTP 创建 Campaign、访问 `/c/:id`、查询全局 logs 与 Analytics。
+  - 已补 `test/postgres-api-smoke-check.test.js`，覆盖参数解析、成功流程和错误关闭。
+- 已修复真实 API smoke 暴露的数据库 schema 问题：
+  - 根因：`access_logs` 是按 `created_at` 分区的 partitioned table，但 `001_initial.sql` 没有创建任何分区，导致访问日志 insert 没有落点。
+  - 新增 `migrations/002_access_logs_default_partition.sql`，创建 `access_logs_default` 默认分区。
+  - 已将 `002` migration 应用到 `cloak-postgres`，再次运行 API smoke 成功。
 - 已运行定向验证：`node --test test/create-postgres-client.test.js test/server-start.test.js test/docs.test.js`，13 个测试全部通过。
 - 已运行定向验证：`node --test test/migration-runner.test.js test/run-migrations-command.test.js test/docs.test.js`，5 个测试全部通过。
 - 已运行定向验证：`node --test test/migration-runner.test.js test/run-migrations-command.test.js`，6 个测试全部通过。
@@ -168,12 +186,14 @@
 - 已运行定向验证：`node --test test/run-migrations-command.test.js test/docs.test.js`，14 个测试全部通过。
 - 已运行定向验证：`node --test test/run-migrations-command.test.js`，16 个测试全部通过。
 - 已运行定向验证：`node --test test/postgres-smoke-check.test.js test/docs.test.js`，9 个测试全部通过。
-- 已运行全量验证：`node --test`，117 个测试全部通过。
+- 已运行定向验证：`node --test test/postgres-api-smoke-check.test.js test/docs.test.js`，6 个测试全部通过。
+- 已运行定向验证：`node --test test/migration.test.js`，3 个测试全部通过。
+- 已运行全量验证：`node --test`，122 个测试全部通过。
 - 进行中：
-  - Phase 2/3 收尾：PostgreSQL 运行时装配和 migration 入口已落地，等待下一步决定是接真实库联调还是回到管理台空/错误态打磨。
+  - Phase 2/3 收尾：PostgreSQL 运行时装配、migration、真实 Docker PostgreSQL smoke-check 和 API smoke flow 已完成。
 - 下一步：
-  - 若继续数据库方向：现在可以直接用 `npm run smoke:postgres` 或 `node src/database/run-postgres-smoke-check.js --database-url <url>` 做真实联调。
+  - 若继续数据库方向：可补 PostgreSQL API smoke 的 cleanup 能力，或增加真实库下 admin UI 联调。
   - 若继续打磨工具链：可补子进程级 CLI 集成测试或把 smoke-check 扩展为可选 `/health` HTTP 探测。
   - 若回到管理台方向：补空状态、错误态和 PostgreSQL 模式下的联调检查。
 - 阻塞项：
-  - 当前没有提供真实 PostgreSQL 连接信息，因此还未做实库联调，只完成了驱动与启动装配层落地。
+  - 无当前阻塞；真实 PostgreSQL 测试库已通过 Docker 独立创建并验证。
