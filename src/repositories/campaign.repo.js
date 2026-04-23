@@ -43,4 +43,41 @@ export class InMemoryCampaignRepository {
 
     return cloneRecords(campaigns);
   }
+
+  async update(id, tenantId = DEFAULT_TENANT_ID, patch = {}) {
+    const campaign = this.campaigns.get(id);
+
+    if (!campaign || campaign.tenantId !== tenantId) {
+      return null;
+    }
+
+    const updated = {
+      ...campaign,
+      ...definedPatch(patch),
+      id: campaign.id,
+      tenantId: campaign.tenantId,
+      createdAt: campaign.createdAt,
+      updatedAt: this.now()
+    };
+
+    this.campaigns.set(id, cloneRecord(updated));
+    return cloneRecord(updated);
+  }
+
+  async delete(id, tenantId = DEFAULT_TENANT_ID) {
+    const campaign = this.campaigns.get(id);
+
+    if (!campaign || campaign.tenantId !== tenantId) {
+      return false;
+    }
+
+    this.campaigns.delete(id);
+    return true;
+  }
+}
+
+function definedPatch(patch) {
+  return Object.fromEntries(
+    Object.entries(patch).filter(([, value]) => value !== undefined)
+  );
 }

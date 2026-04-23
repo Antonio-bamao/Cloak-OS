@@ -163,3 +163,12 @@
 - 结果：`GET /c/:campaignId` 可返回 302 redirect 或 HTML iframe/loading 页面；管理 API 仍保持统一 JSON 响应。
 - 验证：运行 `node --test`，56 个测试全部通过；运行 `.context` 校验，返回 `context is valid`。
 - 下一步：执行后端阶段完成检查，梳理进入 UI 前是否还有必须补齐的后端缺口。
+
+## 2026-04-23 21:35 CST - 补齐 Campaign REST CRUD
+
+- 时间：2026-04-23 21:35 CST
+- 目标：补齐计划文档中的 Campaign CRUD API。
+- 动作：先扩展 Repository contract、Campaign API 和 README 测试并确认失败；随后实现 Repository update/delete、Service update/delete、Route PUT/DELETE。
+- 结果：`PUT /api/v1/campaigns/:id` 支持部分更新并推进 `updatedAt`；`DELETE /api/v1/campaigns/:id` 支持 tenant 隔离删除。
+- 验证：运行 `node --test`，59 个测试全部通过；运行 `.context` 校验，返回 `context is valid`。
+- 下一步：继续后端阶段完成检查，确认进入 UI 前是否还缺安全或运行边界。

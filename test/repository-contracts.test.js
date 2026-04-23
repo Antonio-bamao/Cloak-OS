@@ -63,6 +63,47 @@ function campaignRepositoryContract(name, createRepository) {
 
     assert.deepEqual(await repository.findAll('tenant-1'), [first, second]);
   });
+
+  test(`${name}: updates campaigns by tenant and advances updatedAt`, async () => {
+    const times = ['2026-04-23T10:00:00.000Z', '2026-04-23T10:05:00.000Z'];
+    const repository = createRepository({
+      now: () => times.shift()
+    });
+    const campaign = await repository.create({
+      tenantId: 'tenant-1',
+      name: 'Before',
+      safeUrl: 'https://safe.example',
+      moneyUrl: 'https://money.example',
+      redirectMode: 'redirect'
+    });
+
+    assert.equal(await repository.update(campaign.id, 'tenant-2', { name: 'Wrong' }), null);
+
+    const updated = await repository.update(campaign.id, 'tenant-1', {
+      name: 'After',
+      redirectMode: 'iframe'
+    });
+
+    assert.equal(updated.name, 'After');
+    assert.equal(updated.safeUrl, 'https://safe.example');
+    assert.equal(updated.redirectMode, 'iframe');
+    assert.equal(updated.createdAt, '2026-04-23T10:00:00.000Z');
+    assert.equal(updated.updatedAt, '2026-04-23T10:05:00.000Z');
+  });
+
+  test(`${name}: deletes campaigns by tenant`, async () => {
+    const repository = createRepository();
+    const campaign = await repository.create({
+      tenantId: 'tenant-1',
+      name: 'Delete Me',
+      safeUrl: 'https://safe.example',
+      moneyUrl: 'https://money.example'
+    });
+
+    assert.equal(await repository.delete(campaign.id, 'tenant-2'), false);
+    assert.equal(await repository.delete(campaign.id, 'tenant-1'), true);
+    assert.equal(await repository.findById(campaign.id, 'tenant-1'), null);
+  });
 }
 
 function accessLogRepositoryContract(name, createRepository) {

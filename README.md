@@ -45,6 +45,8 @@ GET /health
 GET /api/v1/campaigns
 POST /api/v1/campaigns
 GET /api/v1/campaigns/:id
+PUT /api/v1/campaigns/:id
+DELETE /api/v1/campaigns/:id
 GET /api/v1/campaigns/:id/logs
 ```
 

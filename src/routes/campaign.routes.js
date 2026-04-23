@@ -24,6 +24,20 @@ export function createCampaignRoutes({ campaignService }) {
         'Campaign fetched'
       )
     }),
+    'PUT /api/v1/campaigns/:id': async (request) => ({
+      statusCode: 200,
+      body: ok(
+        await campaignService.updateCampaign(request.params.id, request.body),
+        'Campaign updated'
+      )
+    }),
+    'DELETE /api/v1/campaigns/:id': async (request) => ({
+      statusCode: 200,
+      body: ok(
+        await campaignService.deleteCampaign(request.params.id),
+        'Campaign deleted'
+      )
+    }),
     'GET /api/v1/campaigns/:id/logs': async (request) => {
       const page = positiveInteger(request.query.page, 1);
       const pageSize = positiveInteger(request.query.pageSize, 20);

@@ -61,6 +61,9 @@
   - 已让 HTTP server 支持 route 返回原始 headers/body，用于 302 redirect 和 HTML iframe/loading 响应。
   - 已更新 README 记录公网斗篷入口。
   - 已运行测试：56 个测试全部通过。
+  - 已补齐 Campaign REST CRUD：`PUT /api/v1/campaigns/:id`、`DELETE /api/v1/campaigns/:id`。
+  - 已扩展 Campaign Repository contract，覆盖 update/delete、updatedAt 推进、tenant 隔离。
+  - 已运行测试：59 个测试全部通过。
 - 进行中：
   - Phase 2 运行时能力继续推进：生产运行边界收尾、后端阶段完成检查。
 - 下一步：

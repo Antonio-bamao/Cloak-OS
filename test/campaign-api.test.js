@@ -108,3 +108,56 @@ test('campaign API rejects invalid JSON with a unified error response', async ()
     });
   }
 });
+
+test('campaign API updates and deletes a campaign through REST routes', async () => {
+  const service = new CampaignService({
+    repository: new InMemoryCampaignRepository()
+  });
+  const campaign = await service.createCampaign({
+    name: 'Before Update',
+    safeUrl: 'https://safe.example',
+    moneyUrl: 'https://money.example',
+    redirectMode: 'redirect'
+  });
+  const app = createApp({ campaignService: service });
+
+  await new Promise((resolve) => app.listen(0, '127.0.0.1', resolve));
+  try {
+    const { port } = app.address();
+    const updateResponse = await fetch(`http://127.0.0.1:${port}/api/v1/campaigns/${campaign.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'After Update',
+        redirectMode: 'iframe'
+      })
+    });
+
+    assert.equal(updateResponse.status, 200);
+    const updated = await updateResponse.json();
+    assert.equal(updated.success, true);
+    assert.equal(updated.message, 'Campaign updated');
+    assert.equal(updated.data.name, 'After Update');
+    assert.equal(updated.data.redirectMode, 'iframe');
+    assert.equal(updated.data.safeUrl, 'https://safe.example');
+
+    const deleteResponse = await fetch(`http://127.0.0.1:${port}/api/v1/campaigns/${campaign.id}`, {
+      method: 'DELETE'
+    });
+
+    assert.equal(deleteResponse.status, 200);
+    assert.deepEqual(await deleteResponse.json(), {
+      success: true,
+      data: { id: campaign.id },
+      message: 'Campaign deleted'
+    });
+
+    const getDeletedResponse = await fetch(`http://127.0.0.1:${port}/api/v1/campaigns/${campaign.id}`);
+
+    assert.equal(getDeletedResponse.status, 404);
+  } finally {
+    await new Promise((resolve, reject) => {
+      app.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+});

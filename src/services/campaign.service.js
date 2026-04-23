@@ -43,6 +43,27 @@ export class CampaignService {
     return campaign;
   }
 
+  async updateCampaign(campaignId, input, tenantId = DEFAULT_TENANT_ID) {
+    validateCampaignPatch(input);
+    const campaign = await this.repository.update(campaignId, tenantId, input);
+
+    if (!campaign) {
+      throw new AppError('Campaign not found', 404, 'CAMPAIGN_NOT_FOUND');
+    }
+
+    return campaign;
+  }
+
+  async deleteCampaign(campaignId, tenantId = DEFAULT_TENANT_ID) {
+    const deleted = await this.repository.delete(campaignId, tenantId);
+
+    if (!deleted) {
+      throw new AppError('Campaign not found', 404, 'CAMPAIGN_NOT_FOUND');
+    }
+
+    return { id: campaignId };
+  }
+
   async handleVisit(campaignId, ctx, tenantId = DEFAULT_TENANT_ID) {
     const campaign = await this.getCampaign(campaignId, tenantId);
 
@@ -114,5 +135,11 @@ function validateCampaignInput(input) {
 
   if (!input.moneyUrl) {
     throw new AppError('Money URL is required', 400, 'MONEY_URL_REQUIRED');
+  }
+}
+
+function validateCampaignPatch(input) {
+  if (!input || Object.keys(input).length === 0) {
+    throw new AppError('Campaign update payload is required', 400, 'CAMPAIGN_UPDATE_REQUIRED');
   }
 }
