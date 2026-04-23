@@ -7,6 +7,7 @@ export function parsePostgresApiSmokeCheckArgs(argv = process.argv.slice(2)) {
   const parsed = {
     databaseUrl: undefined,
     adminToken: undefined,
+    checkHealth: false,
     keepCampaign: false,
     help: false
   };
@@ -41,6 +42,11 @@ export function parsePostgresApiSmokeCheckArgs(argv = process.argv.slice(2)) {
       continue;
     }
 
+    if (argument === '--check-health') {
+      parsed.checkHealth = true;
+      continue;
+    }
+
     if (argument === '--keep-campaign') {
       parsed.keepCampaign = true;
       continue;
@@ -57,6 +63,7 @@ export function formatPostgresApiSmokeCheckSummary({
   redirectStatus,
   logCount,
   totalVisits,
+  healthStatus,
   cleanup
 } = {}) {
   return [
@@ -65,6 +72,7 @@ export function formatPostgresApiSmokeCheckSummary({
     `Redirect status: ${redirectStatus}`,
     `Log count: ${logCount}`,
     `Total visits: ${totalVisits}`,
+    ...(healthStatus ? [`Health status: ${healthStatus}`] : []),
     `Cleanup: ${cleanup}`
   ].join('\n');
 }
@@ -78,6 +86,7 @@ export function formatPostgresApiSmokeCheckHelp() {
     'Flags:',
     '  --database-url <url> Override DATABASE_URL for this command',
     '  --admin-token <token> Override ADMIN_TOKEN for this command',
+    '  --check-health       Probe GET /health before running API smoke steps',
     '  --keep-campaign      Leave the created smoke campaign and logs in the database',
     '  --help               Show this help text'
   ].join('\n');
@@ -119,6 +128,9 @@ export async function runPostgresApiSmokeCheck({
     });
     const { port } = server.address();
     const baseUrl = `http://127.0.0.1:${port}`;
+    const health = cliArgs.checkHealth
+      ? await probeHealth({ baseUrl, fetchImpl })
+      : null;
     const headers = {
       Authorization: `Bearer ${adminToken}`,
       'Content-Type': 'application/json'
@@ -163,6 +175,7 @@ export async function runPostgresApiSmokeCheck({
       redirectStatus: redirectResponse.status,
       logCount: logs.pagination?.total ?? logs.data.length,
       totalVisits: analytics.data.totalVisits,
+      healthStatus: health?.status,
       cleanup
     });
 
@@ -203,6 +216,11 @@ if (isDirectRun(import.meta.url)) {
 }
 
 async function requestJson(fetchImpl, url, options) {
+  const { body } = await requestJsonResponse(fetchImpl, url, options);
+  return body;
+}
+
+async function requestJsonResponse(fetchImpl, url, options) {
   const response = await fetchImpl(url, options);
   const body = await response.json();
 
@@ -210,7 +228,20 @@ async function requestJson(fetchImpl, url, options) {
     throw new Error(`HTTP ${response.status}: ${body.error?.message ?? 'request failed'}`);
   }
 
-  return body;
+  return {
+    status: response.status,
+    body
+  };
+}
+
+async function probeHealth({ baseUrl, fetchImpl }) {
+  const health = await requestJsonResponse(fetchImpl, `${baseUrl}/health`);
+
+  if (health.body.data?.status !== 'ok') {
+    throw new Error(`Health probe returned unexpected status payload: ${health.body.data?.status ?? 'unknown'}`);
+  }
+
+  return health;
 }
 
 async function cleanupSmokeArtifacts({ baseUrl, campaignId, fetchImpl, headers, keepCampaign }) {

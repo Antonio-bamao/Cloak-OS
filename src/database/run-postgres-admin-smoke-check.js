@@ -7,6 +7,7 @@ export function parsePostgresAdminSmokeCheckArgs(argv = process.argv.slice(2)) {
   const parsed = {
     databaseUrl: undefined,
     adminToken: undefined,
+    checkHealth: false,
     help: false
   };
 
@@ -40,6 +41,11 @@ export function parsePostgresAdminSmokeCheckArgs(argv = process.argv.slice(2)) {
       continue;
     }
 
+    if (argument === '--check-health') {
+      parsed.checkHealth = true;
+      continue;
+    }
+
     throw new Error(`Unknown argument: ${argument}`);
   }
 
@@ -50,14 +56,16 @@ export function formatPostgresAdminSmokeCheckSummary({
   pageStatus,
   campaignCount,
   logCount,
-  totalVisits
+  totalVisits,
+  healthStatus
 } = {}) {
   return [
     'PostgreSQL admin smoke check passed',
     `Admin page status: ${pageStatus}`,
     `Campaign count: ${campaignCount}`,
     `Log count: ${logCount}`,
-    `Total visits: ${totalVisits}`
+    `Total visits: ${totalVisits}`,
+    ...(healthStatus ? [`Health status: ${healthStatus}`] : [])
   ].join('\n');
 }
 
@@ -70,6 +78,7 @@ export function formatPostgresAdminSmokeCheckHelp() {
     'Flags:',
     '  --database-url <url> Override DATABASE_URL for this command',
     '  --admin-token <token> Override ADMIN_TOKEN for this command',
+    '  --check-health       Probe GET /health before loading admin assets',
     '  --help               Show this help text'
   ].join('\n');
 }
@@ -109,6 +118,9 @@ export async function runPostgresAdminSmokeCheck({
     });
     const { port } = server.address();
     const baseUrl = `http://127.0.0.1:${port}`;
+    const health = cliArgs.checkHealth
+      ? await probeHealth({ baseUrl, fetchImpl })
+      : null;
     const headers = {
       Authorization: `Bearer ${adminToken}`
     };
@@ -133,7 +145,8 @@ export async function runPostgresAdminSmokeCheck({
       pageStatus: adminPage.status,
       campaignCount: campaigns.data.length,
       logCount: logs.pagination?.total ?? logs.data.length,
-      totalVisits: analytics.data.totalVisits
+      totalVisits: analytics.data.totalVisits,
+      healthStatus: health?.status
     });
 
     stdout.write(`${summary}\n`);
@@ -179,6 +192,11 @@ async function requestText(fetchImpl, url, options) {
 }
 
 async function requestJson(fetchImpl, url, options) {
+  const { body } = await requestJsonResponse(fetchImpl, url, options);
+  return body;
+}
+
+async function requestJsonResponse(fetchImpl, url, options) {
   const response = await fetchImpl(url, options);
   const body = await response.json();
 
@@ -186,7 +204,20 @@ async function requestJson(fetchImpl, url, options) {
     throw new Error(`HTTP ${response.status}: ${body.error?.message ?? 'request failed'}`);
   }
 
-  return body;
+  return {
+    status: response.status,
+    body
+  };
+}
+
+async function probeHealth({ baseUrl, fetchImpl }) {
+  const health = await requestJsonResponse(fetchImpl, `${baseUrl}/health`);
+
+  if (health.body.data?.status !== 'ok') {
+    throw new Error(`Health probe returned unexpected status payload: ${health.body.data?.status ?? 'unknown'}`);
+  }
+
+  return health;
 }
 
 function assertIncludes(value, expected, label) {

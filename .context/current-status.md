@@ -213,10 +213,21 @@
 - 已运行全量验证：`node --test`，132 个测试全部通过。
 - 已运行真实验证：`node src/database/run-postgres-api-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak`，输出 `Cleanup: logs deleted, campaign deleted`。
 - 已运行真实验证：`node src/database/run-postgres-admin-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak`，Campaign count 2、Log count 2、Total visits 2，确认本轮 API smoke 未继续增长持久化日志。
+- 已新增可选 health 探测能力：
+  - `run-postgres-api-smoke-check.js` 新增 `--check-health`，会在业务 smoke 前探测 `GET /health`。
+  - `run-postgres-admin-smoke-check.js` 新增 `--check-health`，会在加载管理台资源前探测 `GET /health`。
+  - 两个 smoke 摘要都会在启用时输出 `Health status: 200`。
+  - 已更新 README 和文档测试，补充 `--check-health` 示例与联调说明。
+- 已运行定向验证：`node test/postgres-api-smoke-check.test.js`，9 个测试全部通过。
+- 已运行定向验证：`node test/postgres-admin-smoke-check.test.js`，7 个测试全部通过。
+- 已运行定向验证：`node test/docs.test.js`，2 个测试全部通过。
+- 已运行全量验证：`node --test`，137 个测试全部通过。
+- 已运行真实验证：`node src/database/run-postgres-api-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak --check-health`，输出 `Health status: 200` 和 `Cleanup: logs deleted, campaign deleted`。
+- 已运行真实验证：`node src/database/run-postgres-admin-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak --check-health`，输出 `Health status: 200`；当前测试库计数为 Campaign 3、Log 2、Total visits 3。
 - 进行中：
-  - Phase 2/3 收尾：PostgreSQL 运行时装配、migration、真实 Docker PostgreSQL smoke-check、API smoke flow、API smoke cleanup、访问日志 cleanup 和 admin UI smoke flow 已完成。
+  - Phase 2/3 收尾：PostgreSQL 运行时装配、migration、真实 Docker PostgreSQL smoke-check、API smoke flow、API smoke cleanup、访问日志 cleanup、可选 health 探测和 admin UI smoke flow 已完成。
 - 下一步：
-  - 若继续打磨工具链：可补子进程级 CLI 集成测试或把 smoke-check 扩展为可选 `/health` HTTP 探测。
   - 若回到管理台方向：补空状态、错误态和 PostgreSQL 模式下的联调检查。
+  - 若继续工具链方向：可补子进程级 CLI 集成测试。
 - 阻塞项：
   - 无当前阻塞；真实 PostgreSQL 测试库已通过 Docker 独立创建并验证。

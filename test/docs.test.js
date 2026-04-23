@@ -40,6 +40,7 @@ test('README documents startup, tests, env vars, and available API routes', asyn
   assert.match(readme, /--database-url/);
   assert.match(readme, /--dry-run/);
   assert.match(readme, /--help/);
+  assert.match(readme, /--check-health/);
   assert.match(readme, /readonly/i);
 });
 

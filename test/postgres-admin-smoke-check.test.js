@@ -18,17 +18,28 @@ test('parsePostgresAdminSmokeCheckArgs reads database-url and admin-token overri
     {
       databaseUrl: 'postgres://cloak:secret@127.0.0.1:55432/cloak',
       adminToken: 'secret-token',
+      checkHealth: false,
       help: false
     }
   );
 });
 
-test('formatPostgresAdminSmokeCheckSummary includes page, campaigns, logs, and analytics counts', () => {
+test('parsePostgresAdminSmokeCheckArgs can enable health probing', () => {
+  assert.deepEqual(parsePostgresAdminSmokeCheckArgs(['--check-health']), {
+    databaseUrl: undefined,
+    adminToken: undefined,
+    checkHealth: true,
+    help: false
+  });
+});
+
+test('formatPostgresAdminSmokeCheckSummary includes page, campaigns, logs, analytics counts, and health when present', () => {
   const summary = formatPostgresAdminSmokeCheckSummary({
     pageStatus: 200,
     campaignCount: 2,
     logCount: 3,
-    totalVisits: 3
+    totalVisits: 3,
+    healthStatus: 200
   });
 
   assert.match(summary, /PostgreSQL admin smoke check passed/);
@@ -36,6 +47,7 @@ test('formatPostgresAdminSmokeCheckSummary includes page, campaigns, logs, and a
   assert.match(summary, /Campaign count: 2/);
   assert.match(summary, /Log count: 3/);
   assert.match(summary, /Total visits: 3/);
+  assert.match(summary, /Health status: 200/);
 });
 
 test('formatPostgresAdminSmokeCheckHelp documents postgres admin smoke behavior', () => {
@@ -44,6 +56,7 @@ test('formatPostgresAdminSmokeCheckHelp documents postgres admin smoke behavior'
   assert.match(help, /Admin Smoke Check/i);
   assert.match(help, /--database-url/);
   assert.match(help, /--admin-token/);
+  assert.match(help, /--check-health/);
 });
 
 test('runPostgresAdminSmokeCheck validates admin assets and management APIs then closes server', async () => {
@@ -110,6 +123,77 @@ test('runPostgresAdminSmokeCheck validates admin assets and management APIs then
   assert.equal(result.exitCode, 0);
   assert.ok(calls.some((call) => call.type === 'stdout' && call.message.includes('PostgreSQL admin smoke check passed')));
   assert.equal(calls.at(-1).type, 'close');
+});
+
+test('runPostgresAdminSmokeCheck can probe health when --check-health is present', async () => {
+  const calls = [];
+  const server = {
+    address() {
+      return { address: '127.0.0.1', port: 3222 };
+    },
+    close(callback) {
+      calls.push({ type: 'close' });
+      callback();
+    }
+  };
+
+  const result = await runPostgresAdminSmokeCheck({
+    argv: ['--check-health'],
+    stdout: { write(message) { calls.push({ type: 'stdout', message }); } },
+    stderr: { write(message) { calls.push({ type: 'stderr', message }); } },
+    startServer: async () => server,
+    fetch: async (url, options = {}) => {
+      calls.push({ type: 'fetch', url, options });
+
+      if (url.endsWith('/health')) {
+        return jsonResponse(200, {
+          success: true,
+          data: { status: 'ok', version: '0.1.0', uptimeSeconds: 0 },
+          message: 'ok'
+        });
+      }
+
+      if (url.endsWith('/admin')) {
+        return textResponse(200, '<div id="app-shell"></div><link href="/admin/styles.css"><script src="/admin/app.js"></script>');
+      }
+
+      if (url.endsWith('/admin/styles.css')) {
+        return textResponse(200, ':root { --color-primary: #000; }');
+      }
+
+      if (url.endsWith('/admin/app.js')) {
+        return textResponse(200, 'loadOverview(); loadCampaigns(); loadLogs();');
+      }
+
+      if (url.endsWith('/api/v1/campaigns')) {
+        return jsonResponse(200, {
+          success: true,
+          data: [{ id: 'campaign-1' }]
+        });
+      }
+
+      if (url.includes('/api/v1/logs')) {
+        return jsonResponse(200, {
+          success: true,
+          data: [{ id: 'log-1' }],
+          pagination: { total: 1 }
+        });
+      }
+
+      if (url.endsWith('/api/v1/analytics/overview')) {
+        return jsonResponse(200, {
+          success: true,
+          data: { totalVisits: 1 }
+        });
+      }
+
+      throw new Error(`Unexpected URL: ${url}`);
+    }
+  });
+
+  assert.equal(result.exitCode, 0);
+  assert.ok(calls.some((call) => call.type === 'fetch' && call.url.endsWith('/health')));
+  assert.ok(calls.some((call) => call.type === 'stdout' && call.message.includes('Health status: 200')));
 });
 
 test('runPostgresAdminSmokeCheck closes server and reports errors', async () => {

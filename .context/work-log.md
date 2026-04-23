@@ -406,3 +406,12 @@
 - 结果：API smoke 成功后会默认调用 `DELETE /api/v1/campaigns/:id/logs` 清理本次访问日志，再调用 `DELETE /api/v1/campaigns/:id` 清理测试 Campaign；`--keep-campaign` 会同时保留 Campaign 和日志样本。
 - 验证：运行 `node --test`，132 个测试全部通过；运行真实 `node src/database/run-postgres-api-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak`，输出 `Cleanup: logs deleted, campaign deleted`；随后运行真实 admin smoke，Campaign count 2、Log count 2、Total visits 2，确认本轮 smoke 未继续增长持久化日志。
 - 下一步：若继续工具链方向，可给 smoke-check 增加可选 `/health` HTTP 探测；若回到管理台方向，可补空状态、错误态和 PostgreSQL 模式下的 UI 联调细节。
+
+## 2026-04-24 02:21 CST - 为 PostgreSQL smoke-check 增加可选 health 探测
+
+- 时间：2026-04-24 02:21 CST
+- 目标：在真实 PostgreSQL 联调时让 API/Admin smoke 可以顺手验证 `GET /health`，避免只验证业务接口而漏掉服务健康探针。
+- 动作：先扩展 `test/postgres-api-smoke-check.test.js`、`test/postgres-admin-smoke-check.test.js` 和 `test/docs.test.js`，锁定 `--check-health` 参数解析、help 文案、可选 health 摘要行和真实请求行为；随后在两个 smoke CLI 中新增 `--check-health`，在主流程前探测 `/health`，并把 `Health status: 200` 写入摘要；最后更新 README 的命令示例和联调说明。
+- 结果：`run-postgres-api-smoke-check.js` 与 `run-postgres-admin-smoke-check.js` 现在都支持 `--check-health`；只有显式传参时才请求 `/health`，并校验统一响应中的 `data.status === ok`；摘要会输出 `Health status: 200` 便于人工确认。
+- 验证：运行 `node test/postgres-api-smoke-check.test.js`，9 个测试全部通过；运行 `node test/postgres-admin-smoke-check.test.js`，7 个测试全部通过；运行 `node test/docs.test.js`，2 个测试全部通过；运行 `node --test`，137 个测试全部通过；运行真实 `node src/database/run-postgres-api-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak --check-health` 与 `node src/database/run-postgres-admin-smoke-check.js --database-url ... --check-health`，均输出 `Health status: 200`。
+- 下一步：若继续管理台方向，可补空状态和错误态展示；若继续工具链方向，可考虑补更高层的子进程级 CLI 集成验证。
