@@ -1,0 +1,64 @@
+import { DetectionPipeline } from '../core/pipeline.js';
+import { DecisionEngine } from '../core/decision-engine.js';
+import { DEFAULT_TENANT_ID } from '../config/index.js';
+import { AppError } from '../utils/errors.js';
+import { getRedirectStrategy } from '../strategies/index.js';
+
+export class CampaignService {
+  constructor({
+    repository,
+    pipeline = new DetectionPipeline(),
+    decisionEngine = new DecisionEngine()
+  } = {}) {
+    if (!repository) {
+      throw new TypeError('CampaignService requires a repository');
+    }
+
+    this.repository = repository;
+    this.pipeline = pipeline;
+    this.decisionEngine = decisionEngine;
+  }
+
+  async createCampaign(input) {
+    validateCampaignInput(input);
+    return this.repository.create({
+      ...input,
+      tenantId: input.tenantId ?? DEFAULT_TENANT_ID
+    });
+  }
+
+  async handleVisit(campaignId, ctx, tenantId = DEFAULT_TENANT_ID) {
+    const campaign = await this.repository.findById(campaignId, tenantId);
+
+    if (!campaign) {
+      throw new AppError('Campaign not found', 404, 'CAMPAIGN_NOT_FOUND');
+    }
+
+    const detections = await this.pipeline.execute(ctx);
+    const decision = this.decisionEngine.decide(detections);
+    const targetUrl = decision.action === 'money' ? campaign.moneyUrl : campaign.safeUrl;
+    const strategy = getRedirectStrategy(campaign.redirectMode);
+    const response = await strategy.execute(targetUrl);
+
+    return {
+      campaign,
+      detections,
+      decision,
+      response
+    };
+  }
+}
+
+function validateCampaignInput(input) {
+  if (!input?.name) {
+    throw new AppError('Campaign name is required', 400, 'CAMPAIGN_NAME_REQUIRED');
+  }
+
+  if (!input.safeUrl) {
+    throw new AppError('Safe URL is required', 400, 'SAFE_URL_REQUIRED');
+  }
+
+  if (!input.moneyUrl) {
+    throw new AppError('Money URL is required', 400, 'MONEY_URL_REQUIRED');
+  }
+}

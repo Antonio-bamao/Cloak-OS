@@ -1,0 +1,22 @@
+# 当前状态
+
+- 当前阶段：Phase 1 核心斗篷引擎 MVP
+- 已完成：
+  - 已阅读 `ENGINEERING_PRINCIPLES.md`。
+  - 已初始化 `.context/` 项目记忆系统。
+  - 已将工程准则转换为阶段计划和任务拆解。
+  - 已创建 Node.js ESM 项目骨架和 `node --test` 测试入口。
+  - 已实现 `BaseDetector`、`DetectionPipeline`、`DecisionEngine`。
+  - 已实现 `IpDetector`、`UserAgentDetector` 示例检测器。
+  - 已实现 Redirect / Iframe / Loading 跳转策略和策略工厂。
+  - 已实现内存版 `CampaignRepository`、`CampaignService`、`cloak.routes.js`。
+  - 已运行测试：14 个测试全部通过。
+  - 已初始化 Git 仓库。
+- 进行中：
+  - 准备进入 Phase 2 的真实运行时能力设计：HTTP 服务入口、统一响应、错误中间件、结构化日志。
+- 下一步：
+  - 创建首次提交，固定当前上下文与 Phase 1 核心骨架。
+  - 补充 API service 入口和健康检查。
+  - 将内存 Repository 的接口映射到数据库 schema 草案。
+- 阻塞项：
+  - 当前仅有架构原则文档，没有产品级字段清单或数据库连接信息，因此 Phase 1 使用内存 Repository。
