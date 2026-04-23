@@ -172,3 +172,12 @@
 - 结果：`PUT /api/v1/campaigns/:id` 支持部分更新并推进 `updatedAt`；`DELETE /api/v1/campaigns/:id` 支持 tenant 隔离删除。
 - 验证：运行 `node --test`，59 个测试全部通过；运行 `.context` 校验，返回 `context is valid`。
 - 下一步：继续后端阶段完成检查，确认进入 UI 前是否还缺安全或运行边界。
+
+## 2026-04-23 21:50 CST - 完成公网斗篷入口限流
+
+- 时间：2026-04-23 21:50 CST
+- 目标：落实计划文档中斗篷公网接口需要 rate limiting 的安全要求。
+- 动作：先新增限流器和公网 cloak 429 测试并确认失败；随后实现 `InMemoryRateLimiter`、`createRateLimitedRoute`，并在 app 装配层包住 `GET /c/:campaignId`。
+- 结果：公网斗篷入口超限时返回 429 JSON 错误与 `Retry-After` 头；正常 redirect/HTML 响应不受影响。
+- 验证：运行 `node --test`，61 个测试全部通过；运行 `.context` 校验，返回 `context is valid`。
+- 下一步：继续后端阶段完成检查，重点看鉴权边界和进入 UI 前的后端依赖。

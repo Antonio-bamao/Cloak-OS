@@ -64,6 +64,10 @@
   - 已补齐 Campaign REST CRUD：`PUT /api/v1/campaigns/:id`、`DELETE /api/v1/campaigns/:id`。
   - 已扩展 Campaign Repository contract，覆盖 update/delete、updatedAt 推进、tenant 隔离。
   - 已运行测试：59 个测试全部通过。
+  - 已新增独立 `InMemoryRateLimiter`。
+  - 已新增 `createRateLimitedRoute`，仅在 app 装配层包住公网 `GET /c/:campaignId`。
+  - 已让 AppError 支持响应头，限流返回 `Retry-After`。
+  - 已运行测试：61 个测试全部通过。
 - 进行中：
   - Phase 2 运行时能力继续推进：生产运行边界收尾、后端阶段完成检查。
 - 下一步：

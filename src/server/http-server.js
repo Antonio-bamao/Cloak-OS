@@ -26,7 +26,7 @@ export function createHttpServer({
       sendRouteResponse(response, statusCode, routeResponse);
     } catch (error) {
       statusCode = error instanceof AppError ? error.statusCode : 500;
-      sendJson(response, statusCode, fail(error));
+      sendJson(response, statusCode, fail(error), error.headers);
     } finally {
       logRequest({ logger, request, statusCode, latencyMs: now() - startedAt });
     }
@@ -131,9 +131,10 @@ async function readJsonBody(request) {
   }
 }
 
-function sendJson(response, statusCode, body) {
+function sendJson(response, statusCode, body, headers = {}) {
   response.writeHead(statusCode, {
-    'Content-Type': 'application/json; charset=utf-8'
+    'Content-Type': 'application/json; charset=utf-8',
+    ...headers
   });
   response.end(JSON.stringify(body));
 }

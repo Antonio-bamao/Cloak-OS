@@ -78,3 +78,14 @@
 - 解决方案：注册 `GET /c/:campaignId`，并新增 `sendRouteResponse`，当 route 返回 headers 时原样发送 status/header/body。
 - 预防措施：保留 `cloak-http.test.js` 覆盖 redirect 和 iframe 策略的 HTTP 集成行为。
 - 状态：已解决。
+
+## 公网 cloak 限流测试未禁用 redirect 跟随
+
+- 标题：公网 cloak 限流测试未禁用 redirect 跟随
+- 现象：限流尚未接入时，测试请求跟随 302 到 `https://money.example`，导致外部连接超时。
+- 触发条件：`fetch` 默认跟随 redirect，而测试期望在本地验证 429。
+- 影响：红灯测试耗时变长且失败原因被外部网络噪声污染。
+- 根因：测试没有设置 `redirect: 'manual'`。
+- 解决方案：限流集成测试改为手动处理 redirect。
+- 预防措施：所有验证 302 或可能触发 302 的 HTTP 测试都显式设置 `redirect: 'manual'`。
+- 状态：已解决。

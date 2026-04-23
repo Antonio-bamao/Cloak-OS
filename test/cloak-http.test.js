@@ -85,3 +85,47 @@ test('HTTP server preserves HTML strategy headers and body for cloak responses',
     });
   }
 });
+
+test('public cloak HTTP route returns 429 when the rate limiter rejects a visitor', async () => {
+  const repository = new InMemoryCampaignRepository();
+  const campaignService = new CampaignService({ repository });
+  const campaign = await campaignService.createCampaign({
+    name: 'Limited Cloak',
+    safeUrl: 'https://safe.example',
+    moneyUrl: 'https://money.example',
+    redirectMode: 'redirect'
+  });
+  const app = createApp({
+    campaignService,
+    cloakRateLimiter: {
+      consume() {
+        return {
+          allowed: false,
+          retryAfterSeconds: 30
+        };
+      }
+    }
+  });
+
+  await new Promise((resolve) => app.listen(0, '127.0.0.1', resolve));
+  try {
+    const { port } = app.address();
+    const response = await fetch(`http://127.0.0.1:${port}/c/${campaign.id}`, {
+      redirect: 'manual'
+    });
+
+    assert.equal(response.status, 429);
+    assert.equal(response.headers.get('retry-after'), '30');
+    assert.deepEqual(await response.json(), {
+      success: false,
+      error: {
+        code: 'RATE_LIMITED',
+        message: 'Too many requests'
+      }
+    });
+  } finally {
+    await new Promise((resolve, reject) => {
+      app.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+});
