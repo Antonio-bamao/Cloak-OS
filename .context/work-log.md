@@ -432,5 +432,5 @@
 - 动作：先新增 `test/postgres-admin-smoke-check.test.js` 失败用例，确认缺少 `error-banner`、`retry-error`、`.error-banner`、`.empty-state`、`handleUiError` 或 `emptyState` 时 smoke 应该失败；随后在 `src/database/run-postgres-admin-smoke-check.js` 中加入这些 UI 状态资源断言，并更新 README 对 `smoke:postgres-admin` 的说明。
 - 结果：PostgreSQL admin smoke 会检查管理台 shell、错误态/空状态 CSS 与 JS 钩子，再检查 Campaign、Logs、Analytics 管理 API。
 - 验证：运行 `node test/postgres-admin-smoke-check.test.js`，8 个测试全部通过；运行 `node --check src/database/run-postgres-admin-smoke-check.js` 通过；运行 `node --test`，138 个测试全部通过。
-- 阻塞：真实 `node src/database/run-postgres-admin-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak --check-health` 暂时失败，原因是本机 Docker Desktop daemon 未运行，`cloak-postgres` 测试库未监听 `55432`；已记录到 `.context/bug-log.md`，待 Docker 恢复后复验。
-- 下一步：恢复 Docker 后重跑真实 PostgreSQL admin smoke；或继续管理台移动端细节检查。
+- 真实复验：用户恢复 Docker Desktop 后，启动既有 `cloak-postgres` 容器并确认 `pg_isready`；运行 `node src/database/run-postgres-admin-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak --check-health`，输出 `PostgreSQL admin smoke check passed`、`Health status: 200`，Campaign count 2、Log count 2、Total visits 2。
+- 下一步：继续管理台移动端细节检查，或补子进程级 CLI 集成测试。

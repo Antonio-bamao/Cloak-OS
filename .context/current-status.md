@@ -241,16 +241,15 @@
 - 已运行定向验证：`node test/postgres-admin-smoke-check.test.js`，8 个测试全部通过。
 - 已运行语法验证：`node --check src/database/run-postgres-admin-smoke-check.js` 通过。
 - 已运行全量验证：`node --test`，138 个测试全部通过。
-- 真实 PostgreSQL admin smoke 复验暂时阻塞：
-  - 命令：`node src/database/run-postgres-admin-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak --check-health`。
-  - 结果：`connect ECONNREFUSED 127.0.0.1:55432`。
-  - `docker ps` 也无法连接 Docker Desktop Linux engine，说明本机 Docker daemon 未运行。
-  - 已记录到 `.context/bug-log.md`，待 Docker 恢复后复验。
+- 真实 PostgreSQL admin smoke 已复验通过：
+  - 用户恢复 Docker Desktop 后，已启动既有 `cloak-postgres` 容器。
+  - 已运行 `docker exec cloak-postgres pg_isready -U cloak -d cloak`，返回 accepting connections。
+  - 已运行 `node src/database/run-postgres-admin-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak --check-health`，输出 `PostgreSQL admin smoke check passed`、`Health status: 200`，Campaign count 2、Log count 2、Total visits 2。
+  - `.context/bug-log.md` 中 Docker daemon 阻塞项已标记为已解决。
 - 进行中：
-  - Phase 2/3 收尾：PostgreSQL 运行时装配、migration、API smoke flow、API smoke cleanup、访问日志 cleanup、可选 health 探测、admin UI smoke flow、管理台空状态和错误态已完成；PostgreSQL Admin smoke 已强化 UI 状态资源检查，但真实 Docker 复验待 Docker daemon 恢复。
+  - Phase 2/3 收尾：PostgreSQL 运行时装配、migration、API smoke flow、API smoke cleanup、访问日志 cleanup、可选 health 探测、admin UI smoke flow、管理台空状态和错误态已完成；PostgreSQL Admin smoke 已强化 UI 状态资源检查并通过真实 Docker 复验。
 - 下一步：
-  - 恢复 Docker 后重跑真实 PostgreSQL admin smoke。
   - 若回到管理台方向：补移动端细节检查。
   - 若继续工具链方向：可补子进程级 CLI 集成测试。
 - 阻塞项：
-  - 当前真实 PostgreSQL 复验阻塞于本机 Docker daemon 未运行；自动化单测不受影响。
+  - 无当前阻塞。

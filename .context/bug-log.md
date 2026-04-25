@@ -95,6 +95,6 @@
 - 触发条件：Running real PostgreSQL admin smoke verification after strengthening admin UI state asset checks.
 - 影响：Code-level tests pass, but real PostgreSQL smoke cannot be re-verified until the local Docker daemon and cloak-postgres test container are running again.
 - 根因：Local Docker Desktop Linux engine is not running, so the cloak-postgres container is unavailable and port 55432 has no PostgreSQL listener.
-- 解决方案：Recorded as an environment blocker; rerun the real smoke command after Docker Desktop and cloak-postgres are started.
+- 解决方案：Recorded as an environment blocker; after Docker Desktop was restarted, started the existing `cloak-postgres` container, confirmed `pg_isready`, and reran the real PostgreSQL admin smoke successfully.
 - 预防措施：Before real PostgreSQL smoke checks, confirm Docker daemon availability and cloak-postgres readiness with docker ps and pg_isready.
-- 状态：环境阻塞，待 Docker 恢复后复验。
+- 状态：已解决，2026-04-25 20:09 CST 复验通过。
