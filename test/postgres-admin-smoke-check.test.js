@@ -83,15 +83,15 @@ test('runPostgresAdminSmokeCheck validates admin assets and management APIs then
       calls.push({ type: 'fetch', url, options });
 
       if (url.endsWith('/admin')) {
-        return textResponse(200, '<div id="app-shell"></div><link href="/admin/styles.css"><script src="/admin/app.js"></script>');
+        return textResponse(200, '<div id="app-shell"></div><section id="error-banner"></section><button id="retry-error"></button><link href="/admin/styles.css"><script src="/admin/app.js"></script>');
       }
 
       if (url.endsWith('/admin/styles.css')) {
-        return textResponse(200, ':root { --color-primary: #000; }');
+        return textResponse(200, ':root { --color-primary: #000; } .error-banner {} .empty-state {}');
       }
 
       if (url.endsWith('/admin/app.js')) {
-        return textResponse(200, 'loadOverview(); loadCampaigns(); loadLogs();');
+        return textResponse(200, 'loadOverview(); loadCampaigns(); loadLogs(); handleUiError(); emptyState();');
       }
 
       if (url.endsWith('/api/v1/campaigns')) {
@@ -125,6 +125,56 @@ test('runPostgresAdminSmokeCheck validates admin assets and management APIs then
   assert.equal(calls.at(-1).type, 'close');
 });
 
+test('runPostgresAdminSmokeCheck fails when admin UI state assets are missing', async () => {
+  const calls = [];
+  const server = {
+    address() {
+      return { address: '127.0.0.1', port: 3222 };
+    },
+    close(callback) {
+      calls.push('close');
+      callback();
+    }
+  };
+
+  const result = await runPostgresAdminSmokeCheck({
+    stdout: { write() {} },
+    stderr: { write(message) { calls.push(message); } },
+    startServer: async () => server,
+    fetch: async (url) => {
+      if (url.endsWith('/admin')) {
+        return textResponse(200, '<div id="app-shell"></div><link href="/admin/styles.css"><script src="/admin/app.js"></script>');
+      }
+
+      if (url.endsWith('/admin/styles.css')) {
+        return textResponse(200, ':root { --color-primary: #000; }');
+      }
+
+      if (url.endsWith('/admin/app.js')) {
+        return textResponse(200, 'loadOverview(); loadCampaigns(); loadLogs();');
+      }
+
+      if (url.endsWith('/api/v1/campaigns')) {
+        return jsonResponse(200, { success: true, data: [] });
+      }
+
+      if (url.includes('/api/v1/logs')) {
+        return jsonResponse(200, { success: true, data: [], pagination: { total: 0 } });
+      }
+
+      if (url.endsWith('/api/v1/analytics/overview')) {
+        return jsonResponse(200, { success: true, data: { totalVisits: 0 } });
+      }
+
+      throw new Error(`Unexpected URL: ${url}`);
+    }
+  });
+
+  assert.equal(result.exitCode, 1);
+  assert.ok(calls.includes('close'));
+  assert.ok(calls.some((message) => message.includes('admin UI state')));
+});
+
 test('runPostgresAdminSmokeCheck can probe health when --check-health is present', async () => {
   const calls = [];
   const server = {
@@ -154,15 +204,15 @@ test('runPostgresAdminSmokeCheck can probe health when --check-health is present
       }
 
       if (url.endsWith('/admin')) {
-        return textResponse(200, '<div id="app-shell"></div><link href="/admin/styles.css"><script src="/admin/app.js"></script>');
+        return textResponse(200, '<div id="app-shell"></div><section id="error-banner"></section><button id="retry-error"></button><link href="/admin/styles.css"><script src="/admin/app.js"></script>');
       }
 
       if (url.endsWith('/admin/styles.css')) {
-        return textResponse(200, ':root { --color-primary: #000; }');
+        return textResponse(200, ':root { --color-primary: #000; } .error-banner {} .empty-state {}');
       }
 
       if (url.endsWith('/admin/app.js')) {
-        return textResponse(200, 'loadOverview(); loadCampaigns(); loadLogs();');
+        return textResponse(200, 'loadOverview(); loadCampaigns(); loadLogs(); handleUiError(); emptyState();');
       }
 
       if (url.endsWith('/api/v1/campaigns')) {

@@ -21,7 +21,7 @@ npm start
 `npm run migrate:status` 会连接 PostgreSQL 并输出当前已知、已执行和 pending 的 migration 文件列表，适合联调前先做 smoke check。
 `npm run smoke:postgres` 会做一套 readonly PostgreSQL smoke check：连接数据库、输出 migration status、再输出 dry-run 预演摘要，但不会执行 migration。
 `npm run smoke:postgres-api` 会在 PostgreSQL 模式下启动真实 app，通过 HTTP 创建 Campaign、访问公网入口并检查日志与 Analytics；成功后默认删除本次创建的访问日志和测试 Campaign。可追加 `--check-health` 先探测 `GET /health`。
-`npm run smoke:postgres-admin` 会在 PostgreSQL 模式下启动真实 app，加载管理台页面/CSS/JS，并检查 Campaign、Logs、Analytics 管理 API。可追加 `--check-health` 先探测 `GET /health`。
+`npm run smoke:postgres-admin` 会在 PostgreSQL 模式下启动真实 app，加载管理台页面/CSS/JS，检查错误态/空状态资源，并检查 Campaign、Logs、Analytics 管理 API。可追加 `--check-health` 先探测 `GET /health`。
 
 也可以直接通过 CLI 覆盖连接信息或 migration 目录：
 

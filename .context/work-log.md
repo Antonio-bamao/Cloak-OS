@@ -424,3 +424,13 @@
 - 结果：管理台顶部现在有可重试的错误横幅；活动表空状态会引导新建活动；日志表在无日志和筛选无结果时显示不同文案，筛选无结果时可直接清空筛选。
 - 验证：运行 `node test/admin-ui.test.js`，1 个测试通过；运行 `node --check public/admin/app.js` 通过；运行 `node --test`，137 个测试全部通过。
 - 下一步：若继续管理台方向，可补 PostgreSQL 模式下的浏览器级 UI 联调或移动端细节检查；若继续工具链方向，可补子进程级 CLI 集成测试。
+
+## 2026-04-25 19:52 CST - 强化 PostgreSQL Admin smoke 对管理台状态资源的检查
+
+- 时间：2026-04-25 19:52 CST
+- 目标：让真实 PostgreSQL admin smoke 不只验证 `/admin` 页面、CSS、JS 和管理 API 可访问，也能防止错误态/空状态相关资源从管理台回退。
+- 动作：先新增 `test/postgres-admin-smoke-check.test.js` 失败用例，确认缺少 `error-banner`、`retry-error`、`.error-banner`、`.empty-state`、`handleUiError` 或 `emptyState` 时 smoke 应该失败；随后在 `src/database/run-postgres-admin-smoke-check.js` 中加入这些 UI 状态资源断言，并更新 README 对 `smoke:postgres-admin` 的说明。
+- 结果：PostgreSQL admin smoke 会检查管理台 shell、错误态/空状态 CSS 与 JS 钩子，再检查 Campaign、Logs、Analytics 管理 API。
+- 验证：运行 `node test/postgres-admin-smoke-check.test.js`，8 个测试全部通过；运行 `node --check src/database/run-postgres-admin-smoke-check.js` 通过；运行 `node --test`，138 个测试全部通过。
+- 阻塞：真实 `node src/database/run-postgres-admin-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak --check-health` 暂时失败，原因是本机 Docker Desktop daemon 未运行，`cloak-postgres` 测试库未监听 `55432`；已记录到 `.context/bug-log.md`，待 Docker 恢复后复验。
+- 下一步：恢复 Docker 后重跑真实 PostgreSQL admin smoke；或继续管理台移动端细节检查。

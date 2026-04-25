@@ -127,16 +127,22 @@ export async function runPostgresAdminSmokeCheck({
 
     const adminPage = await requestText(fetchImpl, `${baseUrl}/admin`);
     assertIncludes(adminPage.text, 'id="app-shell"', 'admin page shell');
+    assertIncludes(adminPage.text, 'id="error-banner"', 'admin UI state shell');
+    assertIncludes(adminPage.text, 'id="retry-error"', 'admin UI state shell');
     assertIncludes(adminPage.text, '/admin/styles.css', 'admin stylesheet link');
     assertIncludes(adminPage.text, '/admin/app.js', 'admin app script');
 
     const stylesheet = await requestText(fetchImpl, `${baseUrl}/admin/styles.css`);
     assertIncludes(stylesheet.text, '--color-primary', 'admin stylesheet');
+    assertIncludes(stylesheet.text, '.error-banner', 'admin UI state stylesheet');
+    assertIncludes(stylesheet.text, '.empty-state', 'admin UI state stylesheet');
 
     const script = await requestText(fetchImpl, `${baseUrl}/admin/app.js`);
     assertIncludes(script.text, 'loadOverview', 'admin app script');
     assertIncludes(script.text, 'loadCampaigns', 'admin app script');
     assertIncludes(script.text, 'loadLogs', 'admin app script');
+    assertIncludes(script.text, 'handleUiError', 'admin UI state script');
+    assertIncludes(script.text, 'emptyState', 'admin UI state script');
 
     const campaigns = await requestJson(fetchImpl, `${baseUrl}/api/v1/campaigns`, { headers });
     const logs = await requestJson(fetchImpl, `${baseUrl}/api/v1/logs?pageSize=5`, { headers });

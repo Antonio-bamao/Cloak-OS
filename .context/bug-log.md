@@ -89,3 +89,12 @@
 - 解决方案：限流集成测试改为手动处理 redirect。
 - 预防措施：所有验证 302 或可能触发 302 的 HTTP 测试都显式设置 `redirect: 'manual'`。
 - 状态：已解决。
+
+## Docker daemon unavailable blocked real PostgreSQL admin smoke
+- 现象：node src/database/run-postgres-admin-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak --check-health failed with connect ECONNREFUSED 127.0.0.1:55432; docker ps also failed because Docker Desktop daemon pipe was unavailable.
+- 触发条件：Running real PostgreSQL admin smoke verification after strengthening admin UI state asset checks.
+- 影响：Code-level tests pass, but real PostgreSQL smoke cannot be re-verified until the local Docker daemon and cloak-postgres test container are running again.
+- 根因：Local Docker Desktop Linux engine is not running, so the cloak-postgres container is unavailable and port 55432 has no PostgreSQL listener.
+- 解决方案：Recorded as an environment blocker; rerun the real smoke command after Docker Desktop and cloak-postgres are started.
+- 预防措施：Before real PostgreSQL smoke checks, confirm Docker daemon availability and cloak-postgres readiness with docker ps and pg_isready.
+- 状态：环境阻塞，待 Docker 恢复后复验。
