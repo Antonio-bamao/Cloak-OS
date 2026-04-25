@@ -224,10 +224,19 @@
 - 已运行全量验证：`node --test`，137 个测试全部通过。
 - 已运行真实验证：`node src/database/run-postgres-api-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak --check-health`，输出 `Health status: 200` 和 `Cleanup: logs deleted, campaign deleted`。
 - 已运行真实验证：`node src/database/run-postgres-admin-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak --check-health`，输出 `Health status: 200`；当前测试库计数为 Campaign 3、Log 2、Total visits 3。
+- 已补齐管理台空状态与错误态：
+  - `/admin` shell 新增 `error-banner` 与重试按钮，API 失败时会显示可恢复错误状态。
+  - 管理台 JS 新增 `renderErrorBanner()`、`hideErrorBanner()`、`handleUiError()`，并让刷新、筛选、保存、删除、清空筛选等异步操作统一走错误横幅和 toast。
+  - 活动表空状态会引导新建活动。
+  - 日志表会区分“暂无日志”和“暂无匹配记录”，筛选无结果时可直接清空筛选。
+  - 已补充 `test/admin-ui.test.js` 静态资源回归断言，防止错误态/空状态 UI 回退。
+- 已运行定向验证：`node test/admin-ui.test.js`，1 个测试通过。
+- 已运行语法验证：`node --check public/admin/app.js` 通过。
+- 已运行全量验证：`node --test`，137 个测试全部通过。
 - 进行中：
-  - Phase 2/3 收尾：PostgreSQL 运行时装配、migration、真实 Docker PostgreSQL smoke-check、API smoke flow、API smoke cleanup、访问日志 cleanup、可选 health 探测和 admin UI smoke flow 已完成。
+  - Phase 2/3 收尾：PostgreSQL 运行时装配、migration、真实 Docker PostgreSQL smoke-check、API smoke flow、API smoke cleanup、访问日志 cleanup、可选 health 探测、admin UI smoke flow、管理台空状态和错误态已完成。
 - 下一步：
-  - 若回到管理台方向：补空状态、错误态和 PostgreSQL 模式下的联调检查。
+  - 若回到管理台方向：补 PostgreSQL 模式下的浏览器级 UI 联调或移动端细节检查。
   - 若继续工具链方向：可补子进程级 CLI 集成测试。
 - 阻塞项：
   - 无当前阻塞；真实 PostgreSQL 测试库已通过 Docker 独立创建并验证。

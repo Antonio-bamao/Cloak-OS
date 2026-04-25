@@ -415,3 +415,12 @@
 - 结果：`run-postgres-api-smoke-check.js` 与 `run-postgres-admin-smoke-check.js` 现在都支持 `--check-health`；只有显式传参时才请求 `/health`，并校验统一响应中的 `data.status === ok`；摘要会输出 `Health status: 200` 便于人工确认。
 - 验证：运行 `node test/postgres-api-smoke-check.test.js`，9 个测试全部通过；运行 `node test/postgres-admin-smoke-check.test.js`，7 个测试全部通过；运行 `node test/docs.test.js`，2 个测试全部通过；运行 `node --test`，137 个测试全部通过；运行真实 `node src/database/run-postgres-api-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak --check-health` 与 `node src/database/run-postgres-admin-smoke-check.js --database-url ... --check-health`，均输出 `Health status: 200`。
 - 下一步：若继续管理台方向，可补空状态和错误态展示；若继续工具链方向，可考虑补更高层的子进程级 CLI 集成验证。
+
+## 2026-04-25 19:45 CST - 补齐管理台空状态与错误态
+
+- 时间：2026-04-25 19:45 CST
+- 目标：让管理台在无活动、无日志、筛选无结果和 API 失败时有清晰可恢复的界面状态，而不是只显示普通空行或 toast。
+- 动作：先扩展 `test/admin-ui.test.js`，锁定错误横幅、重试按钮、空状态样式和 JS 渲染函数；随后在 `public/admin/index.html` 增加 `error-banner` 和重试按钮，在 `public/admin/app.js` 增加 `renderErrorBanner()`、`hideErrorBanner()`、`handleUiError()`、更完整的 `emptyState()`，并将刷新、筛选、保存、删除、清空筛选等异步操作接入统一错误处理；最后在 `public/admin/styles.css` 补齐错误横幅与空状态样式。
+- 结果：管理台顶部现在有可重试的错误横幅；活动表空状态会引导新建活动；日志表在无日志和筛选无结果时显示不同文案，筛选无结果时可直接清空筛选。
+- 验证：运行 `node test/admin-ui.test.js`，1 个测试通过；运行 `node --check public/admin/app.js` 通过；运行 `node --test`，137 个测试全部通过。
+- 下一步：若继续管理台方向，可补 PostgreSQL 模式下的浏览器级 UI 联调或移动端细节检查；若继续工具链方向，可补子进程级 CLI 集成测试。

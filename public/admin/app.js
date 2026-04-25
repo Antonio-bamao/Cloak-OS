@@ -36,6 +36,9 @@ const elements = {
   tokenForm: document.querySelector('#token-form'),
   tokenInput: document.querySelector('#admin-token'),
   refreshButton: document.querySelector('#refresh-button'),
+  errorBanner: document.querySelector('#error-banner'),
+  errorMessage: document.querySelector('#error-message'),
+  retryError: document.querySelector('#retry-error'),
   statusVisits: document.querySelector('#status-visits'),
   campaignForm: document.querySelector('#campaign-form'),
   campaignId: document.querySelector('#campaign-id'),
@@ -70,42 +73,53 @@ elements.tokenForm.addEventListener('submit', async (event) => {
 });
 
 elements.refreshButton.addEventListener('click', () => refreshAll('数据已刷新'));
+elements.retryError.addEventListener('click', () => refreshAll('已重新加载'));
 
 elements.logFilters.addEventListener('submit', async (event) => {
   event.preventDefault();
-  state.filters = {
-    verdict: elements.filterVerdict.value,
-    action: elements.filterAction.value,
-    ipAddress: elements.filterIp.value.trim()
-  };
-  await loadLogs();
+  try {
+    hideErrorBanner();
+    state.filters = {
+      verdict: elements.filterVerdict.value,
+      action: elements.filterAction.value,
+      ipAddress: elements.filterIp.value.trim()
+    };
+    await loadLogs();
+  } catch (error) {
+    handleUiError(error);
+  }
 });
 
 elements.campaignForm.addEventListener('submit', async (event) => {
   event.preventDefault();
-  const payload = {
-    name: elements.campaignName.value.trim(),
-    safeUrl: elements.campaignSafeUrl.value.trim(),
-    moneyUrl: elements.campaignMoneyUrl.value.trim(),
-    redirectMode: elements.campaignMode.value
-  };
+  try {
+    hideErrorBanner();
+    const payload = {
+      name: elements.campaignName.value.trim(),
+      safeUrl: elements.campaignSafeUrl.value.trim(),
+      moneyUrl: elements.campaignMoneyUrl.value.trim(),
+      redirectMode: elements.campaignMode.value
+    };
 
-  if (state.editingCampaignId) {
-    await api(`/api/v1/campaigns/${state.editingCampaignId}`, {
-      method: 'PUT',
-      body: JSON.stringify(payload)
-    });
-    showSuccessModal('活动已更新，新的分流规则已生效。');
-  } else {
-    await api('/api/v1/campaigns', {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    });
-    showSuccessModal('活动已创建，已加入当前看板。');
+    if (state.editingCampaignId) {
+      await api(`/api/v1/campaigns/${state.editingCampaignId}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+      showSuccessModal('活动已更新，新的分流规则已生效。');
+    } else {
+      await api('/api/v1/campaigns', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      showSuccessModal('活动已创建，已加入当前看板。');
+    }
+
+    resetCampaignForm();
+    await refreshAll();
+  } catch (error) {
+    handleUiError(error);
   }
-
-  resetCampaignForm();
-  await refreshAll();
 });
 
 elements.resetCampaignForm.addEventListener('click', resetCampaignForm);
@@ -120,13 +134,28 @@ elements.successModal.addEventListener('click', (event) => {
 document.addEventListener('click', async (event) => {
   const editButton = event.target.closest('[data-edit-campaign]');
   const deleteButton = event.target.closest('[data-delete-campaign]');
+  const clearFiltersButton = event.target.closest('[data-clear-filters]');
 
   if (editButton) {
     editCampaign(editButton.dataset.editCampaign);
   }
 
   if (deleteButton) {
-    await deleteCampaign(deleteButton.dataset.deleteCampaign);
+    try {
+      hideErrorBanner();
+      await deleteCampaign(deleteButton.dataset.deleteCampaign);
+    } catch (error) {
+      handleUiError(error);
+    }
+  }
+
+  if (clearFiltersButton) {
+    try {
+      hideErrorBanner();
+      await clearLogFilters();
+    } catch (error) {
+      handleUiError(error);
+    }
   }
 });
 
@@ -134,12 +163,13 @@ refreshAll();
 
 async function refreshAll(message) {
   try {
+    hideErrorBanner();
     await Promise.all([loadOverview(), loadCampaigns(), loadLogs()]);
     if (message) {
       showToast(message);
     }
   } catch (error) {
-    showToast(error.message);
+    handleUiError(error);
   }
 }
 
@@ -260,7 +290,15 @@ function renderActionStrip(overview) {
 
 function renderCampaigns() {
   if (state.campaigns.length === 0) {
-    elements.campaignsTable.innerHTML = emptyRow(5, '暂无活动');
+    elements.campaignsTable.innerHTML = emptyRow(
+      5,
+      emptyState({
+        title: '暂无活动',
+        detail: '创建第一个活动后，这里会显示安全页、收益页和跳转模式。',
+        action: '新建活动',
+        href: '#campaign-form-title'
+      })
+    );
     return;
   }
 
@@ -291,7 +329,17 @@ function renderCampaigns() {
 
 function renderLogs() {
   if (state.logs.length === 0) {
-    elements.logsTable.innerHTML = emptyRow(6, '暂无日志');
+    elements.logsTable.innerHTML = emptyRow(
+      6,
+      emptyState({
+        title: hasActiveFilters() ? '暂无匹配记录' : '暂无日志',
+        detail: hasActiveFilters()
+          ? '当前筛选条件没有命中访问记录。'
+          : '公网入口产生访问后，这里会显示判定、动作和置信度。',
+        action: hasActiveFilters() ? '清空筛选' : '',
+        button: hasActiveFilters() ? 'data-clear-filters="true"' : ''
+      })
+    );
     return;
   }
 
@@ -330,6 +378,18 @@ async function deleteCampaign(campaignId) {
   await refreshAll();
 }
 
+async function clearLogFilters() {
+  elements.filterVerdict.value = '';
+  elements.filterAction.value = '';
+  elements.filterIp.value = '';
+  state.filters = {
+    verdict: '',
+    action: '',
+    ipAddress: ''
+  };
+  await loadLogs();
+}
+
 function resetCampaignForm() {
   state.editingCampaignId = null;
   elements.campaignForm.reset();
@@ -353,6 +413,42 @@ function setText(selector, value) {
 
 function emptyRow(colspan, label) {
   return `<tr><td class="empty-row" colspan="${colspan}">${label}</td></tr>`;
+}
+
+function emptyState({ title, detail, action, href, button }) {
+  const actionMarkup = action
+    ? href
+      ? `<a class="empty-action" href="${href}">${action}</a>`
+      : `<button class="empty-action" type="button" ${button}>${action}</button>`
+    : '';
+
+  return `
+    <div class="empty-state">
+      <span class="empty-mark"><svg><use href="#icon-search"></use></svg></span>
+      <strong>${escapeHtml(title)}</strong>
+      <p>${escapeHtml(detail)}</p>
+      ${actionMarkup}
+    </div>
+  `;
+}
+
+function hasActiveFilters() {
+  return Object.values(state.filters).some(Boolean);
+}
+
+function renderErrorBanner(message) {
+  elements.errorMessage.textContent = message || '请检查管理令牌或服务状态后重试。';
+  elements.errorBanner.hidden = false;
+}
+
+function hideErrorBanner() {
+  elements.errorBanner.hidden = true;
+}
+
+function handleUiError(error) {
+  const message = error?.message || '请求失败';
+  renderErrorBanner(message);
+  showToast(message);
 }
 
 function formatDate(value) {

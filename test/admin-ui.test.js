@@ -18,6 +18,8 @@ test('admin UI shell and assets are served by the app', async () => {
     assert.match(html, /class="top-status"/);
     assert.match(html, /id="donut-chart"/);
     assert.match(html, /id="success-modal"/);
+    assert.match(html, /id="error-banner"/);
+    assert.match(html, /id="retry-error"/);
     assert.match(html, /总览/);
     assert.match(html, /活动列表/);
     assert.match(html, /访问日志/);
@@ -34,6 +36,8 @@ test('admin UI shell and assets are served by the app', async () => {
     assert.match(css, /--surface-elevated/);
     assert.match(css, /conic-gradient/);
     assert.match(css, /backdrop-filter/);
+    assert.match(css, /\.error-banner/);
+    assert.match(css, /\.empty-state/);
 
     const jsResponse = await fetch(`http://127.0.0.1:${port}/admin/app.js`);
     assert.equal(jsResponse.status, 200);
@@ -41,6 +45,11 @@ test('admin UI shell and assets are served by the app', async () => {
     const js = await jsResponse.text();
     assert.match(js, /loadOverview/);
     assert.match(js, /showSuccessModal/);
+    assert.match(js, /renderErrorBanner/);
+    assert.match(js, /hideErrorBanner/);
+    assert.match(js, /handleUiError/);
+    assert.match(js, /emptyState/);
+    assert.match(js, /暂无匹配记录/);
     assert.doesNotMatch(js, /Premium|Campaign updated|Campaign created|operation board|Save Campaign|Update Campaign/);
   } finally {
     await new Promise((resolve, reject) => {

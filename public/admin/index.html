@@ -113,6 +113,14 @@
           </div>
         </header>
 
+        <section class="error-banner" id="error-banner" role="alert" hidden>
+          <div>
+            <strong id="error-title">数据加载失败</strong>
+            <p id="error-message">请检查管理令牌或服务状态后重试。</p>
+          </div>
+          <button class="secondary-button" id="retry-error" type="button">重试</button>
+        </section>
+
         <section class="metrics-grid" id="overview" aria-label="数据概览">
           <article class="metric-card is-hot">
             <span class="metric-icon"><svg><use href="#icon-shield"></use></svg></span>
