@@ -98,3 +98,14 @@
 - 解决方案：Recorded as an environment blocker; after Docker Desktop was restarted, started the existing `cloak-postgres` container, confirmed `pg_isready`, and reran the real PostgreSQL admin smoke successfully.
 - 预防措施：Before real PostgreSQL smoke checks, confirm Docker daemon availability and cloak-postgres readiness with docker ps and pg_isready.
 - 状态：已解决，2026-04-25 20:09 CST 复验通过。
+
+## Chrome headless browser check left residual processes
+
+- 标题：Chrome headless browser check left residual processes
+- 现象：运行管理台真实浏览器布局检查后，用户反馈 Google Chrome 卡住；进程列表中出现本轮检查时间附近启动的多个 Chrome 进程。
+- 触发条件：`test/admin-browser-layout.test.js` 使用 Chrome headless + remote debugging 做真实视口检查。
+- 影响：会干扰用户本机 Chrome 使用体验，并让后续验证步骤显得卡住。
+- 根因：Windows 下只 kill Chrome 主进程不足以保证其 renderer / utility 子进程树全部退出。
+- 解决方案：清理最近疑似残留的 5 个 Chrome 进程；将浏览器测试保持为 `RUN_BROWSER_LAYOUT=1` opt-in；在测试清理逻辑中使用 Windows `taskkill /T /F` 终止 Chrome 进程树。
+- 预防措施：默认全量测试不启动 Chrome；只有需要真实浏览器截图检查时才显式设置 `RUN_BROWSER_LAYOUT=1`，并在结束后检查近期 Chrome 进程。
+- 状态：已解决。

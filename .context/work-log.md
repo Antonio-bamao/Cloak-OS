@@ -434,3 +434,40 @@
 - 验证：运行 `node test/postgres-admin-smoke-check.test.js`，8 个测试全部通过；运行 `node --check src/database/run-postgres-admin-smoke-check.js` 通过；运行 `node --test`，138 个测试全部通过。
 - 真实复验：用户恢复 Docker Desktop 后，启动既有 `cloak-postgres` 容器并确认 `pg_isready`；运行 `node src/database/run-postgres-admin-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak --check-health`，输出 `PostgreSQL admin smoke check passed`、`Health status: 200`，Campaign count 2、Log count 2、Total visits 2。
 - 下一步：继续管理台移动端细节检查，或补子进程级 CLI 集成测试。
+
+## 2026-04-25 20:30 CST - 补齐管理台移动端细节
+
+- 时间：2026-04-25 20:30 CST
+- 目标：完成管理台移动端细节检查，减少窄屏下的拥挤、横向滚动顿挫和触控延迟。
+- 动作：先扩展 `test/admin-ui.test.js`，锁定移动端 CSS 关键资源；随后在 `public/admin/styles.css` 增加触控优化、表格惯性横滚、740px 侧栏/导航收敛和 520px 细粒度布局。
+- 结果：移动端下支持链接会隐藏，导航变为双列，KPI 保持双列紧凑展示，Token 表单变为输入框 + 44px 图标按钮，图表与条形图尺寸收敛，表格横向滚动更顺滑。
+- 验证：运行 `node test\admin-ui.test.js`，1 个测试通过；运行 `node --check public\admin\app.js` 通过；运行 `node --test`，138 个测试全部通过。
+- 下一步：若继续工具链方向，补子进程级 CLI 集成测试；若继续管理台方向，做真实浏览器截图检查。
+
+## 2026-04-25 20:32 CST - 补子进程级 CLI 集成测试
+
+- 时间：2026-04-25 20:32 CST
+- 目标：覆盖 CLI direct-run 的真实进程边界，避免只有函数级单测而漏掉入口文件、exit code、stdout/stderr 行为。
+- 动作：新增 `test/cli-subprocess.test.js`，通过 `process.execPath` 运行 migration、readonly PostgreSQL smoke、API smoke、Admin smoke CLI 的 `--help` 路径，并覆盖 migration CLI 缺少 `--database-url` 参数值时的错误退出。
+- 结果：四个 CLI 的真实子进程 `--help` 均返回 exit code 0、stdout 包含对应帮助标题且 stderr 为空；参数错误会返回 exit code 1、stdout 为空、stderr 包含明确错误。
+- 验证：初次在默认沙箱运行时因真实 `spawn` 受限返回 `EPERM`；按权限提权运行 `node --test test\cli-subprocess.test.js`，5 个测试全部通过；随后运行 `node --test`，143 个测试全部通过。
+- 下一步：若继续管理台方向，做真实浏览器截图检查；若继续数据库方向，可补真实 PostgreSQL smoke 的子进程级测试。
+
+## 2026-04-25 20:48 CST - 完成管理台真实浏览器布局检查
+
+- 时间：2026-04-25 20:48 CST
+- 目标：用真实 Chrome 检查管理台在手机、平板和桌面视口下是否存在横向溢出、触控目标过小或截图级布局问题。
+- 动作：新增 opt-in 浏览器测试 `test/admin-browser-layout.test.js`，通过 Chrome headless + DevTools 协议访问 `/admin`，检查 390x844、768x1024、1440x1000 三个视口并保存截图；首次红灯暴露 390px 视口横向溢出和 38px 高触控目标；随后修复 CSS，并将 `test-output/` 加入 `.gitignore` 且补充 `.gitignore` 回归测试。
+- 结果：`panel`/`table-wrap` 通过 `min-width: 0` 防止 grid 子项被表格撑破；搜索输入、`ghost-link`、`empty-action` 都达到 44px 触控高度；浏览器测试默认跳过，只有设置 `RUN_BROWSER_LAYOUT=1` 才会启动 Chrome。
+- 验证：运行 `$env:RUN_BROWSER_LAYOUT='1'; node --test test\admin-browser-layout.test.js`，1 个测试通过并生成 `phone-390.png`、`tablet-768.png`、`desktop-1440.png`；运行 `node --test test\admin-browser-layout.test.js`，默认跳过且语法正常；运行 `node --test test\admin-ui.test.js`、`node --test test\gitignore.test.js`、`node --check public\admin\app.js` 均通过；运行 `node --test`，143 个测试通过，1 个 opt-in 浏览器测试跳过。
+- 工程备注：真实浏览器检查曾留下疑似 Chrome headless 子进程，已清理最近 5 个 Chrome 进程，并把测试清理逻辑加固为 Windows 下 `taskkill /T /F`。
+- 下一步：若继续管理台方向，可在真实 PostgreSQL 数据下做非空表格和长 URL 的浏览器布局检查；若继续数据库方向，可补真实 PostgreSQL smoke 的子进程级测试。
+
+## 2026-04-25 21:10 CST - 扩展浏览器布局检查到非空长数据
+
+- 时间：2026-04-25 21:10 CST
+- 目标：确认管理台在真实渲染下遇到非空活动表、访问日志和超长 URL 时，不会重新出现移动端横向溢出或触控目标过小。
+- 动作：扩展 `test/admin-browser-layout.test.js`，新增一个 opt-in Chrome 测试；测试先通过管理 API 创建包含超长 safeUrl / moneyUrl 的 Campaign，再访问 `/c/:id` 生成日志，然后在 390x844、768x1024、1440x1000 三个视口下检查布局。
+- 结果：非空长数据场景会保存 `phone-390-long-data.png`、`tablet-768-long-data.png`、`desktop-1440-long-data.png`；测试会断言页面级无横向 overflow、触控目标不小于 44px，并确认表格横向溢出被包含在 `.table-wrap` 内。
+- 验证：运行 `$env:RUN_BROWSER_LAYOUT='1'; node --test test\admin-browser-layout.test.js`，2 个浏览器测试全部通过；运行 `node --test test\admin-browser-layout.test.js`，默认 2 个 opt-in 测试跳过且语法正常；运行 `node --test test\admin-ui.test.js test\gitignore.test.js`，2 个测试通过；运行 `node --test`，143 个测试通过，2 个 opt-in 浏览器测试跳过。
+- 下一步：若继续管理台方向，可把同一套浏览器检查接到真实 PostgreSQL 模式并在测试后清理样本数据；若继续数据库方向，可补真实 PostgreSQL smoke 的子进程级测试。

@@ -246,10 +246,49 @@
   - 已运行 `docker exec cloak-postgres pg_isready -U cloak -d cloak`，返回 accepting connections。
   - 已运行 `node src/database/run-postgres-admin-smoke-check.js --database-url postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak --check-health`，输出 `PostgreSQL admin smoke check passed`、`Health status: 200`，Campaign count 2、Log count 2、Total visits 2。
   - `.context/bug-log.md` 中 Docker daemon 阻塞项已标记为已解决。
+- 已补齐管理台移动端细节：
+  - 管理台交互控件增加 `touch-action: manipulation`，减少移动端点击延迟。
+  - 表格横向滚动容器增加 `max-width: 100%`、`-webkit-overflow-scrolling: touch` 与稳定滚动槽。
+  - 740px 以下优化侧栏间距、搜索框、导航网格，并隐藏移动端不必要的支持链接。
+  - 520px 以下新增更细布局：KPI 保持双列、Token 表单变为输入框 + 44px 图标按钮、状态区双列、图表和条形图缩小，避免移动端挤压。
+  - 已扩展 `test/admin-ui.test.js`，锁定这些移动端 CSS 资源，防止回退。
+- 已运行定向验证：`node test\admin-ui.test.js`，1 个测试通过。
+- 已运行语法验证：`node --check public\admin\app.js` 通过。
+- 已运行全量验证：`node --test`，138 个测试全部通过。
+- 已补子进程级 CLI 集成测试：
+  - 新增 `test/cli-subprocess.test.js`，用真实 Node 子进程运行 migration、readonly PostgreSQL smoke、API smoke、Admin smoke CLI 的 `--help` direct-run 路径。
+  - 覆盖 migration CLI 参数错误时的真实子进程 exit code、stdout/stderr 行为。
+  - 单独运行子进程测试时，默认沙箱曾因真实 `spawn` 返回 `EPERM`；提权后验证通过，随后全量测试在当前会话通过。
+- 已运行定向验证：`node --test test\cli-subprocess.test.js`，5 个测试全部通过。
+- 已运行全量验证：`node --test`，143 个测试全部通过。
+- 已完成管理台真实浏览器布局检查：
+  - 新增 opt-in 测试 `test/admin-browser-layout.test.js`，设置 `RUN_BROWSER_LAYOUT=1` 时用本机 Chrome headless + DevTools 协议检查 `/admin`。
+  - 覆盖 390x844、768x1024、1440x1000 三个视口，断言页面无横向 document overflow，所有可见交互目标不小于 44px，并保存截图到 `test-output/admin-browser-layout/`。
+  - 首次真实浏览器检查在 390px 视口发现页面横向溢出到 851px，且搜索框、`ghost-link`、`empty-action` 高度低于 44px。
+  - 已修复 CSS：`panel`/`table-wrap` 增加 `min-width: 0`，让表格只在容器内横滚；搜索输入、`ghost-link`、`empty-action` 补到 44px 触控高度。
+  - `.gitignore` 新增 `test-output/`，并扩展 `test/gitignore.test.js` 锁定截图输出不进入 Git。
+  - Windows 下浏览器测试清理逻辑已加固为 `taskkill /T /F`，避免 Chrome headless 子进程残留。
+- 已运行真实浏览器验证：`$env:RUN_BROWSER_LAYOUT='1'; node --test test\admin-browser-layout.test.js`，1 个测试通过，并生成 `phone-390.png`、`tablet-768.png`、`desktop-1440.png`。
+- 已清理本轮疑似残留的 5 个近期 Chrome 进程；后续未再启用浏览器测试，避免干扰用户 Chrome。
+- 已运行定向验证：`node --test test\admin-browser-layout.test.js`，默认跳过且语法正常。
+- 已运行定向验证：`node --test test\admin-ui.test.js`，1 个测试通过。
+- 已运行定向验证：`node --test test\gitignore.test.js`，1 个测试通过。
+- 已运行语法验证：`node --check public\admin\app.js` 通过。
+- 已运行全量验证：`node --test`，143 个测试通过，1 个 opt-in 浏览器测试跳过。
+- 已扩展管理台真实浏览器布局检查到非空长数据场景：
+  - `test/admin-browser-layout.test.js` 新增第二个 opt-in 测试，会先通过管理 API 创建一条包含超长 safeUrl / moneyUrl 的 Campaign，并访问 `/c/:id` 生成日志。
+  - 非空场景同样覆盖 390x844、768x1024、1440x1000，断言页面级无横向溢出、可见交互目标不小于 44px。
+  - 新增 `.table-wrap` 量测，确认长 URL 和非空表格的横向溢出被限制在表格滚动容器内，而不是撑破整页。
+  - 已生成额外截图：`phone-390-long-data.png`、`tablet-768-long-data.png`、`desktop-1440-long-data.png`。
+  - 本轮检查使用测试内临时内存数据完成；真实 PostgreSQL 数据下的同类浏览器检查仍可作为下一步。
+- 已运行真实浏览器验证：`$env:RUN_BROWSER_LAYOUT='1'; node --test test\admin-browser-layout.test.js`，2 个测试全部通过。
+- 已运行定向验证：`node --test test\admin-browser-layout.test.js`，默认 2 个 opt-in 浏览器测试跳过且语法正常。
+- 已运行定向验证：`node --test test\admin-ui.test.js test\gitignore.test.js`，2 个测试全部通过。
+- 已运行全量验证：`node --test`，143 个测试通过，2 个 opt-in 浏览器测试跳过。
 - 进行中：
-  - Phase 2/3 收尾：PostgreSQL 运行时装配、migration、API smoke flow、API smoke cleanup、访问日志 cleanup、可选 health 探测、admin UI smoke flow、管理台空状态和错误态已完成；PostgreSQL Admin smoke 已强化 UI 状态资源检查并通过真实 Docker 复验。
+  - Phase 2/3 收尾：PostgreSQL 运行时装配、migration、API smoke flow、API smoke cleanup、访问日志 cleanup、可选 health 探测、admin UI smoke flow、管理台空状态/错误态、管理台移动端细节、CLI 子进程级集成测试、管理台真实浏览器布局检查、非空长数据布局检查已完成；PostgreSQL Admin smoke 已强化 UI 状态资源检查并通过真实 Docker 复验。
 - 下一步：
-  - 若回到管理台方向：补移动端细节检查。
-  - 若继续工具链方向：可补子进程级 CLI 集成测试。
+  - 若继续数据库方向：可补真实 PostgreSQL API smoke 的子进程级测试，但需明确使用测试库并处理数据清理。
+  - 若继续管理台方向：可把浏览器布局检查接入真实 PostgreSQL 模式，确认数据库返回的非空表格和长 URL 数据不会破坏移动端布局，并在测试后清理样本数据。
 - 阻塞项：
   - 无当前阻塞。

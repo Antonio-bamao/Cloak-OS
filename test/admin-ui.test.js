@@ -38,6 +38,12 @@ test('admin UI shell and assets are served by the app', async () => {
     assert.match(css, /backdrop-filter/);
     assert.match(css, /\.error-banner/);
     assert.match(css, /\.empty-state/);
+    assert.match(css, /touch-action: manipulation/);
+    assert.match(css, /-webkit-overflow-scrolling: touch/);
+    assert.match(css, /@media \(max-width: 520px\)/);
+    assert.match(css, /\.support-list\s*\{[^}]*display: none/s);
+    assert.match(css, /\.metrics-grid\s*\{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/s);
+    assert.match(css, /\.token-form\s*\{[^}]*grid-template-columns: minmax\(0, 1fr\) 44px/s);
 
     const jsResponse = await fetch(`http://127.0.0.1:${port}/admin/app.js`);
     assert.equal(jsResponse.status, 200);
