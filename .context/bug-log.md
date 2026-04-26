@@ -109,3 +109,14 @@
 - 解决方案：清理最近疑似残留的 5 个 Chrome 进程；将浏览器测试保持为 `RUN_BROWSER_LAYOUT=1` opt-in；在测试清理逻辑中使用 Windows `taskkill /T /F` 终止 Chrome 进程树。
 - 预防措施：默认全量测试不启动 Chrome；只有需要真实浏览器截图检查时才显式设置 `RUN_BROWSER_LAYOUT=1`，并在结束后检查近期 Chrome 进程。
 - 状态：已解决。
+
+## Docker daemon unavailable blocked PostgreSQL browser layout check
+
+- 标题：Docker daemon unavailable blocked PostgreSQL browser layout check
+- 现象：准备真实运行 PostgreSQL 模式浏览器布局检查时，`docker ps --filter name=cloak-postgres ...` 返回 Docker Desktop Linux engine pipe 不存在。
+- 触发条件：为 `test/admin-browser-layout.test.js` 新增 PostgreSQL 模式 opt-in 测试后，尝试确认本地 `cloak-postgres` 是否可用于真实复验。
+- 影响：代码级入口和普通测试均已通过，但无法在当前环境确认真实 PostgreSQL + Chrome 场景。
+- 根因：本机 Docker Desktop daemon 当前未运行或 Linux engine pipe 不可用。
+- 解决方案：本轮先完成 opt-in 测试入口、README 文档和普通测试验证；真实复验延后到 Docker Desktop / `cloak-postgres` 恢复后执行。
+- 预防措施：真实 PostgreSQL 浏览器检查前先确认 Docker daemon、`cloak-postgres` 容器和端口 `55432` 可用。
+- 状态：已解决，2026-04-26 22:36 CST 用户恢复 Docker Desktop 后已运行真实 PostgreSQL 浏览器布局复验，3 个浏览器测试全部通过。

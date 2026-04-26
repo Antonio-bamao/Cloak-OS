@@ -23,6 +23,15 @@ npm start
 `npm run smoke:postgres-api` 会在 PostgreSQL 模式下启动真实 app，通过 HTTP 创建 Campaign、访问公网入口并检查日志与 Analytics；成功后默认删除本次创建的访问日志和测试 Campaign。可追加 `--check-health` 先探测 `GET /health`。
 `npm run smoke:postgres-admin` 会在 PostgreSQL 模式下启动真实 app，加载管理台页面/CSS/JS，检查错误态/空状态资源，并检查 Campaign、Logs、Analytics 管理 API。可追加 `--check-health` 先探测 `GET /health`。
 
+管理台浏览器布局检查默认不会随 `npm test` 启动 Chrome；需要显式开启：
+
+```powershell
+$env:RUN_BROWSER_LAYOUT='1'; node --test test\admin-browser-layout.test.js
+$env:RUN_BROWSER_LAYOUT='1'; $env:POSTGRES_BROWSER_LAYOUT_DATABASE_URL='postgres://cloak:secret@127.0.0.1:5432/cloak'; node --test test\admin-browser-layout.test.js
+```
+
+第一条命令会用内存仓储检查 `/admin` 的空状态和长 URL 非空表格布局；第二条会在 PostgreSQL 模式下创建长 URL 测试 Campaign、生成访问日志、检查管理台布局，并在结束时删除测试 Campaign 和日志。截图会写入 `test-output/admin-browser-layout/`，该目录已被 Git 忽略。
+
 也可以直接通过 CLI 覆盖连接信息或 migration 目录：
 
 ```bash

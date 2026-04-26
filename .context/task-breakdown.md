@@ -68,13 +68,29 @@
    - 使用 fake PG client 测试数据库仓储行为，避免当前阶段依赖真实数据库服务。
    - 通过 `REPOSITORY_DRIVER` 和仓储工厂统一切换 memory / postgres。
    - 通过 `startServer` 的 `postgresClient` / `createPostgresClient(databaseUrl)` 接入真实 PostgreSQL client。
-   - 准备未来接入真实 PostgreSQL 驱动依赖。
+   - 引入官方 `pg` 驱动，并在 PostgreSQL 模式启动前执行连通性校验。
+   - 增加 migration runner、status、dry-run、help 和可测试 CLI 调度层。
+   - 增加 readonly PostgreSQL smoke-check、API smoke-check、Admin smoke-check。
+   - 增加 API smoke cleanup，默认删除本次测试 Campaign 和访问日志。
+   - 为 API/Admin smoke 增加可选 `--check-health` 探测。
+   - 补子进程级 CLI 集成测试，覆盖 direct-run、stdout/stderr 和 exit code。
 7. Phase 3：前端管理台与分析
    - 使用 `ui-ux-pro-max` 生成 Cloak Admin 设计系统。
-   - 增加 `/admin` 静态管理台入口。
+   - 增加无构建依赖的 `/admin` 静态管理台入口。
    - 增加管理台概览指标、判定分布、全局日志、活动列表和活动表单。
    - 通过同源 API 调用 `/api/v1/analytics/overview`、`/api/v1/logs`、`/api/v1/campaigns`。
    - 保持管理台 UI 使用 ADMIN_TOKEN，不绕过后端鉴权。
+   - 去除 SaaS/Premium 营销化文案，统一为自用中文管理台语气。
+   - 补齐错误横幅、重试按钮、空状态和筛选无结果状态。
+   - 补齐移动端 CSS：触控目标、表格横向滚动、侧栏/导航收敛、窄屏表单布局。
+   - 增加 opt-in 真实浏览器布局测试，覆盖空状态、长 URL 非空表格和 PostgreSQL 模式。
+   - 将浏览器截图输出到 `test-output/admin-browser-layout/`，并保持该目录不进入 Git。
+
+## 剩余可选项
+
+- 清理测试库中历史旧孤儿日志：当前已知 1 条来自 2026-04-23 的 `Mozilla/5.0 CloakSmokeCheck`。
+- 增加真实 PostgreSQL API smoke 的子进程级 opt-in 测试，覆盖 direct-run + 真实 DB 全链路。
+- 若未来确实需要复杂前端状态管理，再单独立项 React/Vite 管理台；当前无构建静态管理台已满足本阶段验收。
 
 ## 依赖关系
 
@@ -107,6 +123,8 @@
 - 全局日志 route 只调用 AccessLogService，并通过管理 API 鉴权 wrapper 接入。
 - Admin UI 静态资源由独立 route 托管，不进入业务 Service。
 - Admin UI 只通过公开的管理 API 读写数据，不直接访问 Repository。
+- Admin UI 当前采用无构建静态 HTML/CSS/JS；除非另立前端工程任务，不引入 React/Vite/SPA 状态库。
+- 管理台浏览器布局测试必须保持 opt-in，避免日常 `node --test` 启动 Chrome 或连接真实数据库。
 - PostgreSQL 仓储适配器只依赖注入的 `client.query(sql, params)`，不直接耦合具体驱动。
 - 默认运行时仍使用内存 Repository；未来切换数据库只应改装配层，不改 Service / Route。
 - Redis 尚未接入真实服务，当前 Redis Bot IP Source 仅预留适配器接口。

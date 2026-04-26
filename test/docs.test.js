@@ -42,6 +42,9 @@ test('README documents startup, tests, env vars, and available API routes', asyn
   assert.match(readme, /--help/);
   assert.match(readme, /--check-health/);
   assert.match(readme, /readonly/i);
+  assert.match(readme, /RUN_BROWSER_LAYOUT/);
+  assert.match(readme, /POSTGRES_BROWSER_LAYOUT_DATABASE_URL/);
+  assert.match(readme, /test-output\/admin-browser-layout/);
 });
 
 test('.env.example lists every runtime env var consumed by config', async () => {

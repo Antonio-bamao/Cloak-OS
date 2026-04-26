@@ -34,20 +34,23 @@
 
 ### Phase 2 - 数据与运行时能力
 
-- 替换内存 Repository 为数据库 Repository。
+- 保留内存 Repository 作为默认开发模式，并通过仓储工厂支持 PostgreSQL Repository。
 - 增加统一错误处理中间件、结构化 logger、配置加载。
 - 增加健康检查和真实 HTTP 服务入口。
+- 增加 PostgreSQL client 装配、migration runner、readonly/API/Admin smoke-check 与真实 Docker PostgreSQL 联调。
 
 验收标准：
 - API 统一响应格式。
 - 管理 API 带 `/api/v1/` 前缀。
 - `GET /health` 可返回运行状态。
+- `REPOSITORY_DRIVER=postgres` 时可连接真实 PostgreSQL，并通过 migration 与 smoke-check 验证。
 
 ### Phase 3 - 前端管理台与分析
 
-- 建立 React SPA 管理台。
-- 实现活动 CRUD、实时日志、基础数据概览。
-- 预留 i18n、React Query、Zustand、React Hook Form 结构。
+- 建立无构建依赖的静态管理台，由 `/admin`、`/admin/styles.css`、`/admin/app.js` 托管。
+- 实现活动 CRUD、全局访问日志、基础数据概览、判定/动作分布和活动表单。
+- 管理台只通过同源管理 API 工作，不直接访问 Repository，不绕过 Bearer token 鉴权。
+- 补齐空状态、错误态、移动端布局和真实浏览器布局检查。
 
 ## 验收标准
 
@@ -55,4 +58,6 @@
 - 所有新增核心逻辑先有测试，测试命令可一键运行。
 - 配置、错误、日志和 API 响应格式集中管理。
 - 数据模型预留 `tenant_id`、`created_at`、`updated_at`。
+- 管理台无需前端构建即可随 Node HTTP server 访问，并通过管理 API 完成读写。
+- PostgreSQL 模式下 migration、API smoke、Admin smoke 和 opt-in 浏览器布局检查均可复验。
 - `.context/current-status.md` 与实际工作状态保持同步。

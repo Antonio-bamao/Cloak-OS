@@ -471,3 +471,32 @@
 - 结果：非空长数据场景会保存 `phone-390-long-data.png`、`tablet-768-long-data.png`、`desktop-1440-long-data.png`；测试会断言页面级无横向 overflow、触控目标不小于 44px，并确认表格横向溢出被包含在 `.table-wrap` 内。
 - 验证：运行 `$env:RUN_BROWSER_LAYOUT='1'; node --test test\admin-browser-layout.test.js`，2 个浏览器测试全部通过；运行 `node --test test\admin-browser-layout.test.js`，默认 2 个 opt-in 测试跳过且语法正常；运行 `node --test test\admin-ui.test.js test\gitignore.test.js`，2 个测试通过；运行 `node --test`，143 个测试通过，2 个 opt-in 浏览器测试跳过。
 - 下一步：若继续管理台方向，可把同一套浏览器检查接到真实 PostgreSQL 模式并在测试后清理样本数据；若继续数据库方向，可补真实 PostgreSQL smoke 的子进程级测试。
+
+## 2026-04-26 22:31 CST - 接入 PostgreSQL 模式浏览器布局检查
+
+- 时间：2026-04-26 22:31 CST
+- 目标：把管理台浏览器布局检查从内存数据扩展到真实 PostgreSQL app 装配，确认数据库返回的长 URL 非空表格也不会破坏移动端布局。
+- 动作：扩展 `test/admin-browser-layout.test.js`，新增第三个 opt-in Chrome 测试；该测试只有同时设置 `RUN_BROWSER_LAYOUT=1` 和 `POSTGRES_BROWSER_LAYOUT_DATABASE_URL` 才运行，会通过 `startServer()` 启动 postgres 模式 app，创建长 URL Campaign，访问 `/c/:id` 生成日志，并在结束时删除日志和 Campaign。同步更新 README 与 docs 测试，记录浏览器布局检查的环境变量、截图目录和清理行为。
+- 结果：PostgreSQL 浏览器布局检查入口已具备完整的启动、造数、截图、布局断言和清理路径；日常 `node --test` 不启动 Chrome，也不会连接 PostgreSQL。
+- 验证：运行 `node --test test\docs.test.js`，2 个测试通过；运行 `node --test test\admin-browser-layout.test.js`，默认 3 个 opt-in 测试跳过且语法正常；运行 `node --check public\admin\app.js` 通过；运行 `node --test`，143 个测试通过，3 个 opt-in 浏览器测试跳过。
+- 阻塞：`docker ps --filter name=cloak-postgres ...` 返回 Docker Desktop daemon pipe 不存在，真实 PostgreSQL 浏览器布局复验需等 Docker Desktop / `cloak-postgres` 恢复后执行。
+- 下一步：Docker 恢复后运行 `$env:RUN_BROWSER_LAYOUT='1'; $env:POSTGRES_BROWSER_LAYOUT_DATABASE_URL='postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak'; node --test test\admin-browser-layout.test.js`，确认真实 PostgreSQL 场景通过并清理样本数据。
+
+## 2026-04-26 22:36 CST - 完成真实 PostgreSQL 浏览器布局复验
+
+- 时间：2026-04-26 22:36 CST
+- 目标：在真实 `cloak-postgres` 测试库上运行 PostgreSQL 模式管理台浏览器布局检查，并确认测试样本会自动清理。
+- 动作：用户恢复 Docker Desktop 后，启动既有 `cloak-postgres` 容器；确认 `pg_isready` ready；运行 `RUN_BROWSER_LAYOUT=1` + `POSTGRES_BROWSER_LAYOUT_DATABASE_URL=postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak` 的 `test/admin-browser-layout.test.js`；随后查询测试库中的样本 Campaign 与 `BrowserLayoutCheck` 日志计数。
+- 结果：真实 PostgreSQL + Chrome 场景下，空状态、内存长数据、PostgreSQL 长数据 3 个浏览器布局测试全部通过；PostgreSQL 长数据截图已生成；测试创建的 `PostgreSQL 长链接布局回归%` Campaign 与 `Mozilla/5.0 BrowserLayoutCheck` 日志均为 0，清理成功。
+- 验证：运行 `$env:RUN_BROWSER_LAYOUT='1'; $env:POSTGRES_BROWSER_LAYOUT_DATABASE_URL='postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak'; node --test test\admin-browser-layout.test.js`，3 个测试全部通过；运行 `node --test test\admin-browser-layout.test.js`，默认 3 个 opt-in 测试跳过；运行 `node --test`，143 个测试通过，3 个 opt-in 浏览器测试跳过。
+- 备注：测试库中仍有 1 条旧孤儿日志，来源为 2026-04-23 的 `Mozilla/5.0 CloakSmokeCheck`，不是本轮浏览器测试产生。
+- 下一步：可清理历史旧孤儿日志，或继续补真实 PostgreSQL API smoke 的子进程级验证。
+
+## 2026-04-26 22:40 CST - 对齐计划文档到当前架构
+
+- 时间：2026-04-26 22:40 CST
+- 目标：清理 `.context` 中早期 React SPA 计划与当前无构建静态管理台实现之间的漂移。
+- 动作：更新 `.context/master-plan.md`，把 Phase 3 改为 `/admin` 静态 HTML/CSS/原生 JS 管理台；更新 `.context/task-breakdown.md`，补齐 PostgreSQL runtime、migration、smoke、浏览器布局检查和剩余可选项；在 `.context/decisions.md` 记录“Phase 3 管理台采用无构建静态实现”的决策。
+- 结果：计划、任务拆解、决策记录已与当前实现一致；React/Vite/SPA 只作为“不采用或未来另立项”的说明保留，不再作为当前交付目标。
+- 验证：运行 `rg "React|Vite|SPA|React Query|Zustand|React Hook Form" .context README.md test public src`，确认只剩决策语境下的刻意说明。
+- 下一步：运行 `.context` 校验；之后可提交当前已完成改动，或继续处理旧孤儿日志 / PostgreSQL API smoke 子进程级验证。

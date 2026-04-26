@@ -285,10 +285,33 @@
 - 已运行定向验证：`node --test test\admin-browser-layout.test.js`，默认 2 个 opt-in 浏览器测试跳过且语法正常。
 - 已运行定向验证：`node --test test\admin-ui.test.js test\gitignore.test.js`，2 个测试全部通过。
 - 已运行全量验证：`node --test`，143 个测试通过，2 个 opt-in 浏览器测试跳过。
+- 已将浏览器布局检查接入 PostgreSQL 模式：
+  - `test/admin-browser-layout.test.js` 新增第三个 opt-in 测试，只有同时设置 `RUN_BROWSER_LAYOUT=1` 与 `POSTGRES_BROWSER_LAYOUT_DATABASE_URL` 才运行。
+  - 该测试会通过 `startServer()` 以 `repository.driver=postgres` 启动真实 app，创建超长 URL Campaign，访问 `/c/:id` 生成日志，再检查 390x844、768x1024、1440x1000 三个视口。
+  - 测试结束时会调用 `DELETE /api/v1/campaigns/:id/logs` 和 `DELETE /api/v1/campaigns/:id` 清理样本数据。
+  - README 已补 `RUN_BROWSER_LAYOUT` 与 `POSTGRES_BROWSER_LAYOUT_DATABASE_URL` 的运行方式，并说明截图输出与清理行为。
+- 已运行定向验证：`node --test test\docs.test.js`，2 个测试全部通过。
+- 已运行定向验证：`node --test test\admin-browser-layout.test.js`，默认 3 个 opt-in 浏览器测试跳过且语法正常。
+- 已运行语法验证：`node --check public\admin\app.js` 通过。
+- 已运行全量验证：`node --test`，143 个测试通过，3 个 opt-in 浏览器测试跳过。
+- 真实 PostgreSQL 浏览器布局复验已完成：
+  - 用户恢复 Docker Desktop 后，已启动既有 `cloak-postgres` 容器。
+  - 已运行 `docker exec cloak-postgres pg_isready -U cloak -d cloak`，返回 accepting connections。
+  - 已运行 `$env:RUN_BROWSER_LAYOUT='1'; $env:POSTGRES_BROWSER_LAYOUT_DATABASE_URL='postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak'; node --test test\admin-browser-layout.test.js`，3 个浏览器测试全部通过。
+  - 已生成 PostgreSQL 场景截图：`phone-390-postgres-long-data.png`、`tablet-768-postgres-long-data.png`、`desktop-1440-postgres-long-data.png`。
+  - 已确认测试创建的 `PostgreSQL 长链接布局回归%` Campaign 为 0，`Mozilla/5.0 BrowserLayoutCheck` 日志为 0，样本清理成功。
+  - 测试库中仍有 1 条旧孤儿日志，来源为 2026-04-23 的 `Mozilla/5.0 CloakSmokeCheck`，不是本轮浏览器测试产生。
+- 已运行全量验证：`node --test`，143 个测试通过，3 个 opt-in 浏览器测试跳过。
+- 已完成计划文档对齐：
+  - `.context/master-plan.md` 已将 Phase 3 从早期 “React SPA” 修正为当前已实现的无构建静态管理台。
+  - `.context/task-breakdown.md` 已补齐 PostgreSQL runtime/migration/smoke/browser-layout 相关任务，并增加剩余可选项。
+  - `.context/decisions.md` 新增决策：Phase 3 管理台采用 `/admin` 静态 HTML/CSS/原生 JS，除非另立前端工程任务，不引入 React/Vite/SPA 状态库。
+  - 已扫描 `.context` / README / test / public / src，React/Vite/SP​A 仅保留在“明确不采用或未来另立项”的决策语境里。
 - 进行中：
-  - Phase 2/3 收尾：PostgreSQL 运行时装配、migration、API smoke flow、API smoke cleanup、访问日志 cleanup、可选 health 探测、admin UI smoke flow、管理台空状态/错误态、管理台移动端细节、CLI 子进程级集成测试、管理台真实浏览器布局检查、非空长数据布局检查已完成；PostgreSQL Admin smoke 已强化 UI 状态资源检查并通过真实 Docker 复验。
+  - Phase 2/3 收尾：PostgreSQL 运行时装配、migration、API smoke flow、API smoke cleanup、访问日志 cleanup、可选 health 探测、admin UI smoke flow、管理台空状态/错误态、管理台移动端细节、CLI 子进程级集成测试、管理台真实浏览器布局检查、非空长数据布局检查、PostgreSQL 模式浏览器布局复验已完成。
 - 下一步：
   - 若继续数据库方向：可补真实 PostgreSQL API smoke 的子进程级测试，但需明确使用测试库并处理数据清理。
-  - 若继续管理台方向：可把浏览器布局检查接入真实 PostgreSQL 模式，确认数据库返回的非空表格和长 URL 数据不会破坏移动端布局，并在测试后清理样本数据。
+  - 可清理测试库中历史旧孤儿日志。
+  - 当前改动可整理提交。
 - 阻塞项：
   - 无当前阻塞。

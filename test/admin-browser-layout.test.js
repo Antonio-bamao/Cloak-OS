@@ -10,10 +10,12 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { promisify } from 'node:util';
 
 import { createApp } from '../src/server/app.js';
+import { startServer } from '../src/server/start.js';
 
 const projectRoot = path.resolve(import.meta.dirname, '..');
 const screenshotDir = path.join(projectRoot, 'test-output', 'admin-browser-layout');
 const execFileAsync = promisify(execFile);
+const adminToken = 'dev-admin-token';
 
 const viewports = [
   { name: 'phone-390', width: 390, height: 844, mobile: true },
@@ -142,6 +144,89 @@ test('admin UI contains long non-empty tables without page overflow in real Chro
   }
 });
 
+test('postgres admin UI contains long non-empty tables without page overflow in real Chrome', {
+  skip: process.env.RUN_BROWSER_LAYOUT === '1' && process.env.POSTGRES_BROWSER_LAYOUT_DATABASE_URL
+    ? false
+    : 'Set RUN_BROWSER_LAYOUT=1 and POSTGRES_BROWSER_LAYOUT_DATABASE_URL to run the postgres browser layout check.'
+}, async () => {
+  const chromePath = findChromePath();
+
+  if (!chromePath) {
+    assert.fail('Chrome was not found. Set CHROME_PATH to run browser layout checks.');
+  }
+
+  const server = await startServer({
+    logger: {
+      info() {},
+      error() {}
+    },
+    config: {
+      server: {
+        host: '127.0.0.1',
+        port: 0
+      },
+      auth: {
+        adminToken
+      },
+      repository: {
+        driver: 'postgres',
+        databaseUrl: process.env.POSTGRES_BROWSER_LAYOUT_DATABASE_URL
+      }
+    }
+  });
+  const chrome = await launchChrome(chromePath);
+  const client = await CdpClient.connect(chrome.webSocketDebuggerUrl);
+  let campaignId;
+
+  try {
+    await mkdir(screenshotDir, { recursive: true });
+    await client.send('Page.enable');
+    await client.send('Runtime.enable');
+
+    const { port } = server.address();
+    const baseUrl = `http://127.0.0.1:${port}`;
+    campaignId = await seedLongCampaign(baseUrl, {
+      name: `PostgreSQL 长链接布局回归 ${Date.now()}`
+    });
+
+    for (const viewport of viewports) {
+      const result = await inspectViewport({
+        client,
+        viewport,
+        url: `${baseUrl}/admin`,
+        waitFor: `
+          document.readyState === 'complete' &&
+            document.body.textContent.includes('PostgreSQL 长链接布局回归') &&
+            document.querySelectorAll('#campaigns-table tr').length > 0 &&
+            document.querySelectorAll('#logs-table tr').length > 0 &&
+            !document.querySelector('#campaigns-table .empty-state') &&
+            !document.querySelector('#logs-table .empty-state')
+        `
+      });
+      await writeFile(
+        path.join(screenshotDir, `${viewport.name}-postgres-long-data.png`),
+        Buffer.from(result.screenshot, 'base64')
+      );
+
+      assertHealthyLayout(result.metrics, `${viewport.name} postgres long-data`);
+      assert.ok(
+        result.metrics.tableWraps.every((tableWrap) => tableWrap.containsOverflow),
+        `${viewport.name} postgres table overflow should stay contained in table-wrap: ${JSON.stringify(result.metrics.tableWraps)}`
+      );
+    }
+  } finally {
+    if (campaignId) {
+      await cleanupCampaign(`http://127.0.0.1:${server.address().port}`, campaignId);
+    }
+
+    client.close();
+    await chrome.close();
+    await new Promise((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+});
+
 async function inspectViewport({ client, viewport, url, waitFor }) {
   await client.send('Emulation.setDeviceMetricsOverride', {
     width: viewport.width,
@@ -225,16 +310,18 @@ function assertHealthyLayout(metrics, label) {
   );
 }
 
-async function seedLongCampaign(baseUrl) {
+async function seedLongCampaign(baseUrl, {
+  name = '超长链接布局回归活动'
+} = {}) {
   const longSuffix = 'utm_source=' + 'very-long-source-value-'.repeat(12);
   const response = await fetch(`${baseUrl}/api/v1/campaigns`, {
     method: 'POST',
     headers: {
-      Authorization: 'Bearer dev-admin-token',
+      Authorization: `Bearer ${adminToken}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      name: '超长链接布局回归活动',
+      name,
       safeUrl: `https://safe.example/path/to/a/very/deep/resource/${'safe-segment-'.repeat(16)}?${longSuffix}`,
       moneyUrl: `https://money.example/offers/${'money-segment-'.repeat(18)}?${longSuffix}`,
       redirectMode: 'redirect'
@@ -251,6 +338,23 @@ async function seedLongCampaign(baseUrl) {
     headers: {
       'user-agent': 'Mozilla/5.0 BrowserLayoutCheck'
     }
+  });
+
+  return payload.data.id;
+}
+
+async function cleanupCampaign(baseUrl, campaignId) {
+  const headers = {
+    Authorization: `Bearer ${adminToken}`
+  };
+
+  await fetch(`${baseUrl}/api/v1/campaigns/${campaignId}/logs`, {
+    method: 'DELETE',
+    headers
+  });
+  await fetch(`${baseUrl}/api/v1/campaigns/${campaignId}`, {
+    method: 'DELETE',
+    headers
   });
 }
 
