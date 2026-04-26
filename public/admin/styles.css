@@ -607,6 +607,70 @@ select {
   font-size: 1.35rem;
 }
 
+.settings-panel {
+  grid-column: 1 / -1;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.setting-tile {
+  min-width: 0;
+  min-height: 96px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.setting-tile span,
+.settings-detail h3 {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.setting-tile strong {
+  display: block;
+  margin-top: 10px;
+  color: var(--color-foreground);
+  font-family: "Fira Code", "Cascadia Code", Consolas, monospace;
+  font-size: 0.96rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.settings-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.settings-detail > div {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: rgba(8, 10, 24, 0.52);
+}
+
+.settings-detail p,
+.settings-detail li {
+  color: var(--text-soft);
+  font-size: 0.86rem;
+  overflow-wrap: anywhere;
+}
+
+.settings-detail ul {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
 .table-heading {
   align-items: center;
 }
@@ -885,7 +949,8 @@ td {
   }
 
   .right-rail,
-  .form-panel {
+  .form-panel,
+  .settings-panel {
     grid-column: span 2;
   }
 }
@@ -931,8 +996,14 @@ td {
   }
 
   .right-rail,
-  .form-panel {
+  .form-panel,
+  .settings-panel {
     grid-column: auto;
+  }
+
+  .settings-grid,
+  .settings-detail {
+    grid-template-columns: 1fr;
   }
 
   .token-form,

@@ -74,7 +74,7 @@
 
         <p class="nav-heading">工具</p>
         <nav class="nav-list support-list" aria-label="支持导航">
-          <a class="nav-item" href="#campaign-form-title">
+          <a class="nav-item" href="#settings">
             <svg><use href="#icon-bell"></use></svg>
             系统设置
           </a>
@@ -101,7 +101,7 @@
             </span>
             <span class="status-badge">
               <svg><use href="#icon-bell"></use></svg>
-              本地模式
+              <span id="repository-badge">本地模式</span>
             </span>
             <form class="token-form" id="token-form">
               <label for="admin-token">管理令牌</label>
@@ -273,6 +273,46 @@
                 <button class="primary-button" id="save-campaign-button" type="submit">保存活动</button>
               </div>
             </form>
+          </section>
+
+          <section class="panel settings-panel" id="settings" aria-labelledby="settings-title">
+            <div class="panel-heading">
+              <div>
+                <h2 id="settings-title">系统设置</h2>
+                <p>运行配置与检测参数</p>
+              </div>
+              <span class="pill" id="settings-driver">未加载</span>
+            </div>
+            <div class="settings-grid" aria-label="运行配置">
+              <article class="setting-tile">
+                <span>服务监听</span>
+                <strong id="settings-server">-</strong>
+              </article>
+              <article class="setting-tile">
+                <span>仓储模式</span>
+                <strong id="settings-repository">-</strong>
+              </article>
+              <article class="setting-tile">
+                <span>检测阈值</span>
+                <strong id="settings-thresholds">-</strong>
+              </article>
+              <article class="setting-tile">
+                <span>Bot IP 数量</span>
+                <strong id="settings-bot-count">0</strong>
+              </article>
+            </div>
+            <div class="settings-detail">
+              <div>
+                <h3>Bot IP 列表</h3>
+                <p id="settings-bot-ips">未配置</p>
+              </div>
+              <div>
+                <h3>运维提示</h3>
+                <ul id="settings-notes">
+                  <li>环境变量修改后需要重启服务。</li>
+                </ul>
+              </div>
+            </div>
           </section>
         </section>
       </main>

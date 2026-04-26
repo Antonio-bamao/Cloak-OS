@@ -93,6 +93,8 @@
    - 新增 `docs/DEPLOYMENT.md`，记录 `.env.production`、migration、smoke-check、健康检查和更新流程。
    - 新增 `docs/USAGE.md`，记录 Admin UI/API 使用方式，以及机器人看白页、真人看黑页/黑夜页的验证流程。
    - 新增部署文档测试，锁定生产部署文件和使用手册关键内容。
+   - 将 `docs/DEPLOYMENT.md` 和 `docs/USAGE.md` 改为中文用户文档。
+   - 补齐管理台“系统设置”：新增受保护 `GET /api/v1/settings` 和独立 `#settings` 面板。
 
 ## 剩余可选项
 

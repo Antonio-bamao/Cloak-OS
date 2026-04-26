@@ -128,6 +128,14 @@ GET /api/v1/analytics/overview
 GET /api/v1/logs
 ```
 
+### Settings
+
+```http
+GET /api/v1/settings
+```
+
+该接口返回运行配置摘要，不会返回 `ADMIN_TOKEN` 或 `DATABASE_URL` 明文。
+
 ### Public Cloak
 
 ```http

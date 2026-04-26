@@ -354,9 +354,21 @@
   - RED：`node --test test\deployment-docs.test.js` 先因英文标题失败。
   - GREEN：`node --test test\deployment-docs.test.js test\docs.test.js`，4 个测试通过。
   - 全量：`node --test`，146 个测试通过、4 个 opt-in 测试跳过、0 失败。
+- 已补齐管理台系统设置功能：
+  - 新增 `SettingsService` 和受保护管理 API `GET /api/v1/settings`。
+  - 设置 API 返回运行配置摘要：服务监听、仓储模式、检测阈值、Bot IP 数量/列表、密钥配置状态和运维提示。
+  - `ADMIN_TOKEN` 与 `DATABASE_URL` 只返回是否已配置，不返回明文。
+  - 管理台侧栏“系统设置”现在跳转到独立 `#settings` 面板，不再指向活动表单。
+  - 管理台会加载并展示运行配置、仓储模式、检测阈值、Bot IP 列表和“环境变量修改后需要重启服务”的提示。
+  - README 已补 `GET /api/v1/settings`。
+- 已运行系统设置验证：
+  - RED：`node --test test\settings-api.test.js test\admin-ui.test.js` 先失败。
+  - GREEN：`node --test test\settings-api.test.js test\admin-ui.test.js test\docs.test.js`，5 个测试通过。
+  - 语法：`node --check public\admin\app.js` 通过。
+  - 全量：`node --test`，148 个测试通过、4 个 opt-in 测试跳过、0 失败。
 - 进行中：
-  - Phase 2/3 收尾、生产部署配置与中文使用文档已完成。
+  - Phase 2/3 收尾、生产部署配置、中文使用文档与系统设置面板已完成。
 - 下一步：
-  - 按 `docs/DEPLOYMENT.md` 部署服务；按 `docs/USAGE.md` 创建 Campaign 并验证机器人白页 / 真人黑页链路。
+  - 启动本地服务，让用户查看管理台系统设置与查询记录入口。
 - 阻塞项：
   - 无当前阻塞。

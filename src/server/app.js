@@ -3,6 +3,7 @@ import { createAdminStaticRoutes } from '../routes/admin-static.routes.js';
 import { createCampaignRoutes } from '../routes/campaign.routes.js';
 import { createAnalyticsRoutes } from '../routes/analytics.routes.js';
 import { createAccessLogRoutes } from '../routes/access-log.routes.js';
+import { createSettingsRoutes } from '../routes/settings.routes.js';
 import { createCloakRoute } from '../routes/cloak.routes.js';
 import { createRateLimitedRoute } from '../routes/rate-limit.js';
 import { createAuthenticatedRoutes } from '../routes/authenticated-routes.js';
@@ -10,6 +11,7 @@ import { BearerTokenAuthService } from '../auth/bearer-token-auth.service.js';
 import { CampaignService } from '../services/campaign.service.js';
 import { AnalyticsService } from '../services/analytics.service.js';
 import { AccessLogService } from '../services/access-log.service.js';
+import { SettingsService } from '../services/settings.service.js';
 import { createRepositories } from '../repositories/factory.js';
 import { createDefaultDetectionPipeline } from '../core/pipeline-factory.js';
 import { InMemoryRateLimiter } from '../utils/rate-limiter.js';
@@ -26,14 +28,16 @@ export function createApp({
   adminAuthService = new BearerTokenAuthService({ token: config.auth.adminToken }),
   campaignService = createDefaultCampaignService({ config, repositories, postgresClient }),
   analyticsService = createDefaultAnalyticsService({ campaignService }),
-  accessLogService = createDefaultAccessLogService({ campaignService })
+  accessLogService = createDefaultAccessLogService({ campaignService }),
+  settingsService = new SettingsService({ config })
 } = {}) {
   const cloakRoute = createCloakRoute({ campaignService });
   const managementRoutes = createAuthenticatedRoutes(
     {
       ...createCampaignRoutes({ campaignService }),
       ...createAccessLogRoutes({ accessLogService }),
-      ...createAnalyticsRoutes({ analyticsService })
+      ...createAnalyticsRoutes({ analyticsService }),
+      ...createSettingsRoutes({ settingsService })
     },
     adminAuthService
   );

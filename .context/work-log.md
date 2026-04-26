@@ -561,3 +561,10 @@
 - 结果：面向用户阅读的生产部署和使用手册已中文化，白页/黑页验证流程保持可执行。
 - 验证：RED：node --test test\deployment-docs.test.js 先因英文标题失败；GREEN：node --test test\deployment-docs.test.js test\docs.test.js 4 个测试通过；全量 node --test 146 通过、0 失败、4 跳过。
 - 下一步：运行 .context 校验，提交并推送中文文档改动。
+
+## 2026-04-27 02:51 CST｜补齐管理台系统设置功能
+- 目标：补齐管理台系统设置功能
+- 动作：按 TDD 新增 settings API 与 admin UI 红灯测试；新增 SettingsService 和受保护 GET /api/v1/settings；管理台侧栏系统设置改为跳转独立 #settings 面板；前端加载并展示运行配置、仓储模式、检测阈值、Bot IP 数量与运维提示；README 补 GET /api/v1/settings。
+- 结果：系统设置不再是活动表单占位，已成为独立只读运行配置面板；敏感配置只返回是否已配置，不返回 ADMIN_TOKEN 或 DATABASE_URL 明文。
+- 验证：RED：node --test test\settings-api.test.js test\admin-ui.test.js 先失败；GREEN：settings/admin/docs 定向测试 5 个通过；node --check public\admin\app.js 通过；全量 node --test 148 通过、0 失败、4 跳过。
+- 下一步：运行 .context 校验，提交并推送系统设置功能。

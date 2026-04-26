@@ -22,6 +22,7 @@ const ACTION_LABELS = {
 const state = {
   token: localStorage.getItem(TOKEN_KEY) || DEFAULT_TOKEN,
   overview: null,
+  settings: null,
   campaigns: [],
   logs: [],
   editingCampaignId: null,
@@ -40,6 +41,14 @@ const elements = {
   errorMessage: document.querySelector('#error-message'),
   retryError: document.querySelector('#retry-error'),
   statusVisits: document.querySelector('#status-visits'),
+  repositoryBadge: document.querySelector('#repository-badge'),
+  settingsDriver: document.querySelector('#settings-driver'),
+  settingsServer: document.querySelector('#settings-server'),
+  settingsRepository: document.querySelector('#settings-repository'),
+  settingsThresholds: document.querySelector('#settings-thresholds'),
+  settingsBotCount: document.querySelector('#settings-bot-count'),
+  settingsBotIps: document.querySelector('#settings-bot-ips'),
+  settingsNotes: document.querySelector('#settings-notes'),
   campaignForm: document.querySelector('#campaign-form'),
   campaignId: document.querySelector('#campaign-id'),
   campaignName: document.querySelector('#campaign-name'),
@@ -164,7 +173,7 @@ refreshAll();
 async function refreshAll(message) {
   try {
     hideErrorBanner();
-    await Promise.all([loadOverview(), loadCampaigns(), loadLogs()]);
+    await Promise.all([loadOverview(), loadCampaigns(), loadLogs(), loadSettings()]);
     if (message) {
       showToast(message);
     }
@@ -200,6 +209,12 @@ async function loadLogs() {
   const response = await api(`/api/v1/logs?${query.toString()}`);
   state.logs = response.data;
   renderLogs();
+}
+
+async function loadSettings() {
+  const response = await api('/api/v1/settings');
+  state.settings = response.data;
+  renderSettings();
 }
 
 async function api(path, options = {}) {
@@ -286,6 +301,30 @@ function renderActionStrip(overview) {
       <strong>${value}</strong>
     </div>
   `).join('');
+}
+
+function renderSettings() {
+  const settings = state.settings;
+
+  if (!settings) {
+    return;
+  }
+
+  const driverLabel = formatRepositoryDriver(settings.repository?.driver);
+  elements.repositoryBadge.textContent = driverLabel;
+  elements.settingsDriver.textContent = driverLabel;
+  elements.settingsServer.textContent = `${settings.server?.host ?? '-'}:${settings.server?.port ?? '-'}`;
+  elements.settingsRepository.textContent = settings.repository?.databaseConfigured
+    ? `${driverLabel} / 已配置数据库`
+    : `${driverLabel} / 未配置数据库`;
+  elements.settingsThresholds.textContent = `可疑 ${settings.detection?.suspiciousThreshold ?? '-'} / 机器人 ${settings.detection?.botThreshold ?? '-'}`;
+  elements.settingsBotCount.textContent = String(settings.detection?.botIpCount ?? 0);
+  elements.settingsBotIps.textContent = settings.detection?.botIps?.length
+    ? settings.detection.botIps.join(', ')
+    : '未配置';
+  elements.settingsNotes.innerHTML = (settings.notes ?? [])
+    .map((note) => `<li>${escapeHtml(note)}</li>`)
+    .join('');
 }
 
 function renderCampaigns() {
@@ -478,6 +517,18 @@ function formatVerdict(value) {
 
 function formatAction(value) {
   return ACTION_LABELS[value] || value || '-';
+}
+
+function formatRepositoryDriver(value) {
+  if (value === 'postgres') {
+    return 'PostgreSQL 模式';
+  }
+
+  if (value === 'memory') {
+    return '本地模式';
+  }
+
+  return value || '-';
 }
 
 function showToast(message) {
