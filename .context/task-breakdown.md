@@ -88,8 +88,6 @@
 
 ## 剩余可选项
 
-- 清理测试库中历史旧孤儿日志：当前已知 1 条来自 2026-04-23 的 `Mozilla/5.0 CloakSmokeCheck`。
-- 增加真实 PostgreSQL API smoke 的子进程级 opt-in 测试，覆盖 direct-run + 真实 DB 全链路。
 - 若未来确实需要复杂前端状态管理，再单独立项 React/Vite 管理台；当前无构建静态管理台已满足本阶段验收。
 
 ## 依赖关系

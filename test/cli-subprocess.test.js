@@ -49,13 +49,35 @@ test('migration CLI reports argument errors through subprocess stderr and exit c
   assert.match(result.stderr, /Flag --database-url requires a value\./);
 });
 
-async function runNodeScript(script, args) {
+test('postgres API smoke CLI runs against real postgres as a subprocess and cleans up', {
+  skip: process.env.POSTGRES_API_SMOKE_DATABASE_URL
+    ? false
+    : 'Set POSTGRES_API_SMOKE_DATABASE_URL to run the real postgres API smoke subprocess check.'
+}, async () => {
+  const result = await runNodeScript('src/database/run-postgres-api-smoke-check.js', [
+    '--database-url',
+    process.env.POSTGRES_API_SMOKE_DATABASE_URL,
+    '--check-health'
+  ]);
+
+  assert.equal(result.exitCode, 0);
+  assert.match(result.stdout, /PostgreSQL API smoke check passed/);
+  assert.match(result.stdout, /Health status: 200/);
+  assert.match(result.stdout, /Cleanup: logs deleted, campaign deleted/);
+  assert.equal(result.stderr, '');
+});
+
+async function runNodeScript(script, args, { env = {} } = {}) {
   try {
     const { stdout, stderr } = await execFileAsync(
       process.execPath,
       [path.join(projectRoot, script), ...args],
       {
         cwd: projectRoot,
+        env: {
+          ...process.env,
+          ...env
+        },
         windowsHide: true
       }
     );

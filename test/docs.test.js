@@ -44,6 +44,7 @@ test('README documents startup, tests, env vars, and available API routes', asyn
   assert.match(readme, /readonly/i);
   assert.match(readme, /RUN_BROWSER_LAYOUT/);
   assert.match(readme, /POSTGRES_BROWSER_LAYOUT_DATABASE_URL/);
+  assert.match(readme, /POSTGRES_API_SMOKE_DATABASE_URL/);
   assert.match(readme, /test-output\/admin-browser-layout/);
 });
 

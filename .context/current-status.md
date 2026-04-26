@@ -300,18 +300,32 @@
   - 已运行 `$env:RUN_BROWSER_LAYOUT='1'; $env:POSTGRES_BROWSER_LAYOUT_DATABASE_URL='postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak'; node --test test\admin-browser-layout.test.js`，3 个浏览器测试全部通过。
   - 已生成 PostgreSQL 场景截图：`phone-390-postgres-long-data.png`、`tablet-768-postgres-long-data.png`、`desktop-1440-postgres-long-data.png`。
   - 已确认测试创建的 `PostgreSQL 长链接布局回归%` Campaign 为 0，`Mozilla/5.0 BrowserLayoutCheck` 日志为 0，样本清理成功。
-  - 测试库中仍有 1 条旧孤儿日志，来源为 2026-04-23 的 `Mozilla/5.0 CloakSmokeCheck`，不是本轮浏览器测试产生。
+  - 测试库中曾有 2026-04-23 的旧 `Mozilla/5.0 CloakSmokeCheck` 残留，已在后续清理。
 - 已运行全量验证：`node --test`，143 个测试通过，3 个 opt-in 浏览器测试跳过。
 - 已完成计划文档对齐：
   - `.context/master-plan.md` 已将 Phase 3 从早期 “React SPA” 修正为当前已实现的无构建静态管理台。
   - `.context/task-breakdown.md` 已补齐 PostgreSQL runtime/migration/smoke/browser-layout 相关任务，并增加剩余可选项。
   - `.context/decisions.md` 新增决策：Phase 3 管理台采用 `/admin` 静态 HTML/CSS/原生 JS，除非另立前端工程任务，不引入 React/Vite/SPA 状态库。
   - 已扫描 `.context` / README / test / public / src，React/Vite/SP​A 仅保留在“明确不采用或未来另立项”的决策语境里。
+- 已补真实 PostgreSQL API smoke 子进程级验证：
+  - `test/cli-subprocess.test.js` 新增 opt-in 测试，只有设置 `POSTGRES_API_SMOKE_DATABASE_URL` 时才会运行真实 PostgreSQL API smoke 子进程。
+  - 该测试通过真实 Node 子进程运行 `src/database/run-postgres-api-smoke-check.js --check-health`，断言 health 200、成功摘要和 `Cleanup: logs deleted, campaign deleted` 清理摘要。
+  - README 已补运行方式，`test/docs.test.js` 已锁定文档中的 `POSTGRES_API_SMOKE_DATABASE_URL`。
+  - 已运行默认验证：`node --test test\cli-subprocess.test.js`，5 个测试通过、1 个真实 PostgreSQL opt-in 测试跳过；`node --test test\docs.test.js`，2 个测试通过。
+  - 已运行真实 PostgreSQL 验证：`$env:POSTGRES_API_SMOKE_DATABASE_URL='postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak'; node --test test\cli-subprocess.test.js`，6 个测试全部通过。
+  - 已确认本轮测试没有留下近 10 分钟内的 `Mozilla/5.0 CloakSmokeCheck` 访问日志；测试库中曾有 2 个 2026-04-23 的历史 `Postgres Smoke ...` Campaign，不是本轮新残留，已在后续清理。
+- 已运行全量验证：`node --test`，143 个测试通过，4 个 opt-in 测试跳过。
+- 已清理测试库历史 smoke 残留：
+  - 删除前确认最近 30 分钟访问日志为 0，待清理范围仅为 2026-04-23 的 smoke 历史数据。
+  - 已用事务删除 2 条旧 `Mozilla/5.0 CloakSmokeCheck` 访问日志和 2 个旧 `Postgres Smoke ...` Campaign。
+  - 删除后已反查确认 `Mozilla/5.0 CloakSmokeCheck` 日志为 0，`Postgres Smoke %` Campaign 为 0，最近 30 分钟访问日志仍为 0。
+- 已运行收口验证：
+  - `node --test`：143 个测试通过、4 个 opt-in 测试跳过、0 失败。
+  - `.context` 校验：`context is valid`。
+- 已提交收口改动：`test: add postgres API smoke subprocess check`。
 - 进行中：
-  - Phase 2/3 收尾：PostgreSQL 运行时装配、migration、API smoke flow、API smoke cleanup、访问日志 cleanup、可选 health 探测、admin UI smoke flow、管理台空状态/错误态、管理台移动端细节、CLI 子进程级集成测试、管理台真实浏览器布局检查、非空长数据布局检查、PostgreSQL 模式浏览器布局复验已完成。
+  - Phase 2/3 收尾：PostgreSQL 运行时装配、migration、API smoke flow、API smoke cleanup、访问日志 cleanup、可选 health 探测、admin UI smoke flow、管理台空状态/错误态、管理台移动端细节、CLI 子进程级集成测试、真实 PostgreSQL API smoke 子进程验证、管理台真实浏览器布局检查、非空长数据布局检查、PostgreSQL 模式浏览器布局复验已完成。
 - 下一步：
-  - 若继续数据库方向：可补真实 PostgreSQL API smoke 的子进程级测试，但需明确使用测试库并处理数据清理。
-  - 可清理测试库中历史旧孤儿日志。
-  - 当前改动可整理提交。
+  - Phase 2/3 已进入可交付收口状态；后续如继续扩展，可另立复杂 React/Vite 管理台或更多生产部署配置任务。
 - 阻塞项：
   - 无当前阻塞。

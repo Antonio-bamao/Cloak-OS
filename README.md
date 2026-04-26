@@ -32,6 +32,14 @@ $env:RUN_BROWSER_LAYOUT='1'; $env:POSTGRES_BROWSER_LAYOUT_DATABASE_URL='postgres
 
 第一条命令会用内存仓储检查 `/admin` 的空状态和长 URL 非空表格布局；第二条会在 PostgreSQL 模式下创建长 URL 测试 Campaign、生成访问日志、检查管理台布局，并在结束时删除测试 Campaign 和日志。截图会写入 `test-output/admin-browser-layout/`，该目录已被 Git 忽略。
 
+真实 PostgreSQL API smoke 的子进程级检查也默认跳过；需要显式提供测试库连接串：
+
+```powershell
+$env:POSTGRES_API_SMOKE_DATABASE_URL='postgres://cloak:secret@127.0.0.1:5432/cloak'; node --test test\cli-subprocess.test.js
+```
+
+该测试会以真实 Node 子进程运行 `run-postgres-api-smoke-check.js --check-health`，并确认摘要包含健康检查和默认 cleanup。
+
 也可以直接通过 CLI 覆盖连接信息或 migration 目录：
 
 ```bash

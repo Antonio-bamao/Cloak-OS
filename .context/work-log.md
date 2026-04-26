@@ -500,3 +500,36 @@
 - 结果：计划、任务拆解、决策记录已与当前实现一致；React/Vite/SPA 只作为“不采用或未来另立项”的说明保留，不再作为当前交付目标。
 - 验证：运行 `rg "React|Vite|SPA|React Query|Zustand|React Hook Form" .context README.md test public src`，确认只剩决策语境下的刻意说明。
 - 下一步：运行 `.context` 校验；之后可提交当前已完成改动，或继续处理旧孤儿日志 / PostgreSQL API smoke 子进程级验证。
+
+## 2026-04-26 23:29 CST - 补真实 PostgreSQL API smoke 子进程验证
+
+- 时间：2026-04-26 23:29 CST
+- 目标：把 API smoke 的真实 PostgreSQL 验证也放到子进程边界上，覆盖 direct-run 入口、health 探测输出和测试数据清理摘要。
+- 动作：扩展 `test/cli-subprocess.test.js`，新增 `POSTGRES_API_SMOKE_DATABASE_URL` 控制的 opt-in 测试；测试通过真实 Node 子进程运行 `src/database/run-postgres-api-smoke-check.js --check-health`。同步更新 README 运行说明，并扩展 `test/docs.test.js` 锁定文档变量。
+- 结果：日常 `node --test` 不连接 PostgreSQL；设置 `POSTGRES_API_SMOKE_DATABASE_URL` 后会真实运行 API smoke 子进程，并断言 `PostgreSQL API smoke check passed`、`Health status: 200` 与 `Cleanup: logs deleted, campaign deleted`。
+- 验证：运行 `node --test test\cli-subprocess.test.js`，5 个测试通过、1 个真实 PostgreSQL opt-in 测试跳过；运行 `node --test test\docs.test.js`，2 个测试通过；运行 `$env:POSTGRES_API_SMOKE_DATABASE_URL='postgres://cloak:cloak_dev_password@127.0.0.1:55432/cloak'; node --test test\cli-subprocess.test.js`，6 个测试全部通过；运行 `node --test`，143 个测试通过、4 个 opt-in 测试跳过。
+- 清理确认：本轮测试没有留下近 10 分钟内的 `Mozilla/5.0 CloakSmokeCheck` 访问日志；测试库仍有 2 个 2026-04-23 的历史 `Postgres Smoke ...` Campaign，不是本轮新残留。
+- 下一步：当前改动可整理提交；若要清测试库历史残留，需要先明确允许删除旧测试数据。
+
+## 2026-04-27 00:05 CST - 清理测试库历史 smoke 残留
+
+- 时间：2026-04-27 00:05 CST
+- 目标：在不影响当前测试数据的前提下，清理 2026-04-23 遗留的无用 PostgreSQL smoke 数据。
+- 动作：先查询 `access_logs` 与 `campaigns`，确认最近 30 分钟访问日志为 0；待清理范围仅包含 2 条 2026-04-23 的 `Mozilla/5.0 CloakSmokeCheck` 访问日志和 2 个 2026-04-23 的 `Postgres Smoke ...` Campaign。随后用事务先删访问日志，再删 Campaign。
+- 结果：事务返回 `DELETE 2`、`DELETE 2`、`COMMIT`。
+- 验证：反查 `Mozilla/5.0 CloakSmokeCheck` 日志为 0，`Postgres Smoke %` Campaign 为 0，最近 30 分钟访问日志仍为 0。
+- 下一步：当前改动可整理提交。
+
+## 2026-04-27 00:11 CST｜Phase 2/3 收口前复验
+- 目标：Phase 2/3 收口前复验
+- 动作：读取当前 diff，确认未提交范围集中在真实 PostgreSQL API smoke 子进程 opt-in 测试、README 文档和 .context 状态记录；运行全量测试和 .context 校验。
+- 结果：全量测试通过，项目上下文有效；当前改动可进入 Git 提交。
+- 验证：运行 node --test，输出 tests 147、pass 143、fail 0、skipped 4；运行 validate_context.py --project-root .，输出 context is valid。
+- 下一步：提交当前改动。
+
+## 2026-04-27 00:14 CST｜提交 Phase 2/3 收口改动
+- 目标：提交 Phase 2/3 收口改动
+- 动作：执行 git add . 并创建提交 test: add postgres API smoke subprocess check；随后更新 current-status 记录提交结果。
+- 结果：收口改动已进入 Git 提交；上下文状态已改为 Phase 2/3 可交付收口状态。
+- 验证：提交输出显示 6 files changed, 75 insertions(+), 7 deletions(-)。
+- 下一步：运行 .context 校验并 amend 状态记录到同一提交。
