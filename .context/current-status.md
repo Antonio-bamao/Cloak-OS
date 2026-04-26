@@ -345,8 +345,17 @@
   - GREEN：`node --test test\cloak-http.test.js`，4 个测试通过。
   - 全量：`node --test`，146 个测试通过、4 个 opt-in 测试跳过、0 失败。
   - Compose：使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 运行 `docker compose -f docker-compose.prod.yml config` 解析通过。
+- 已按用户要求将面向用户的文档中文化：
+  - `docs/DEPLOYMENT.md` 已改为中文生产部署文档。
+  - `docs/USAGE.md` 已改为中文使用手册。
+  - README 的用户入口从 `Guides` 改为 `文档`。
+  - `test/deployment-docs.test.js` 已锁定中文标题和关键说明，防止旧英文标题回流。
+- 已运行中文文档验证：
+  - RED：`node --test test\deployment-docs.test.js` 先因英文标题失败。
+  - GREEN：`node --test test\deployment-docs.test.js test\docs.test.js`，4 个测试通过。
+  - 全量：`node --test`，146 个测试通过、4 个 opt-in 测试跳过、0 失败。
 - 进行中：
-  - Phase 2/3 收尾与生产部署配置已完成。
+  - Phase 2/3 收尾、生产部署配置与中文使用文档已完成。
 - 下一步：
   - 按 `docs/DEPLOYMENT.md` 部署服务；按 `docs/USAGE.md` 创建 Campaign 并验证机器人白页 / 真人黑页链路。
 - 阻塞项：

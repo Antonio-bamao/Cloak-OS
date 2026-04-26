@@ -2,7 +2,7 @@
 
 斗篷 Cloak 是一个可扩展的流量判定后端骨架。当前版本包含检测管道、Campaign 管理 API、访问日志、统一响应、配置化启动和初始数据库 migration 草案。
 
-## Guides
+## 文档
 
 - 生产部署：`docs/DEPLOYMENT.md`
 - 使用手册：`docs/USAGE.md`

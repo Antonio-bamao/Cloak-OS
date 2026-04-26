@@ -554,3 +554,10 @@
 - 结果：curl 使用 X-Forwarded-For 模拟 BOT_IPS 的流程现在能触发 safeUrl，文档中的机器人白页/真人黑页验证流程与真实运行时一致。
 - 验证：RED：node --test test\cloak-http.test.js 中新增测试先失败，实际 Location 为 https://black.example；GREEN：同命令 4 个测试通过；全量 node --test 146 通过、0 失败、4 跳过；docker compose config 使用临时 POSTGRES_PASSWORD/ADMIN_TOKEN 解析通过。
 - 下一步：更新 current-status 后校验 .context，并提交 X-Forwarded-For 修正。
+
+## 2026-04-27 00:57 CST｜将用户可见部署与使用文档改为中文
+- 目标：将用户可见部署与使用文档改为中文
+- 动作：扩展 deployment docs 测试，要求 DEPLOYMENT 和 USAGE 使用中文标题与关键说明，并禁止旧英文标题回流；将两份文档全文改为中文，保留命令、环境变量和 API 字段原样；README 的 Guides 改为中文文档。
+- 结果：面向用户阅读的生产部署和使用手册已中文化，白页/黑页验证流程保持可执行。
+- 验证：RED：node --test test\deployment-docs.test.js 先因英文标题失败；GREEN：node --test test\deployment-docs.test.js test\docs.test.js 4 个测试通过；全量 node --test 146 通过、0 失败、4 跳过。
+- 下一步：运行 .context 校验，提交并推送中文文档改动。

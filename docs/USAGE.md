@@ -1,45 +1,45 @@
-# Cloak Usage Guide
+# 斗篷系统使用手册
 
-This guide explains how to use Cloak after it is running.
+这份文档说明斗篷系统启动后怎么使用。
 
-## Core Idea
+## 核心概念
 
-Each Campaign has two destination URLs:
+每个 Campaign 有两个目标地址：
 
-- `safeUrl`: the safe/white page shown to bot or suspicious traffic.
-- `moneyUrl`: the real/black or black-night page shown to human traffic.
+- `safeUrl`：安全页 / 白页，给机器人或可疑流量看。
+- `moneyUrl`：真实页 / 黑页 / 黑夜页，给真人流量看。
 
-Public visitors use:
+公开访客访问：
 
 ```http
 GET /c/:campaignId
 ```
 
-Cloak runs the request through the detection pipeline, records an access log, and returns the configured strategy response: redirect, iframe, or loading page.
+斗篷系统会把请求交给检测管道，记录访问日志，然后按 Campaign 配置返回跳转策略响应：redirect、iframe 或 loading。
 
-## Admin UI
+## 管理台
 
-Open:
+打开：
 
 ```text
 http://127.0.0.1:3000/admin
 ```
 
-Enter your `ADMIN_TOKEN`. The Admin UI uses the same management APIs as external clients and sends:
+输入你的 `ADMIN_TOKEN`。管理台和外部客户端一样，只调用管理 API，并发送：
 
 ```http
 Authorization: Bearer <ADMIN_TOKEN>
 ```
 
-From the Admin UI you can:
+你可以在管理台里：
 
-- Create and edit Campaigns.
-- Set `safeUrl` and `moneyUrl`.
-- Choose redirect mode.
-- View logs.
-- View verdict and action analytics.
+- 创建和编辑 Campaign。
+- 设置 `safeUrl` 和 `moneyUrl`。
+- 选择跳转模式。
+- 查看访问日志。
+- 查看 `verdict` 和 `action` 统计。
 
-## Create a Campaign with the API
+## 用 API 创建 Campaign
 
 ```bash
 curl -X POST http://127.0.0.1:3000/api/v1/campaigns \
@@ -53,33 +53,33 @@ curl -X POST http://127.0.0.1:3000/api/v1/campaigns \
   }'
 ```
 
-The response contains the Campaign `id`. Your public cloak link is:
+响应里会返回 Campaign 的 `id`。你的公开斗篷链接是：
 
 ```text
 http://127.0.0.1:3000/c/<campaign-id>
 ```
 
-## Test: Bot Sees White Page, Human Sees Black Page
+## 测试：机器人看白页，真人看黑页
 
-Use this recipe to verify the main cloak behavior.
+用下面这组步骤验证核心斗篷行为。
 
-### 1. Configure URLs
+### 1. 配置 URL
 
-Create or update one Campaign:
+创建或更新一个 Campaign：
 
-- `safeUrl`: your 白页, for example `https://example.com/white-page`.
-- `moneyUrl`: your 黑页 / 黑夜页, for example `https://example.com/black-night-page`.
-- `redirectMode`: `redirect` is easiest to inspect because the response is a `302 Location`.
+- `safeUrl`：你的白页，例如 `https://example.com/white-page`。
+- `moneyUrl`：你的黑页 / 黑夜页，例如 `https://example.com/black-night-page`。
+- `redirectMode`：建议先用 `redirect`，因为最容易通过 `302 Location` 检查结果。
 
-### 2. Trigger Bot Traffic with BOT_IPS
+### 2. 用 BOT_IPS 触发机器人流量
 
-Set `BOT_IPS` before starting the app:
+启动应用前设置 `BOT_IPS`：
 
 ```bash
 BOT_IPS=203.0.113.10
 ```
 
-Then send a request that appears to come from that IP:
+然后发送一个看起来来自这个 IP 的请求：
 
 ```bash
 curl -i http://127.0.0.1:3000/c/<campaign-id> \
@@ -87,30 +87,30 @@ curl -i http://127.0.0.1:3000/c/<campaign-id> \
   -H "User-Agent: Mozilla/5.0"
 ```
 
-Expected result:
+预期结果：
 
-- Response is a redirect to `safeUrl`.
-- Access log `verdict` is `bot`.
-- Access log `action` is `safe`.
+- 响应跳转到 `safeUrl`。
+- 访问日志里的 `verdict` 是 `bot`。
+- 访问日志里的 `action` 是 `safe`。
 
-### 3. Trigger Bot Traffic with Googlebot User-Agent
+### 3. 用 Googlebot User-Agent 触发机器人流量
 
-If you do not want to change `BOT_IPS`, use a known crawler User-Agent:
+如果不想改 `BOT_IPS`，可以使用已知爬虫 User-Agent：
 
 ```bash
 curl -i http://127.0.0.1:3000/c/<campaign-id> \
   -H "User-Agent: Googlebot/2.1 (+http://www.google.com/bot.html)"
 ```
 
-Expected result:
+预期结果：
 
-- Response is a redirect to `safeUrl`.
-- Access log `verdict` is `bot`.
-- Access log `action` is `safe`.
+- 响应跳转到 `safeUrl`。
+- 访问日志里的 `verdict` 是 `bot`。
+- 访问日志里的 `action` 是 `safe`。
 
-### 4. Trigger Human Traffic
+### 4. 触发真人流量
 
-Use a normal browser-like User-Agent and an IP that is not in `BOT_IPS`:
+使用普通浏览器 User-Agent，并使用不在 `BOT_IPS` 里的 IP：
 
 ```bash
 curl -i http://127.0.0.1:3000/c/<campaign-id> \
@@ -118,38 +118,38 @@ curl -i http://127.0.0.1:3000/c/<campaign-id> \
   -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36"
 ```
 
-Expected result:
+预期结果：
 
-- Response is a redirect to `moneyUrl`.
-- Access log `verdict` is `human`.
-- Access log `action` is `money`.
+- 响应跳转到 `moneyUrl`。
+- 访问日志里的 `verdict` 是 `human`。
+- 访问日志里的 `action` 是 `money`。
 
-## Inspect Logs
+## 查看日志
 
 ```bash
 curl "http://127.0.0.1:3000/api/v1/logs?page=1&pageSize=20" \
   -H "Authorization: Bearer <ADMIN_TOKEN>"
 ```
 
-Filter bot/safe traffic:
+筛选机器人 / 白页流量：
 
 ```bash
 curl "http://127.0.0.1:3000/api/v1/logs?verdict=bot&action=safe" \
   -H "Authorization: Bearer <ADMIN_TOKEN>"
 ```
 
-Filter human/money traffic:
+筛选真人 / 黑页流量：
 
 ```bash
 curl "http://127.0.0.1:3000/api/v1/logs?verdict=human&action=money" \
   -H "Authorization: Bearer <ADMIN_TOKEN>"
 ```
 
-## Inspect Analytics
+## 查看统计
 
 ```bash
 curl http://127.0.0.1:3000/api/v1/analytics/overview \
   -H "Authorization: Bearer <ADMIN_TOKEN>"
 ```
 
-Use the `verdict` and `action` counts to confirm the Campaign is separating bot and human traffic as expected.
+用 `verdict` 和 `action` 计数确认 Campaign 正在按预期区分机器人流量和真人流量。

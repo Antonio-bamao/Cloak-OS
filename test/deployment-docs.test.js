@@ -24,6 +24,12 @@ test('production deployment assets document postgres-backed Docker deployment', 
   assert.match(deployment, /npm run migrate/);
   assert.match(deployment, /npm run smoke:postgres-api/);
   assert.match(deployment, /\/health/);
+  assert.match(deployment, /# 生产部署/);
+  assert.match(deployment, /前置条件/);
+  assert.match(deployment, /创建生产环境变量/);
+  assert.match(deployment, /启动 PostgreSQL/);
+  assert.doesNotMatch(deployment, /# Production Deployment/);
+  assert.doesNotMatch(deployment, /## Prerequisites/);
   assert.match(readme, /docs\/DEPLOYMENT\.md/);
   assert.match(readme, /docs\/USAGE\.md/);
 });
@@ -41,4 +47,10 @@ test('usage guide explains bot safe page and human money page verification', asy
   assert.match(usage, /Authorization: Bearer/);
   assert.match(usage, /verdict/);
   assert.match(usage, /action/);
+  assert.match(usage, /# 斗篷系统使用手册/);
+  assert.match(usage, /核心概念/);
+  assert.match(usage, /测试：机器人看白页，真人看黑页/);
+  assert.doesNotMatch(usage, /# Cloak Usage Guide/);
+  assert.doesNotMatch(usage, /## Core Idea/);
+  assert.doesNotMatch(usage, /Expected result/);
 });
