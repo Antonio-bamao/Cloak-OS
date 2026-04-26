@@ -58,6 +58,43 @@ test('public cloak HTTP route sends clean traffic to the money URL as a raw redi
   }
 });
 
+test('public cloak HTTP route uses X-Forwarded-For as visitor IP when present', async () => {
+  const repository = new InMemoryCampaignRepository();
+  const pipeline = new DetectionPipeline();
+  pipeline.register(new IpCaptureDetector('203.0.113.10'));
+  const campaignService = new CampaignService({
+    repository,
+    pipeline,
+    decisionEngine: new DecisionEngine()
+  });
+  const campaign = await campaignService.createCampaign({
+    name: 'Forwarded IP Cloak',
+    safeUrl: 'https://white.example',
+    moneyUrl: 'https://black.example',
+    redirectMode: 'redirect'
+  });
+  const app = createApp({ campaignService });
+
+  await new Promise((resolve) => app.listen(0, '127.0.0.1', resolve));
+  try {
+    const { port } = app.address();
+    const response = await fetch(`http://127.0.0.1:${port}/c/${campaign.id}`, {
+      redirect: 'manual',
+      headers: {
+        'X-Forwarded-For': '203.0.113.10, 198.51.100.20',
+        'User-Agent': 'Mozilla/5.0'
+      }
+    });
+
+    assert.equal(response.status, 302);
+    assert.equal(response.headers.get('location'), 'https://white.example');
+  } finally {
+    await new Promise((resolve, reject) => {
+      app.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+});
+
 test('HTTP server preserves HTML strategy headers and body for cloak responses', async () => {
   const repository = new InMemoryCampaignRepository();
   const campaignService = new CampaignService({ repository });
@@ -85,6 +122,25 @@ test('HTTP server preserves HTML strategy headers and body for cloak responses',
     });
   }
 });
+
+class IpCaptureDetector extends BaseDetector {
+  constructor(botIp) {
+    super();
+    this.botIp = botIp;
+  }
+
+  get name() {
+    return 'ip-capture';
+  }
+
+  async detect(ctx) {
+    return {
+      isBot: ctx.ip === this.botIp,
+      confidence: ctx.ip === this.botIp ? 100 : 0,
+      reason: `ip=${ctx.ip}`
+    };
+  }
+}
 
 test('public cloak HTTP route returns 429 when the rate limiter rejects a visitor', async () => {
   const repository = new InMemoryCampaignRepository();

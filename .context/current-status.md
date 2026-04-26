@@ -336,6 +336,15 @@
   - GREEN：`node --test test\deployment-docs.test.js test\docs.test.js`，4 个测试通过。
   - 全量：`node --test`，145 个测试通过、4 个 opt-in 测试跳过、0 失败。
   - Compose：使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 运行 `docker compose -f docker-compose.prod.yml config` 解析通过。
+- 已修正文档验证链路中的真实运行时缺口：
+  - 新增 cloak HTTP 回归测试，确认 `X-Forwarded-For` 第一段 IP 会作为访客 IP 进入检测管道。
+  - HTTP server 现在优先使用 `X-Forwarded-For`，再回退到 socket `remoteAddress`。
+  - 这让 `docs/USAGE.md` 中通过 `BOT_IPS` + `X-Forwarded-For` 验证机器人看白页、真人看黑页/黑夜页的流程可直接执行。
+- 已运行最终验证：
+  - RED：新增 `X-Forwarded-For` 测试先失败，实际跳到 `moneyUrl`。
+  - GREEN：`node --test test\cloak-http.test.js`，4 个测试通过。
+  - 全量：`node --test`，146 个测试通过、4 个 opt-in 测试跳过、0 失败。
+  - Compose：使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 运行 `docker compose -f docker-compose.prod.yml config` 解析通过。
 - 进行中：
   - Phase 2/3 收尾与生产部署配置已完成。
 - 下一步：

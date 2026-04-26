@@ -103,8 +103,22 @@ async function toRouteRequest(request, params) {
     query: Object.fromEntries(url.searchParams.entries()),
     headers: request.headers,
     body: await readJsonBody(request),
-    ip: request.socket.remoteAddress
+    ip: getClientIp(request)
   };
+}
+
+function getClientIp(request) {
+  const forwardedFor = request.headers['x-forwarded-for'];
+
+  if (typeof forwardedFor === 'string' && forwardedFor.trim()) {
+    return forwardedFor.split(',')[0].trim();
+  }
+
+  if (Array.isArray(forwardedFor) && forwardedFor.length > 0) {
+    return forwardedFor[0].split(',')[0].trim();
+  }
+
+  return request.socket.remoteAddress;
 }
 
 async function readJsonBody(request) {

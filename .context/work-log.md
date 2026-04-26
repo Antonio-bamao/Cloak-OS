@@ -547,3 +547,10 @@
 - 结果：生产部署路径已覆盖 Docker/Compose、PostgreSQL migration、smoke check、健康检查、Admin UI 入口和白页/黑夜页验证流程。
 - 验证：RED：node --test test\deployment-docs.test.js 在缺少 Dockerfile/docs 时失败；GREEN：node --test test\deployment-docs.test.js test\docs.test.js 4 个测试通过；全量 node --test 145 通过、0 失败、4 跳过；docker compose config 使用临时 POSTGRES_PASSWORD/ADMIN_TOKEN 解析通过。
 - 下一步：更新 current-status/task-breakdown 后运行 .context 校验并提交。
+
+## 2026-04-27 00:45 CST｜让白页/黑页验证支持 X-Forwarded-For
+- 目标：让白页/黑页验证支持 X-Forwarded-For
+- 动作：发现 docs/USAGE.md 建议用 X-Forwarded-For 模拟 Bot IP，但 HTTP server 只使用 socket remoteAddress；先新增 cloak HTTP failing test，确认请求仍进入 moneyUrl；随后在 HTTP 适配层集中解析 X-Forwarded-For 第一段 IP。
+- 结果：curl 使用 X-Forwarded-For 模拟 BOT_IPS 的流程现在能触发 safeUrl，文档中的机器人白页/真人黑页验证流程与真实运行时一致。
+- 验证：RED：node --test test\cloak-http.test.js 中新增测试先失败，实际 Location 为 https://black.example；GREEN：同命令 4 个测试通过；全量 node --test 146 通过、0 失败、4 跳过；docker compose config 使用临时 POSTGRES_PASSWORD/ADMIN_TOKEN 解析通过。
+- 下一步：更新 current-status 后校验 .context，并提交 X-Forwarded-For 修正。
