@@ -323,9 +323,10 @@
   - `node --test`：143 个测试通过、4 个 opt-in 测试跳过、0 失败。
   - `.context` 校验：`context is valid`。
 - 已提交收口改动：`test: add postgres API smoke subprocess check`。
+- 已推送远端：`origin/main` 已更新到 `119dfe0`。
 - 进行中：
   - Phase 2/3 收尾：PostgreSQL 运行时装配、migration、API smoke flow、API smoke cleanup、访问日志 cleanup、可选 health 探测、admin UI smoke flow、管理台空状态/错误态、管理台移动端细节、CLI 子进程级集成测试、真实 PostgreSQL API smoke 子进程验证、管理台真实浏览器布局检查、非空长数据布局检查、PostgreSQL 模式浏览器布局复验已完成。
 - 下一步：
-  - Phase 2/3 已进入可交付收口状态；后续如继续扩展，可另立复杂 React/Vite 管理台或更多生产部署配置任务。
+  - Phase 2/3 已进入远端可交付收口状态；后续如继续扩展，可另立复杂 React/Vite 管理台或更多生产部署配置任务。
 - 阻塞项：
   - 无当前阻塞。
