@@ -540,3 +540,10 @@
 - 结果：远端 origin/main 已从 df88463 更新到 119dfe0。
 - 验证：git push 输出显示 df88463..119dfe0 main -> main。
 - 下一步：更新 current-status 记录远端已同步，并提交项目记忆更新。
+
+## 2026-04-27 00:41 CST｜补生产部署配置与使用手册
+- 目标：补生产部署配置与使用手册
+- 动作：新增生产部署设计 spec 和执行计划；按 TDD 新增 deployment docs 测试，先验证缺少 Dockerfile/USAGE 文档时失败；新增 Dockerfile、.dockerignore、docker-compose.prod.yml、docs/DEPLOYMENT.md、docs/USAGE.md，并从 README 链接。
+- 结果：生产部署路径已覆盖 Docker/Compose、PostgreSQL migration、smoke check、健康检查、Admin UI 入口和白页/黑夜页验证流程。
+- 验证：RED：node --test test\deployment-docs.test.js 在缺少 Dockerfile/docs 时失败；GREEN：node --test test\deployment-docs.test.js test\docs.test.js 4 个测试通过；全量 node --test 145 通过、0 失败、4 跳过；docker compose config 使用临时 POSTGRES_PASSWORD/ADMIN_TOKEN 解析通过。
+- 下一步：更新 current-status/task-breakdown 后运行 .context 校验并提交。

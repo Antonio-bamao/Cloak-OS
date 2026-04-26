@@ -85,10 +85,19 @@
    - 补齐移动端 CSS：触控目标、表格横向滚动、侧栏/导航收敛、窄屏表单布局。
    - 增加 opt-in 真实浏览器布局测试，覆盖空状态、长 URL 非空表格和 PostgreSQL 模式。
    - 将浏览器截图输出到 `test-output/admin-browser-layout/`，并保持该目录不进入 Git。
+8. Phase 4：生产部署与使用手册
+   - 新增生产部署设计 spec 与执行计划。
+   - 新增 Dockerfile，使用 Node 20 与 pnpm 生产依赖安装运行现有 Node HTTP server。
+   - 新增 `.dockerignore`，避免依赖目录、Git 元数据、本地 env 和测试输出进入镜像上下文。
+   - 新增 `docker-compose.prod.yml`，提供 app + PostgreSQL 的生产部署样例，PostgreSQL 不映射公网端口。
+   - 新增 `docs/DEPLOYMENT.md`，记录 `.env.production`、migration、smoke-check、健康检查和更新流程。
+   - 新增 `docs/USAGE.md`，记录 Admin UI/API 使用方式，以及机器人看白页、真人看黑页/黑夜页的验证流程。
+   - 新增部署文档测试，锁定生产部署文件和使用手册关键内容。
 
 ## 剩余可选项
 
 - 若未来确实需要复杂前端状态管理，再单独立项 React/Vite 管理台；当前无构建静态管理台已满足本阶段验收。
+- 若未来需要完整公网生产发布，可单独补 Nginx/TLS、备份恢复、日志轮转和 CI/CD 发布流水线。
 
 ## 依赖关系
 

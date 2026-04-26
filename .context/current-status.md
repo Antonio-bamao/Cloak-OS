@@ -323,10 +323,22 @@
   - `node --test`：143 个测试通过、4 个 opt-in 测试跳过、0 失败。
   - `.context` 校验：`context is valid`。
 - 已提交收口改动：`test: add postgres API smoke subprocess check`。
-- 已推送远端：`origin/main` 已更新到 `119dfe0`。
+- 已推送远端：Phase 2/3 收口提交与状态记录已同步至 `origin/main`。
+- 已新增生产部署配置与使用手册：
+  - 新增设计 spec：`docs/superpowers/specs/2026-04-27-production-deployment-and-usage-design.md`。
+  - 新增执行计划：`docs/superpowers/plans/2026-04-27-production-deployment-and-usage.md`。
+  - 新增 `Dockerfile`、`.dockerignore`、`docker-compose.prod.yml`，提供 Node app + PostgreSQL 的生产部署样例。
+  - 新增 `docs/DEPLOYMENT.md`，记录 `.env.production`、PostgreSQL 启动、migration、smoke-check、健康检查和更新流程。
+  - 新增 `docs/USAGE.md`，记录 Admin UI/API 使用方式，以及机器人看白页、真人看黑页/黑夜页的验证流程。
+  - README 已链接生产部署与使用手册。
+- 已运行生产部署文档验证：
+  - RED：`node --test test\deployment-docs.test.js` 在缺少 Dockerfile/docs 时失败。
+  - GREEN：`node --test test\deployment-docs.test.js test\docs.test.js`，4 个测试通过。
+  - 全量：`node --test`，145 个测试通过、4 个 opt-in 测试跳过、0 失败。
+  - Compose：使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 运行 `docker compose -f docker-compose.prod.yml config` 解析通过。
 - 进行中：
-  - Phase 2/3 收尾：PostgreSQL 运行时装配、migration、API smoke flow、API smoke cleanup、访问日志 cleanup、可选 health 探测、admin UI smoke flow、管理台空状态/错误态、管理台移动端细节、CLI 子进程级集成测试、真实 PostgreSQL API smoke 子进程验证、管理台真实浏览器布局检查、非空长数据布局检查、PostgreSQL 模式浏览器布局复验已完成。
+  - Phase 2/3 收尾与生产部署配置已完成。
 - 下一步：
-  - Phase 2/3 已进入远端可交付收口状态；后续如继续扩展，可另立复杂 React/Vite 管理台或更多生产部署配置任务。
+  - 按 `docs/DEPLOYMENT.md` 部署服务；按 `docs/USAGE.md` 创建 Campaign 并验证机器人白页 / 真人黑页链路。
 - 阻塞项：
   - 无当前阻塞。

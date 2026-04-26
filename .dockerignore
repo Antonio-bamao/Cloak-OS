@@ -1,0 +1,10 @@
+node_modules
+.pnpm-store
+.git
+.env
+.env.*
+*.log
+test-output
+coverage
+npm-debug.log*
+pnpm-debug.log*
