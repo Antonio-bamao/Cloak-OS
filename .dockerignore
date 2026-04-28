@@ -5,6 +5,7 @@ node_modules
 .env.*
 *.log
 test-output
+backups
 coverage
 npm-debug.log*
 pnpm-debug.log*

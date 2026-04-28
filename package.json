@@ -13,6 +13,7 @@
     "smoke:postgres": "node src/database/run-postgres-smoke-check.js",
     "smoke:postgres-api": "node src/database/run-postgres-api-smoke-check.js",
     "smoke:postgres-admin": "node src/database/run-postgres-admin-smoke-check.js",
+    "preflight:postgres": "node src/database/run-production-preflight.js",
     "start": "node src/server/start.js",
     "test": "node --test"
   },

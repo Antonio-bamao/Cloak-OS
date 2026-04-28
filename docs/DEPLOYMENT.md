@@ -75,6 +75,14 @@ docker compose --env-file .env.production -f docker-compose.prod.yml run --rm ap
 
 API smoke-check 会创建一个临时 Campaign，访问 `/c/:campaignId`，检查访问日志和 Analytics，然后默认删除本次创建的访问日志和 Campaign。需要保留样本时再追加 `--keep-campaign`。
 
+运行上线前检查：
+
+```bash
+docker compose --env-file .env.production -f docker-compose.prod.yml run --rm app npm run preflight:postgres
+```
+
+上线前检查会拒绝 pending migration，随后启动 PostgreSQL 模式应用，检查 health、settings、管理台资源，并创建临时 Campaign 验证 Googlebot 访问白页、普通浏览器访问黑页。检查完成后会删除本次临时 Campaign 和访问日志。
+
 ## 5. 启动应用
 
 ```bash
@@ -95,21 +103,50 @@ http://127.0.0.1:3000/admin
 
 管理台要求输入 token 时，填 `.env.production` 里的 `ADMIN_TOKEN`。
 
-## 6. 反向代理建议
+## 6. Nginx / TLS 反向代理
 
-- 只把 app 端口暴露到公网。
+仓库提供了一个 Nginx 示例：
+
+```text
+deploy/nginx/cloak.conf.example
+```
+
+使用前把 `cloak.example.com` 换成你的域名，并把证书路径换成你的真实 TLS 证书路径。建议：
+
+- 只把 Nginx 的 80 / 443 暴露到公网。
+- app 端口只监听本机或内网。
 - PostgreSQL 不要暴露公网。
-- TLS、域名路由、请求日志建议放在反向代理或部署平台里处理。
-- 投放流量访问 `/c/:campaignId`。
-- 管理台访问 `/admin`；管理 API 访问 `/api/v1/*`，并带上 `Authorization: Bearer <ADMIN_TOKEN>`。
+- `/c/:campaignId` 是公开投放入口。
+- `/admin` 和 `/api/v1/*` 建议在反向代理层限制来源 IP；管理 API 仍必须带 `Authorization: Bearer <ADMIN_TOKEN>`。
+- 反代必须保留 `X-Forwarded-For`，否则访问日志和 IP 检测只能看到代理 IP。
 
-## 7. 更新发布流程
+## 7. 备份和恢复
+
+创建 PostgreSQL SQL 备份：
+
+```powershell
+.\scripts\backup-postgres.ps1 -EnvFile .env.production
+```
+
+备份会写入本地 `backups/` 目录，该目录不会提交到 Git，也不会进入 Docker build context。
+
+恢复前需要显式确认，避免误操作覆盖生产库：
+
+```powershell
+$env:CLOAK_CONFIRM_RESTORE='yes'
+.\scripts\restore-postgres.ps1 -EnvFile .env.production -BackupPath .\backups\<backup-file>.sql
+```
+
+恢复脚本会通过 Compose 内部的 `postgres` 服务执行 `psql`，不会要求把数据库端口暴露到公网。
+
+## 8. 更新发布流程
 
 ```bash
 git pull
 docker compose --env-file .env.production -f docker-compose.prod.yml build app
 docker compose --env-file .env.production -f docker-compose.prod.yml run --rm app npm run migrate
 docker compose --env-file .env.production -f docker-compose.prod.yml run --rm app npm run smoke:postgres-api -- --check-health
+docker compose --env-file .env.production -f docker-compose.prod.yml run --rm app npm run preflight:postgres
 docker compose --env-file .env.production -f docker-compose.prod.yml up -d app
 ```
 

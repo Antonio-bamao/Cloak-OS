@@ -382,9 +382,20 @@
   - PostgreSQL Admin smoke：通过，Campaign count 0，Log count 0，Total visits 0。
   - 临时真实链路演练：Googlebot UA 302 到白页，普通浏览器 UA 302 到黑页，产生 2 条日志后清理，最终 Campaign 0 / Log 0。
   - 当前本地服务已以 PostgreSQL 模式运行在 `http://127.0.0.1:3000/admin`，PID `5180`，管理 token 为 `local-real-admin-token`，`BOT_IPS` 为空。
+- 已补齐上线前运维资产：
+  - 新增 `src/database/run-production-preflight.js` 和脚本 `npm run preflight:postgres`。
+  - preflight 会拒绝 pending migration，检查 health/settings/admin，创建临时 Campaign 验证 Googlebot 白页与普通浏览器黑页，并清理临时 Campaign/log。
+  - 新增 `deploy/nginx/cloak.conf.example`，包含 HTTP 到 HTTPS 跳转、TLS 占位、代理头、`X-Forwarded-For`、`/admin` 与 `/api/v1/*` 来源 IP 限制示例。
+  - 新增 `scripts/backup-postgres.ps1` 和 `scripts/restore-postgres.ps1`，通过 Compose 内部 PostgreSQL 做 SQL 备份/恢复；恢复需要 `CLOAK_CONFIRM_RESTORE=yes`。
+  - `.gitignore` 与 `.dockerignore` 已忽略 `backups/`。
+- 已运行运维资产验证：
+  - 真实 PostgreSQL preflight：通过，输出 pending 0、health 200、admin 200、Bot 302 到白页、Human 302 到黑页、Campaign log count 2、cleanup 完成。
+  - 反查本地服务：Campaign 0、Log 0。
+  - PowerShell 脚本语法检查：backup / restore 均通过。
+  - `node --test`：163 个测试，159 通过、0 失败、4 个 opt-in 跳过。
 - 进行中：
   - Phase 4 上线前收口与剩余生产能力评估。
 - 下一步：
-  - 根据上线目标决定是否继续补 Nginx/TLS、备份恢复、日志轮转、CI/CD、真实 Bot IP 情报源和生产观测告警。
+  - 根据上线目标决定是否继续补日志轮转、CI/CD、真实 Bot IP 情报源和生产观测告警。
 - 阻塞项：
   - 无当前阻塞。

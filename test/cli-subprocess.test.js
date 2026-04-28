@@ -27,6 +27,11 @@ const helpCases = [
     script: 'src/database/run-postgres-admin-smoke-check.js',
     title: 'postgres admin smoke-check CLI',
     expected: 'PostgreSQL Admin Smoke Check CLI'
+  },
+  {
+    script: 'src/database/run-production-preflight.js',
+    title: 'postgres production preflight CLI',
+    expected: 'PostgreSQL Production Preflight CLI'
   }
 ];
 

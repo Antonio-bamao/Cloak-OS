@@ -17,6 +17,7 @@ npm run migrate:status
 npm run smoke:postgres
 npm run smoke:postgres-api
 npm run smoke:postgres-admin
+npm run preflight:postgres
 npm start
 ```
 
@@ -27,6 +28,7 @@ npm start
 `npm run smoke:postgres` 会做一套 readonly PostgreSQL smoke check：连接数据库、输出 migration status、再输出 dry-run 预演摘要，但不会执行 migration。
 `npm run smoke:postgres-api` 会在 PostgreSQL 模式下启动真实 app，通过 HTTP 创建 Campaign、访问公网入口并检查日志与 Analytics；成功后默认删除本次创建的访问日志和测试 Campaign。可追加 `--check-health` 先探测 `GET /health`。
 `npm run smoke:postgres-admin` 会在 PostgreSQL 模式下启动真实 app，加载管理台页面/CSS/JS，检查错误态/空状态资源，并检查 Campaign、Logs、Analytics 管理 API。可追加 `--check-health` 先探测 `GET /health`。
+`npm run preflight:postgres` 是上线前检查：确认 migration 没有 pending，启动 PostgreSQL 模式 app，检查 health/settings/admin，再创建临时 Campaign 验证 Googlebot 去白页、普通浏览器去黑页，最后清理临时 Campaign 和访问日志。
 
 管理台浏览器布局检查默认不会随 `npm test` 启动 Chrome；需要显式开启：
 
@@ -58,6 +60,7 @@ node src/database/run-postgres-api-smoke-check.js --database-url postgres://cloa
 node src/database/run-postgres-api-smoke-check.js --database-url postgres://cloak:secret@127.0.0.1:5432/cloak --keep-campaign
 node src/database/run-postgres-admin-smoke-check.js --database-url postgres://cloak:secret@127.0.0.1:5432/cloak
 node src/database/run-postgres-admin-smoke-check.js --database-url postgres://cloak:secret@127.0.0.1:5432/cloak --check-health
+node src/database/run-production-preflight.js --database-url postgres://cloak:secret@127.0.0.1:5432/cloak --admin-token <ADMIN_TOKEN>
 ```
 
 ## Environment
@@ -198,3 +201,4 @@ migrations/001_initial.sql
 4. 再运行 `npm run migrate` 或带 `--database-url` 的 migrate 命令执行 schema 初始化。
 5. 再运行 `npm run smoke:postgres-api`，或运行 `node src/database/run-postgres-api-smoke-check.js --database-url <url>`，验证创建 Campaign、访问日志写入和 Analytics 查询；该命令成功后默认删除本次创建的访问日志和测试 Campaign，如需在正式链路前先验证健康检查，可追加 `--check-health`，如需保留样本可追加 `--keep-campaign`。
 6. 最后运行 `npm run smoke:postgres-admin`，或运行 `node src/database/run-postgres-admin-smoke-check.js --database-url <url>`，验证管理台页面、静态资源和管理 API 都能在 PostgreSQL 模式下工作；如需也探测健康接口，可追加 `--check-health`。
+7. 上线前检查运行 `npm run preflight:postgres -- --database-url <url> --admin-token <ADMIN_TOKEN>`。它会拒绝 pending migration，并用临时 Campaign 完成白页/黑页真实链路演练，成功后输出 `Cleanup: logs deleted, campaign deleted`。

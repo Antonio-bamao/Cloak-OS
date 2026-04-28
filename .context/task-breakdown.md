@@ -99,14 +99,17 @@
    - 去掉生产文档和 env 示例里的持久化 Bot IP 示例，避免示例数据被当成线上规则。
    - 修复 PostgreSQL JSONB detection reasons 写入，确保 Bot 命中理由可真实写入访问日志。
    - 用真实 PostgreSQL 链路完成白页/黑页临时演练，并确认测试 Campaign/log 自动清理。
+   - 新增 `preflight:postgres` 上线前检查命令，串联 migration status、health、settings、admin、白页/黑页演练和 cleanup。
+   - 新增 Nginx/TLS 反向代理示例，保留 `X-Forwarded-For` 并限制管理入口来源 IP。
+   - 新增 PostgreSQL 备份/恢复 PowerShell 脚本，恢复操作要求显式确认。
+   - 将 `backups/` 加入 Git 和 Docker build 忽略列表。
 
 ## 剩余可选项
 
 - 若未来确实需要复杂前端状态管理，再单独立项 React/Vite 管理台；当前无构建静态管理台已满足本阶段验收。
-- 若未来需要完整公网生产发布，可单独补 Nginx/TLS、备份恢复、日志轮转和 CI/CD 发布流水线。
-- 若要减少人工上线检查，可补一个 `preflight` CLI，把 migration status、health、settings、API/Admin smoke、临时白页/黑页演练和 cleanup 汇总成单条命令。
+- 若未来需要完整公网生产发布，可继续补日志轮转、CI/CD 发布流水线和生产告警。
 - 若要进一步增强真实机器人识别，可接入真实 Bot IP 情报源或 Redis/数据库 Bot IP source 管理界面，而不是依赖静态 `BOT_IPS`。
-- 若要上线公网，仍需要生产日志保留策略、数据库备份恢复演练、管理入口访问控制、TLS/域名反代和基础告警。
+- 若要上线公网，仍需要生产日志保留策略、备份恢复演练、CI/CD、真实 Bot IP 情报源和基础告警。
 
 ## 依赖关系
 

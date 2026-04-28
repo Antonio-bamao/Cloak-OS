@@ -575,3 +575,10 @@
 - 结果：生产环境不允许 `memory` 仓储或默认开发 token；`DATABASE_URL` 可自动选择 PostgreSQL；管理台不再预填 `dev-admin-token`；生产文档和 env 示例不再放示例 Bot IP；Bot 命中理由会以 JSON 写入 PostgreSQL。
 - 验证：`node --test` 输出 155 个测试、151 通过、0 失败、4 个 opt-in 跳过；Compose config 使用临时生产变量解析通过；真实 PostgreSQL migration pending 为 0；API/Admin smoke 均通过；临时链路演练中 Googlebot UA 302 到白页、普通浏览器 UA 302 到黑页，cleanup 后 Campaign 0 / Log 0。
 - 下一步：按上线范围决定是否继续补 preflight CLI、Nginx/TLS、备份恢复、日志轮转、CI/CD、真实 Bot IP 情报源和告警。
+
+## 2026-04-28 23:49 CST｜补齐 preflight、反代和备份恢复
+- 目标：继续把上线前缺口做成可执行资产，而不是只停留在建议清单。
+- 动作：按 TDD 新增 `test/production-preflight.test.js`，实现 `src/database/run-production-preflight.js` 与 `npm run preflight:postgres`；新增 `deploy/nginx/cloak.conf.example`、`scripts/backup-postgres.ps1`、`scripts/restore-postgres.ps1`，并扩展部署文档、README、CLI 子进程测试和运维资产测试。
+- 结果：preflight 可一键验证 pending migration、health/settings/admin、Googlebot 白页、真人黑页和 cleanup；Nginx 示例覆盖 TLS、代理头、管理入口来源限制；备份/恢复脚本通过 Compose 内部 PostgreSQL 执行，恢复要求 `CLOAK_CONFIRM_RESTORE=yes`。
+- 验证：真实 PostgreSQL preflight 通过并输出 `Cleanup: logs deleted, campaign deleted`；反查 Campaign 0 / Log 0；PowerShell backup/restore 脚本语法检查通过；全量 `node --test` 输出 163 个测试、159 通过、0 失败、4 个 opt-in 跳过。
+- 下一步：继续补日志轮转、CI/CD、真实 Bot IP 情报源或生产告警。

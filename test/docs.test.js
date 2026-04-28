@@ -13,6 +13,7 @@ test('README documents startup, tests, env vars, and available API routes', asyn
   assert.match(readme, /npm run smoke:postgres/);
   assert.match(readme, /npm run smoke:postgres-api/);
   assert.match(readme, /npm run smoke:postgres-admin/);
+  assert.match(readme, /npm run preflight:postgres/);
   assert.match(readme, /HOST/);
   assert.match(readme, /PORT/);
   assert.match(readme, /BOT_IPS/);
@@ -42,6 +43,7 @@ test('README documents startup, tests, env vars, and available API routes', asyn
   assert.match(readme, /--dry-run/);
   assert.match(readme, /--help/);
   assert.match(readme, /--check-health/);
+  assert.match(readme, /Production Preflight|上线前检查/);
   assert.match(readme, /readonly/i);
   assert.match(readme, /RUN_BROWSER_LAYOUT/);
   assert.match(readme, /POSTGRES_BROWSER_LAYOUT_DATABASE_URL/);
