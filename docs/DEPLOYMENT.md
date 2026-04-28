@@ -173,6 +173,20 @@ $env:CLOAK_CONFIRM_RESTORE='yes'
 
 恢复脚本会通过 Compose 内部的 `postgres` 服务执行 `psql`，不会要求把数据库端口暴露到公网。
 
+建议定期做一次恢复演练，不要直接恢复到生产库。演练脚本会启动一个临时 PostgreSQL 容器，把备份恢复进去，然后对恢复后的数据库运行 migration status、只读 smoke、API smoke 和 Admin smoke：
+
+```powershell
+.\scripts\verify-postgres-restore.ps1 -BackupPath .\backups\<backup-file>.sql
+```
+
+默认临时容器名为 `cloak-restore-drill`，宿主机端口为 `55433`。如端口被占用，可覆盖：
+
+```powershell
+.\scripts\verify-postgres-restore.ps1 -BackupPath .\backups\<backup-file>.sql -HostPort 55434
+```
+
+脚本结束后会停止临时容器；如果演练失败，先查看输出并确认备份文件、Docker 状态和端口占用。
+
 ## 9. 更新发布流程
 
 仓库内置两个 GitHub Actions workflow：

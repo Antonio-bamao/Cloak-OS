@@ -610,3 +610,10 @@
 - 结果：监控命令会检查 `/health` 的 `status=ok`，检查 `/api/v1/settings` 的仓储和数据库配置，默认期望 `postgres`。失败时若提供 `--alert-webhook-url`，会 POST `{ service, status, baseUrl, error }` 到指定 Webhook。
 - 验证：RED：`node --test test\production-monitor.test.js` 先因缺少 monitor module 失败；GREEN：monitor/docs 定向测试 9 个通过，GitHub Actions/monitor 定向测试 7 个通过；`node --check src\ops\run-production-monitor.js` 与 `npm run monitor:production -- --help` 通过；全量 `node --test` 输出 177 个测试、173 通过、0 失败、4 个 opt-in 跳过；`docker compose -f docker-compose.prod.yml config` 使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 解析通过；`python scripts\validate_context.py --project-root .` 输出 `context is valid`。
 - 下一步：可继续备份恢复演练，或把 Bot IP source 升级到 Redis/数据库/外部情报源同步。
+
+## 2026-04-29 02:16 CST｜补齐备份恢复演练入口
+- 目标：让 PostgreSQL 备份不只是能生成/恢复，还能定期在一次性库上演练并跑 smoke 验证，降低真正事故时才发现备份不可用的风险。
+- 动作：按 TDD 扩展 `test/ops-assets.test.js`，先确认缺少恢复演练脚本；新增 `scripts/verify-postgres-restore.ps1`；更新 `docs/DEPLOYMENT.md` 的备份恢复章节。
+- 结果：演练脚本会启动临时 `postgres:16-alpine` 容器，把指定 SQL 备份恢复进去，随后对恢复库运行 migration status、readonly PostgreSQL smoke、API smoke 和 Admin smoke，最后在 `finally` 中停止临时容器。默认端口 `55433` 可通过 `-HostPort` 覆盖。
+- 验证：RED：`node --test test\ops-assets.test.js` 先因缺少 `scripts/verify-postgres-restore.ps1` 失败；GREEN：`node --test test\ops-assets.test.js` 通过；PowerShell Parser 解析 `scripts\verify-postgres-restore.ps1` 通过；全量 `node --test` 输出 177 个测试、173 通过、0 失败、4 个 opt-in 跳过；`docker compose -f docker-compose.prod.yml config` 使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 解析通过；`python scripts\validate_context.py --project-root .` 输出 `context is valid`。
+- 下一步：可按实际基础设施补自动部署、外部 Bot IP 同步或更深入指标告警；当前 Phase 4 生产基础能力已基本闭环。

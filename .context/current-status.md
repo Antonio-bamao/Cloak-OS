@@ -443,9 +443,21 @@
   - 全量：`node --test`，177 个测试，173 通过、0 失败、4 个 opt-in 跳过。
   - Compose：使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 运行 `docker compose -f docker-compose.prod.yml config` 解析通过。
   - `.context` 校验：`context is valid`。
+- 已补齐备份恢复演练入口：
+  - 新增 `scripts/verify-postgres-restore.ps1`，将备份恢复到一次性 PostgreSQL 容器，不触碰生产库。
+  - 演练脚本会等待临时库 ready，执行 `psql` restore，然后对恢复库运行 migration status、readonly smoke、API smoke 和 Admin smoke。
+  - 脚本支持自定义临时容器名、宿主机端口、PostgreSQL 镜像、数据库账号和管理 token。
+  - `docs/DEPLOYMENT.md` 已补恢复演练步骤和端口覆盖说明。
+- 已运行备份恢复演练资产验证：
+  - RED：`node --test test\ops-assets.test.js` 先因缺少 `scripts/verify-postgres-restore.ps1` 失败。
+  - GREEN：`node --test test\ops-assets.test.js` 通过。
+  - PowerShell 语法解析：`verify-postgres-restore.ps1` 通过。
+  - 全量：`node --test`，177 个测试，173 通过、0 失败、4 个 opt-in 跳过。
+  - Compose：使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 运行 `docker compose -f docker-compose.prod.yml config` 解析通过。
+  - `.context` 校验：`context is valid`。
 - 进行中：
   - Phase 4 上线前收口与剩余生产能力评估。
 - 下一步：
-  - 根据上线目标决定是否继续补备份恢复演练，或把 Bot IP source 升级到 Redis/数据库/外部情报源。
+  - 根据上线目标决定是否把 Bot IP source 升级到 Redis/数据库/外部情报源，或进入最终发布/交付收口。
 - 阻塞项：
   - 无当前阻塞。
