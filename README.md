@@ -76,6 +76,9 @@ BOT_IPS=
 ADMIN_TOKEN=replace-with-admin-token
 REPOSITORY_DRIVER=postgres
 DATABASE_URL=postgres://cloak:replace-with-password@127.0.0.1:55432/cloak
+LOG_FILE_PATH=logs/cloak.log
+LOG_MAX_BYTES=10485760
+LOG_MAX_FILES=5
 ```
 
 - `HOST`：HTTP server 监听地址。
@@ -86,6 +89,9 @@ DATABASE_URL=postgres://cloak:replace-with-password@127.0.0.1:55432/cloak
 - `ADMIN_TOKEN`：管理 API Bearer token。生产环境必须设置真实随机值，不能使用开发默认值。
 - `REPOSITORY_DRIVER`：仓储驱动，支持 `memory` 或 `postgres`。DATABASE_URL 配置后会自动使用 PostgreSQL。
 - `DATABASE_URL`：PostgreSQL 连接串，供内置 `pg` 驱动创建连接池使用。生产环境不允许使用本地内存仓储。
+- `LOG_FILE_PATH`：结构化 JSON Lines 日志文件路径；为空时写 stdout。
+- `LOG_MAX_BYTES`：单个日志文件最大字节数，超过后触发日志轮转。
+- `LOG_MAX_FILES`：日志总保留文件数，包含当前日志文件。
 
 ## API
 

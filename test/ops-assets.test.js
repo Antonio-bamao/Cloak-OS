@@ -31,6 +31,10 @@ test('production ops assets include nginx TLS proxy and database backup scripts'
   assert.match(deployment, /Nginx/);
   assert.match(deployment, /backup-postgres\.ps1/);
   assert.match(deployment, /restore-postgres\.ps1/);
+  assert.match(deployment, /LOG_MAX_BYTES/);
+  assert.match(deployment, /LOG_MAX_FILES/);
   assert.match(gitignore, /^backups\/$/m);
+  assert.match(gitignore, /^logs\/$/m);
   assert.match(dockerignore, /^backups$/m);
+  assert.match(dockerignore, /^logs$/m);
 });

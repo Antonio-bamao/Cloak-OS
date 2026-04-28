@@ -21,9 +21,14 @@ POSTGRES_PASSWORD=replace-with-a-long-random-password
 ADMIN_TOKEN=replace-with-a-long-random-admin-token
 MIN_CONFIDENCE=60
 BOT_CONFIDENCE=80
+LOG_FILE_PATH=/app/logs/cloak.log
+LOG_MAX_BYTES=10485760
+LOG_MAX_FILES=5
 ```
 
 生产默认不配置 BOT_IPS，避免把示例 IP 当成线上规则。真实流量会先经过 User-Agent 检测；如果你有自己的 Bot IP 情报源，再把确认后的 IP 以英文逗号写入 `BOT_IPS`。常见爬虫 User-Agent，例如 `Googlebot`，也会被 UA 检测器识别。
+
+日志默认写入容器内 `/app/logs/cloak.log`，Compose 会挂载到 `cloak-app-logs` volume。`LOG_MAX_BYTES` 控制单个日志文件最大字节数，`LOG_MAX_FILES` 控制总保留文件数（包含当前日志）；例如默认值会保留当前 `cloak.log` 加上 4 个轮转归档。
 
 ## 2. 启动 PostgreSQL
 
@@ -120,7 +125,25 @@ deploy/nginx/cloak.conf.example
 - `/admin` 和 `/api/v1/*` 建议在反向代理层限制来源 IP；管理 API 仍必须带 `Authorization: Bearer <ADMIN_TOKEN>`。
 - 反代必须保留 `X-Forwarded-For`，否则访问日志和 IP 检测只能看到代理 IP。
 
-## 7. 备份和恢复
+## 7. 日志轮转
+
+应用会输出 JSON Lines 结构化日志。生产 Compose 默认配置：
+
+```bash
+LOG_FILE_PATH=/app/logs/cloak.log
+LOG_MAX_BYTES=10485760
+LOG_MAX_FILES=5
+```
+
+当当前日志文件超过 `LOG_MAX_BYTES`，应用会把 `cloak.log` 轮转为 `cloak.log.1`，旧归档依次后移，超过 `LOG_MAX_FILES` 的归档会被删除。`LOG_FILE_PATH` 为空时会回退到 stdout，适合交给平台日志系统收集。
+
+查看最近日志：
+
+```bash
+docker compose --env-file .env.production -f docker-compose.prod.yml exec app tail -n 100 /app/logs/cloak.log
+```
+
+## 8. 备份和恢复
 
 创建 PostgreSQL SQL 备份：
 
@@ -139,7 +162,7 @@ $env:CLOAK_CONFIRM_RESTORE='yes'
 
 恢复脚本会通过 Compose 内部的 `postgres` 服务执行 `psql`，不会要求把数据库端口暴露到公网。
 
-## 8. 更新发布流程
+## 9. 更新发布流程
 
 ```bash
 git pull

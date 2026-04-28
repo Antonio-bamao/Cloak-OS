@@ -582,3 +582,10 @@
 - 结果：preflight 可一键验证 pending migration、health/settings/admin、Googlebot 白页、真人黑页和 cleanup；Nginx 示例覆盖 TLS、代理头、管理入口来源限制；备份/恢复脚本通过 Compose 内部 PostgreSQL 执行，恢复要求 `CLOAK_CONFIRM_RESTORE=yes`。
 - 验证：真实 PostgreSQL preflight 通过并输出 `Cleanup: logs deleted, campaign deleted`；反查 Campaign 0 / Log 0；PowerShell backup/restore 脚本语法检查通过；全量 `node --test` 输出 163 个测试、159 通过、0 失败、4 个 opt-in 跳过。
 - 下一步：继续补日志轮转、CI/CD、真实 Bot IP 情报源或生产告警。
+
+## 2026-04-28 23:58 CST｜补齐生产日志轮转
+- 目标：给生产部署补一个可控的结构化文件日志与轮转路径，避免只依赖容器 stdout 或无限增长日志文件。
+- 动作：按 TDD 扩展 `test/logger.test.js`、`test/server-start.test.js`、部署文档测试和运维资产测试；新增 `createRotatingFileSink()`；扩展配置读取与校验；让 `startServer()` 在未注入 logger 时根据 `LOG_FILE_PATH` 自动选择 rotating file logger；更新 `.env.example`、README、`docs/DEPLOYMENT.md`、`docker-compose.prod.yml`、`.gitignore` 和 `.dockerignore`。
+- 结果：生产 Compose 默认把 JSON Lines 日志写到 `/app/logs/cloak.log`，挂载 `cloak-app-logs` volume，并按 `LOG_MAX_BYTES` / `LOG_MAX_FILES` 做大小轮转和保留。未配置 `LOG_FILE_PATH` 时仍回退 stdout，适合平台日志系统接管。
+- 验证：RED：logger 测试先因缺少 `createRotatingFileSink()` 失败，server-start 测试先因缺少 `logging` 配置和日志文件失败；GREEN：`node --test test\logger.test.js test\server-start.test.js test\deployment-docs.test.js test\ops-assets.test.js test\docs.test.js` 21 个测试通过；`docker compose -f docker-compose.prod.yml config` 使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 解析通过并显示 `LOG_FILE_PATH` 与 `cloak-app-logs` volume；全量 `node --test` 输出 165 个测试、161 通过、0 失败、4 个 opt-in 跳过；`.context` 校验输出 `context is valid`。
+- 下一步：运行全量测试与 `.context` 校验；之后可继续 CI/CD、真实 Bot IP 情报源或生产告警。

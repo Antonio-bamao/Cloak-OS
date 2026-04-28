@@ -1,5 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { getConfig, validateConfig } from '../src/config/index.js';
@@ -14,7 +17,10 @@ test('getConfig reads host and port from an injected env object', () => {
     BOT_IPS: '66.249.66.1, 66.249.66.2,,',
     REPOSITORY_DRIVER: 'postgres',
     DATABASE_URL: 'postgres://cloak:secret@127.0.0.1:5432/cloak',
-    ADMIN_TOKEN: 'dev-admin-token'
+    ADMIN_TOKEN: 'dev-admin-token',
+    LOG_FILE_PATH: '/var/log/cloak/app.log',
+    LOG_MAX_BYTES: '2048',
+    LOG_MAX_FILES: '4'
   });
 
   assert.deepEqual(config.server, {
@@ -32,6 +38,11 @@ test('getConfig reads host and port from an injected env object', () => {
   assert.deepEqual(config.repository, {
     driver: 'postgres',
     databaseUrl: 'postgres://cloak:secret@127.0.0.1:5432/cloak'
+  });
+  assert.deepEqual(config.logging, {
+    filePath: '/var/log/cloak/app.log',
+    maxBytes: 2048,
+    maxFiles: 4
   });
 });
 
@@ -77,6 +88,32 @@ test('startServer listens using configured host and port and logs startup', asyn
     await new Promise((resolve, reject) => {
       server.close((error) => (error ? reject(error) : resolve()));
     });
+  }
+});
+
+test('startServer uses configured rotating file logger when no logger is injected', async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'cloak-start-logs-'));
+  const logFile = path.join(directory, 'cloak.log');
+
+  try {
+    const server = await startServer({
+      config: {
+        server: { host: '127.0.0.1', port: 0 },
+        logging: {
+          filePath: logFile,
+          maxBytes: 1024,
+          maxFiles: 2
+        }
+      }
+    });
+
+    await closeServer(server);
+
+    const content = await readFile(logFile, 'utf8');
+    assert.match(content, /"message":"HTTP server started"/);
+    assert.match(content, /"port":/);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
   }
 });
 

@@ -2,6 +2,8 @@ import { AppError } from '../utils/errors.js';
 
 export const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000000';
 const DEFAULT_ADMIN_TOKEN = 'dev-admin-token';
+const DEFAULT_LOG_MAX_BYTES = 10 * 1024 * 1024;
+const DEFAULT_LOG_MAX_FILES = 5;
 
 export function getConfig(env = process.env) {
   const databaseUrl = env.DATABASE_URL ?? '';
@@ -23,6 +25,11 @@ export function getConfig(env = process.env) {
     repository: {
       driver: env.REPOSITORY_DRIVER ?? (databaseUrl ? 'postgres' : 'memory'),
       databaseUrl
+    },
+    logging: {
+      filePath: env.LOG_FILE_PATH ?? '',
+      maxBytes: Number(env.LOG_MAX_BYTES ?? DEFAULT_LOG_MAX_BYTES),
+      maxFiles: Number(env.LOG_MAX_FILES ?? DEFAULT_LOG_MAX_FILES)
     }
   };
 }
@@ -68,6 +75,17 @@ export function validateConfig(runtimeConfig) {
     errors.push('repository.databaseUrl is required when repository.driver is postgres');
   }
 
+  const logMaxBytes = runtimeConfig.logging?.maxBytes ?? DEFAULT_LOG_MAX_BYTES;
+  const logMaxFiles = runtimeConfig.logging?.maxFiles ?? DEFAULT_LOG_MAX_FILES;
+
+  if (!Number.isInteger(logMaxBytes) || logMaxBytes < 1) {
+    errors.push('logging.maxBytes must be a positive integer');
+  }
+
+  if (!Number.isInteger(logMaxFiles) || logMaxFiles < 1) {
+    errors.push('logging.maxFiles must be a positive integer');
+  }
+
   if (errors.length > 0) {
     throw new AppError(errors.join('; '), 500, 'CONFIG_INVALID');
   }
@@ -94,6 +112,10 @@ export function mergeConfig(baseConfig, overrideConfig = {}) {
     repository: {
       ...baseConfig.repository,
       ...overrideConfig.repository
+    },
+    logging: {
+      ...baseConfig.logging,
+      ...overrideConfig.logging
     }
   };
 }

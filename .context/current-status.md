@@ -393,9 +393,21 @@
   - 反查本地服务：Campaign 0、Log 0。
   - PowerShell 脚本语法检查：backup / restore 均通过。
   - `node --test`：163 个测试，159 通过、0 失败、4 个 opt-in 跳过。
+- 已补齐生产日志轮转：
+  - 新增配置项 `LOG_FILE_PATH`、`LOG_MAX_BYTES`、`LOG_MAX_FILES`，默认不配置文件路径时仍写 stdout。
+  - 新增 `createRotatingFileSink()`，将结构化 JSON Lines 日志写入文件，并按大小轮转、按总文件数保留归档。
+  - `startServer()` 在未注入 logger 时会根据运行配置创建 stdout logger 或 rotating file logger。
+  - `docker-compose.prod.yml` 默认将日志写入 `/app/logs/cloak.log`，并挂载 `cloak-app-logs` volume。
+  - README、`.env.example`、`docs/DEPLOYMENT.md` 已补日志轮转说明；`.gitignore` 与 `.dockerignore` 已忽略 `logs/`。
+- 已运行日志轮转定向验证：
+  - RED：新增 logger/start/docs 测试后，先因缺少 `createRotatingFileSink()`、`logging` 配置和日志文件写入失败。
+  - GREEN：`node --test test\logger.test.js test\server-start.test.js test\deployment-docs.test.js test\ops-assets.test.js test\docs.test.js`，21 个测试全部通过。
+  - Compose：使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 运行 `docker compose -f docker-compose.prod.yml config` 解析通过，并确认 `LOG_FILE_PATH` 与 `cloak-app-logs` volume 生效。
+  - 全量：`node --test`，165 个测试，161 通过、0 失败、4 个 opt-in 跳过。
+  - `.context` 校验：`context is valid`。
 - 进行中：
   - Phase 4 上线前收口与剩余生产能力评估。
 - 下一步：
-  - 根据上线目标决定是否继续补日志轮转、CI/CD、真实 Bot IP 情报源和生产观测告警。
+  - 根据上线目标决定是否继续补 CI/CD、真实 Bot IP 情报源和生产观测告警。
 - 阻塞项：
   - 无当前阻塞。

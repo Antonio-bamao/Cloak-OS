@@ -7,7 +7,7 @@ import {
   validateConfig
 } from '../config/index.js';
 import { AppError } from '../utils/errors.js';
-import { createLogger } from '../utils/logger.js';
+import { createLogger, createLoggerFromConfig } from '../utils/logger.js';
 import { createPostgresClientFactory } from '../infrastructure/postgres/create-postgres-client.js';
 import { createApp } from './app.js';
 
@@ -15,7 +15,7 @@ const createDefaultPostgresClient = createPostgresClientFactory();
 
 export async function startServer({
   config = {},
-  logger = createLogger(),
+  logger,
   createApp: appFactory = createApp,
   createDefaultPostgresClient: defaultPostgresClientFactory = createDefaultPostgresClient,
   createPostgresClient,
@@ -24,6 +24,7 @@ export async function startServer({
 } = {}) {
   const runtimeConfig = mergeConfig(defaultConfig, config);
   validateConfig(runtimeConfig);
+  const runtimeLogger = logger ?? createLoggerFromConfig(runtimeConfig);
   const { postgresClient: resolvedPostgresClient, shouldDispose } = await resolvePostgresClient({
     config: runtimeConfig,
     postgresClient,
@@ -31,7 +32,7 @@ export async function startServer({
     createDefaultPostgresClient: defaultPostgresClientFactory
   });
   const server = app ?? appFactory({
-    logger,
+    logger: runtimeLogger,
     config: runtimeConfig,
     postgresClient: resolvedPostgresClient
   });
@@ -43,7 +44,7 @@ export async function startServer({
   });
 
   const address = server.address();
-  logger.info('HTTP server started', {
+  runtimeLogger.info('HTTP server started', {
     host: address.address,
     port: address.port
   });

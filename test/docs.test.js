@@ -20,6 +20,9 @@ test('README documents startup, tests, env vars, and available API routes', asyn
   assert.match(readme, /ADMIN_TOKEN/);
   assert.match(readme, /REPOSITORY_DRIVER/);
   assert.match(readme, /DATABASE_URL/);
+  assert.match(readme, /LOG_FILE_PATH/);
+  assert.match(readme, /LOG_MAX_BYTES/);
+  assert.match(readme, /LOG_MAX_FILES/);
   assert.match(readme, /GET \/health/);
   assert.match(readme, /GET \/admin/);
   assert.match(readme, /GET \/c\/:campaignId/);
@@ -65,7 +68,10 @@ test('.env.example lists every runtime env var consumed by config', async () => 
     'BOT_IPS=',
     'ADMIN_TOKEN=',
     'REPOSITORY_DRIVER=',
-    'DATABASE_URL='
+    'DATABASE_URL=',
+    'LOG_FILE_PATH=',
+    'LOG_MAX_BYTES=',
+    'LOG_MAX_FILES='
   ]) {
     assert.match(envExample, new RegExp(`^${key}`, 'm'));
   }

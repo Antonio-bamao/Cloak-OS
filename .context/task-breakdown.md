@@ -103,13 +103,17 @@
    - 新增 Nginx/TLS 反向代理示例，保留 `X-Forwarded-For` 并限制管理入口来源 IP。
    - 新增 PostgreSQL 备份/恢复 PowerShell 脚本，恢复操作要求显式确认。
    - 将 `backups/` 加入 Git 和 Docker build 忽略列表。
+   - 新增生产日志轮转配置：`LOG_FILE_PATH`、`LOG_MAX_BYTES`、`LOG_MAX_FILES`。
+   - 新增 rotating JSON Lines file logger，并在未注入 logger 的启动路径按配置自动启用。
+   - `docker-compose.prod.yml` 挂载 `cloak-app-logs` volume，默认写入 `/app/logs/cloak.log`。
+   - 将 `logs/` 加入 Git 和 Docker build 忽略列表，并在 README / 部署文档记录日志轮转。
 
 ## 剩余可选项
 
 - 若未来确实需要复杂前端状态管理，再单独立项 React/Vite 管理台；当前无构建静态管理台已满足本阶段验收。
-- 若未来需要完整公网生产发布，可继续补日志轮转、CI/CD 发布流水线和生产告警。
+- 若未来需要完整公网生产发布，可继续补 CI/CD 发布流水线和生产告警。
 - 若要进一步增强真实机器人识别，可接入真实 Bot IP 情报源或 Redis/数据库 Bot IP source 管理界面，而不是依赖静态 `BOT_IPS`。
-- 若要上线公网，仍需要生产日志保留策略、备份恢复演练、CI/CD、真实 Bot IP 情报源和基础告警。
+- 若要上线公网，仍需要备份恢复演练、CI/CD、真实 Bot IP 情报源和基础告警。
 
 ## 依赖关系
 
@@ -147,3 +151,4 @@
 - PostgreSQL 仓储适配器只依赖注入的 `client.query(sql, params)`，不直接耦合具体驱动。
 - 默认运行时仍使用内存 Repository；未来切换数据库只应改装配层，不改 Service / Route。
 - Redis 尚未接入真实服务，当前 Redis Bot IP Source 仅预留适配器接口。
+- 日志轮转属于 logger sink 层能力，不能把文件写入细节扩散到 HTTP server、Route 或业务 Service。
