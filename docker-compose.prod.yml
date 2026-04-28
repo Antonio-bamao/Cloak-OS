@@ -31,6 +31,8 @@ services:
       - MIN_CONFIDENCE=${MIN_CONFIDENCE:-60}
       - BOT_CONFIDENCE=${BOT_CONFIDENCE:-80}
       - BOT_IPS=${BOT_IPS:-}
+      - BOT_IP_SOURCE=${BOT_IP_SOURCE:-env}
+      - BOT_IP_FILE_PATH=${BOT_IP_FILE_PATH:-}
       - ADMIN_TOKEN=${ADMIN_TOKEN:?Set ADMIN_TOKEN in .env.production}
       - REPOSITORY_DRIVER=postgres
       - DATABASE_URL=postgres://${POSTGRES_USER:-cloak}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-cloak}

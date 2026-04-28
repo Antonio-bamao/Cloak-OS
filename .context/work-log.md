@@ -596,3 +596,10 @@
 - 结果：`ci.yml` 会在 push / pull request 上安装依赖、运行 `node --test`、解析 `docker-compose.prod.yml` 并校验 `.context`；`release-smoke.yml` 可手动触发 PostgreSQL service container，执行 migration、readonly smoke、API smoke、Admin smoke 和 production preflight。当前不自动部署生产服务器。
 - 验证：RED：`node --test test\github-actions.test.js` 先因 workflow 文件不存在失败；GREEN：`node --test test\github-actions.test.js test\docs.test.js test\deployment-docs.test.js` 6 个测试通过；全量 `node --test` 输出 167 个测试、163 通过、0 失败、4 个 opt-in 跳过；`docker compose -f docker-compose.prod.yml config` 使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 解析通过；`python scripts\validate_context.py --project-root .` 输出 `context is valid`。
 - 下一步：运行全量测试、Compose 配置解析和 `.context` 校验；之后可提交并推送 CI/CD 验收门。
+
+## 2026-04-29 01:31 CST｜补齐文件型 Bot IP source
+- 目标：把 Bot IP 识别从单纯 `BOT_IPS` 环境变量升级为可维护的生产文件来源，同时保持 Detector 与 Pipeline 边界不变。
+- 动作：按 TDD 扩展 `test/bot-ip-source.test.js`、`test/server-start.test.js`、`test/pipeline-factory.test.js`、`test/settings-api.test.js` 和文档测试；新增 `FileBotIpSource` 与 `parseBotIpFile()`；扩展配置读取/校验；让默认 CampaignService 装配根据 `BOT_IP_SOURCE` 创建 env/file source；管理台 Settings 面板展示 Bot IP 来源；更新 README、`.env.example`、`docs/DEPLOYMENT.md` 和 `docker-compose.prod.yml`。
+- 结果：默认 `BOT_IP_SOURCE=env` 保持兼容；设置 `BOT_IP_SOURCE=file` 与 `BOT_IP_FILE_PATH=/app/config/bot-ips.txt` 后，运行时会从文本文件加载确认过的 Bot IP 名单，文件支持空行和 `#` 注释。管理台可见来源类型和文件路径。
+- 验证：RED：新增测试先因缺少 `FileBotIpSource`、配置字段、settings 输出和文档说明失败；GREEN：定向 Bot source/config/settings/docs 测试 35 个通过；`node --check public\admin\app.js` 通过；全量 `node --test` 输出 172 个测试、168 通过、0 失败、4 个 opt-in 跳过；`docker compose -f docker-compose.prod.yml config` 使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 解析通过并显示 `BOT_IP_SOURCE` / `BOT_IP_FILE_PATH`；`python scripts\validate_context.py --project-root .` 输出 `context is valid`。
+- 下一步：可继续生产观测告警、备份恢复演练，或后续把 Bot IP source 升级到 Redis/数据库/外部情报源同步。

@@ -2,8 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  FileBotIpSource,
   InMemoryBotIpSource,
   RedisBotIpSource,
+  parseBotIpFile,
   createBotIpSource
 } from '../src/detectors/bot-ip-source.js';
 import { IpDetector } from '../src/detectors/ip.detector.js';
@@ -21,6 +23,46 @@ test('createBotIpSource creates an in-memory source from configured IPs', async 
   const source = createBotIpSource({
     type: 'memory',
     botIps: ['66.249.66.1']
+  });
+
+  assert.equal(await source.has('66.249.66.1'), true);
+});
+
+test('parseBotIpFile reads one IP per line and ignores comments and blanks', () => {
+  assert.deepEqual(parseBotIpFile([
+    '# Google crawler ranges confirmed upstream',
+    '66.249.66.1',
+    '',
+    '  66.249.66.2  ',
+    '# trailing comment',
+    '203.0.113.10'
+  ].join('\n')), [
+    '66.249.66.1',
+    '66.249.66.2',
+    '203.0.113.10'
+  ]);
+});
+
+test('FileBotIpSource loads configured IPs from a text file', async () => {
+  const source = new FileBotIpSource({
+    filePath: 'config/bot-ips.txt',
+    readFile: (filePath) => {
+      assert.equal(filePath, 'config/bot-ips.txt');
+      return '66.249.66.1\n# ignored\n66.249.66.2\n';
+    }
+  });
+
+  assert.equal(source.count, 2);
+  assert.deepEqual(source.list(), ['66.249.66.1', '66.249.66.2']);
+  assert.equal(await source.has('66.249.66.1'), true);
+  assert.equal(await source.has('203.0.113.10'), false);
+});
+
+test('createBotIpSource creates a file source from BOT_IP_FILE_PATH settings', async () => {
+  const source = createBotIpSource({
+    type: 'file',
+    filePath: 'config/bot-ips.txt',
+    readFile: () => '66.249.66.1\n'
   });
 
   assert.equal(await source.has('66.249.66.1'), true);

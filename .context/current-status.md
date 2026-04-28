@@ -416,9 +416,22 @@
   - `python scripts\validate_context.py --project-root .` 输出 `context is valid`。
   - 全量：`node --test`，167 个测试，163 通过、0 失败、4 个 opt-in 跳过。
   - Compose：使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 运行 `docker compose -f docker-compose.prod.yml config` 解析通过。
+- 已补齐文件型 Bot IP source：
+  - 新增 `BOT_IP_SOURCE=env|file` 与 `BOT_IP_FILE_PATH` 配置，默认 `env` 兼容现有 `BOT_IPS`。
+  - 新增 `FileBotIpSource` 与 `parseBotIpFile()`，支持一行一个 IP、空行和 `#` 注释。
+  - 默认 CampaignService 装配会按配置创建 env/file Bot IP source，不改变 `IpDetector` 或检测管道职责。
+  - 管理台 Settings API 与 UI 已展示 Bot IP 来源类型和文件路径。
+  - README、`.env.example`、`docs/DEPLOYMENT.md` 与生产 Compose 已补 Bot IP source 配置说明。
+- 已运行文件型 Bot IP source 验证：
+  - RED：新增 bot source/config/settings/docs 测试后，先因缺少 `FileBotIpSource`、配置字段、文档和 settings 输出失败。
+  - GREEN：`node --test test\deployment-docs.test.js test\docs.test.js test\bot-ip-source.test.js test\server-start.test.js test\settings-api.test.js test\pipeline-factory.test.js`，35 个测试全部通过。
+  - `node --check public\admin\app.js` 通过。
+  - 全量：`node --test`，172 个测试，168 通过、0 失败、4 个 opt-in 跳过。
+  - Compose：使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 运行 `docker compose -f docker-compose.prod.yml config` 解析通过，并确认 `BOT_IP_SOURCE` / `BOT_IP_FILE_PATH` 生效。
+  - `.context` 校验：`context is valid`。
 - 进行中：
   - Phase 4 上线前收口与剩余生产能力评估。
 - 下一步：
-  - 根据上线目标决定是否继续补真实 Bot IP 情报源、生产观测告警或备份恢复演练。
+  - 根据上线目标决定是否继续补生产观测告警、备份恢复演练，或把 Bot IP source 升级到 Redis/数据库/外部情报源。
 - 阻塞项：
   - 无当前阻塞。

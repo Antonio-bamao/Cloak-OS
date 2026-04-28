@@ -83,3 +83,41 @@ test('createDefaultCampaignService reads bot IPs from config detection settings'
 
   assert.equal(result.decision.verdict, 'bot');
 });
+
+test('createDefaultCampaignService can load bot IPs from a configured file source', async () => {
+  const campaignService = createDefaultCampaignService({
+    config: {
+      detection: {
+        botIps: [],
+        botIpSource: {
+          type: 'file',
+          filePath: 'config/bot-ips.txt'
+        }
+      }
+    },
+    repositories: {
+      campaignRepository: new InMemoryCampaignRepository(),
+      accessLogRepository: new InMemoryAccessLogRepository()
+    },
+    readBotIpFile: () => '66.249.66.1\n'
+  });
+
+  const campaign = await campaignService.createCampaign({
+    tenantId: 'tenant-1',
+    name: 'File Bot IP Campaign',
+    safeUrl: 'https://safe.example',
+    moneyUrl: 'https://money.example'
+  });
+
+  const result = await campaignService.handleVisit(
+    campaign.id,
+    {
+      ip: '66.249.66.1',
+      userAgent: 'Mozilla/5.0'
+    },
+    'tenant-1'
+  );
+
+  assert.equal(result.decision.verdict, 'bot');
+  assert.equal(result.decision.action, 'safe');
+});

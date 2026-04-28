@@ -7,6 +7,7 @@ const AUTH_HEADERS = { Authorization: 'Bearer dev-admin-token' };
 
 test('settings API returns protected runtime settings summary without secrets', async () => {
   const app = createApp({
+    readBotIpFile: () => '203.0.113.10\n203.0.113.11\n',
     postgresClient: {
       async query() {
         return { rows: [], rowCount: 0 };
@@ -20,7 +21,11 @@ test('settings API returns protected runtime settings summary without secrets', 
       detection: {
         suspiciousThreshold: 55,
         botThreshold: 85,
-        botIps: ['203.0.113.10', '203.0.113.11']
+        botIps: ['203.0.113.10', '203.0.113.11'],
+        botIpSource: {
+          type: 'file',
+          filePath: '/app/config/bot-ips.txt'
+        }
       },
       auth: {
         adminToken: 'super-secret-token'
@@ -51,7 +56,11 @@ test('settings API returns protected runtime settings summary without secrets', 
           suspiciousThreshold: 55,
           botThreshold: 85,
           botIpCount: 2,
-          botIps: ['203.0.113.10', '203.0.113.11']
+          botIps: ['203.0.113.10', '203.0.113.11'],
+          botIpSource: {
+            type: 'file',
+            filePath: '/app/config/bot-ips.txt'
+          }
         },
         repository: {
           driver: 'postgres',

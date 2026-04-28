@@ -79,6 +79,8 @@ PORT=3000
 MIN_CONFIDENCE=60
 BOT_CONFIDENCE=80
 BOT_IPS=
+BOT_IP_SOURCE=env
+BOT_IP_FILE_PATH=
 ADMIN_TOKEN=replace-with-admin-token
 REPOSITORY_DRIVER=postgres
 DATABASE_URL=postgres://cloak:replace-with-password@127.0.0.1:55432/cloak
@@ -92,6 +94,8 @@ LOG_MAX_FILES=5
 - `MIN_CONFIDENCE`：进入 suspicious 判定的最低置信度，范围 `1-100`。
 - `BOT_CONFIDENCE`：进入 bot 判定的最低置信度，范围 `1-100`。
 - `BOT_IPS`：逗号分隔的 Bot IP 列表；生产默认留空，只在有真实 Bot IP 情报源时填写。
+- `BOT_IP_SOURCE`：Bot IP 来源，支持 `env` 或 `file`；默认 `env` 读取 `BOT_IPS`。
+- `BOT_IP_FILE_PATH`：`BOT_IP_SOURCE=file` 时读取的文本文件路径，一行一个 IP，支持空行和 `#` 注释。
 - `ADMIN_TOKEN`：管理 API Bearer token。生产环境必须设置真实随机值，不能使用开发默认值。
 - `REPOSITORY_DRIVER`：仓储驱动，支持 `memory` 或 `postgres`。DATABASE_URL 配置后会自动使用 PostgreSQL。
 - `DATABASE_URL`：PostgreSQL 连接串，供内置 `pg` 驱动创建连接池使用。生产环境不允许使用本地内存仓储。
@@ -175,7 +179,7 @@ GET /c/:campaignId
 - Service 负责编排 Repository、DetectionPipeline、DecisionEngine 和跳转策略。
 - AnalyticsService 独立汇总管理台概览数据，不侵入 CampaignService。
 - Detector 之间互不依赖，由 Pipeline 编排。
-- Bot IP 检测依赖 `botIpSource` 接口，未来可替换为 Redis 或数据库实现。
+- Bot IP 检测依赖 `botIpSource` 接口，当前支持环境变量和文件来源，未来可替换为 Redis 或数据库实现。
 - 默认 Repository 仍使用内存实现，行为由 contract tests 固定。
 - 已提供可注入 `client.query(sql, params)` 的 PostgreSQL 风格仓储适配器：
   - `PostgresCampaignRepository`

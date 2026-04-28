@@ -60,6 +60,7 @@ test('admin UI shell and assets are served by the app', async () => {
     assert.match(js, /renderSettings/);
     assert.match(js, /\/api\/v1\/settings/);
     assert.match(js, /botIpCount/);
+    assert.match(js, /formatBotIpSource/);
     assert.match(js, /showSuccessModal/);
     assert.match(js, /renderErrorBanner/);
     assert.match(js, /hideErrorBanner/);

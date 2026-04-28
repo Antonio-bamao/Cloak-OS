@@ -14,6 +14,7 @@ import { AccessLogService } from '../services/access-log.service.js';
 import { SettingsService } from '../services/settings.service.js';
 import { createRepositories } from '../repositories/factory.js';
 import { createDefaultDetectionPipeline } from '../core/pipeline-factory.js';
+import { createBotIpSource } from '../detectors/bot-ip-source.js';
 import { InMemoryRateLimiter } from '../utils/rate-limiter.js';
 import { config as defaultConfig } from '../config/index.js';
 import { createHttpServer } from './http-server.js';
@@ -24,9 +25,10 @@ export function createApp({
   config = defaultConfig,
   postgresClient,
   repositories,
+  readBotIpFile,
   cloakRateLimiter = new InMemoryRateLimiter({ limit: 120, windowMs: 60_000 }),
   adminAuthService = new BearerTokenAuthService({ token: config.auth.adminToken }),
-  campaignService = createDefaultCampaignService({ config, repositories, postgresClient }),
+  campaignService = createDefaultCampaignService({ config, repositories, postgresClient, readBotIpFile }),
   analyticsService = createDefaultAnalyticsService({ campaignService }),
   accessLogService = createDefaultAccessLogService({ campaignService }),
   settingsService = new SettingsService({ config })
@@ -63,12 +65,33 @@ export function createDefaultCampaignService({
   repository = repositories.campaignRepository,
   accessLogRepository = repositories.accessLogRepository,
   botIps = config?.detection?.botIps ?? [],
-  botIpSource
+  botIpSource,
+  readBotIpFile
 } = {}) {
+  const configuredBotIpSource = botIpSource ?? createConfiguredBotIpSource({
+    config,
+    botIps,
+    readBotIpFile
+  });
+
   return new CampaignService({
     repository,
     accessLogRepository,
-    pipeline: createDefaultDetectionPipeline({ botIps, botIpSource })
+    pipeline: createDefaultDetectionPipeline({ botIps, botIpSource: configuredBotIpSource })
+  });
+}
+
+export function createConfiguredBotIpSource({
+  config,
+  botIps = config?.detection?.botIps ?? [],
+  readBotIpFile
+} = {}) {
+  const sourceConfig = config?.detection?.botIpSource ?? { type: 'env' };
+  return createBotIpSource({
+    type: sourceConfig.type,
+    botIps,
+    filePath: sourceConfig.filePath,
+    readFile: readBotIpFile
   });
 }
 

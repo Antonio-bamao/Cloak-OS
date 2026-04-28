@@ -17,7 +17,11 @@ export function getConfig(env = process.env) {
     detection: {
       suspiciousThreshold: Number(env.MIN_CONFIDENCE ?? 60),
       botThreshold: Number(env.BOT_CONFIDENCE ?? 80),
-      botIps: parseCsv(env.BOT_IPS)
+      botIps: parseCsv(env.BOT_IPS),
+      botIpSource: {
+        type: env.BOT_IP_SOURCE ?? 'env',
+        filePath: env.BOT_IP_FILE_PATH ?? ''
+      }
     },
     auth: {
       adminToken: env.ADMIN_TOKEN ?? DEFAULT_ADMIN_TOKEN
@@ -53,6 +57,14 @@ export function validateConfig(runtimeConfig) {
 
   if (!isPercentage(runtimeConfig.detection?.botThreshold)) {
     errors.push('detection.botThreshold must be between 1 and 100');
+  }
+
+  if (!['env', 'file'].includes(runtimeConfig.detection?.botIpSource?.type)) {
+    errors.push('detection.botIpSource.type must be env or file');
+  }
+
+  if (runtimeConfig.detection?.botIpSource?.type === 'file' && !runtimeConfig.detection.botIpSource.filePath) {
+    errors.push('detection.botIpSource.filePath is required when detection.botIpSource.type is file');
   }
 
   if (!runtimeConfig.auth?.adminToken) {

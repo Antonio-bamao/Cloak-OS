@@ -110,13 +110,17 @@
    - 新增 GitHub Actions CI workflow，覆盖依赖安装、全量测试、生产 Compose 配置解析和 `.context` 校验。
    - 新增手动 release smoke workflow，使用 PostgreSQL service container 跑 migration、smoke-check 和 production preflight。
    - 新增 repo-local `scripts/validate_context.py`，让 CI 中的项目上下文校验可移植。
+   - 新增文件型 Bot IP source 配置：`BOT_IP_SOURCE=env|file` 与 `BOT_IP_FILE_PATH`。
+   - 新增 `FileBotIpSource`，支持一行一个 IP、空行和 `#` 注释。
+   - 默认运行时按配置装配 env/file Bot IP source，并在 Settings API / 管理台展示来源。
+   - README、`.env.example`、`docs/DEPLOYMENT.md` 与生产 Compose 已补 Bot IP source 配置说明。
 
 ## 剩余可选项
 
 - 若未来确实需要复杂前端状态管理，再单独立项 React/Vite 管理台；当前无构建静态管理台已满足本阶段验收。
 - 若未来需要完整公网生产发布，可继续补自动部署流水线和生产告警。
-- 若要进一步增强真实机器人识别，可接入真实 Bot IP 情报源或 Redis/数据库 Bot IP source 管理界面，而不是依赖静态 `BOT_IPS`。
-- 若要上线公网，仍需要备份恢复演练、真实 Bot IP 情报源和基础告警。
+- 若要进一步增强真实机器人识别，可接入 Redis/数据库 Bot IP source 管理界面或外部情报源同步。
+- 若要上线公网，仍需要备份恢复演练和基础告警。
 
 ## 依赖关系
 
@@ -153,6 +157,6 @@
 - 管理台浏览器布局测试必须保持 opt-in，避免日常 `node --test` 启动 Chrome 或连接真实数据库。
 - PostgreSQL 仓储适配器只依赖注入的 `client.query(sql, params)`，不直接耦合具体驱动。
 - 默认运行时仍使用内存 Repository；未来切换数据库只应改装配层，不改 Service / Route。
-- Redis 尚未接入真实服务，当前 Redis Bot IP Source 仅预留适配器接口。
+- Redis 尚未接入真实服务，当前 Redis Bot IP Source 仅预留适配器接口；生产可先用文件型 Bot IP source 管理确认过的 IP 名单。
 - 日志轮转属于 logger sink 层能力，不能把文件写入细节扩散到 HTTP server、Route 或业务 Service。
 - GitHub Actions 当前只做质量门和手动发布前验收，不自动部署生产服务器。

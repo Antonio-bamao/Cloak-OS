@@ -19,6 +19,8 @@ test('production deployment assets document postgres-backed Docker deployment', 
   assert.match(compose, /REPOSITORY_DRIVER=postgres/);
   assert.match(compose, /DATABASE_URL=/);
   assert.match(compose, /ADMIN_TOKEN=/);
+  assert.match(compose, /BOT_IP_SOURCE=/);
+  assert.match(compose, /BOT_IP_FILE_PATH=/);
   assert.match(compose, /LOG_FILE_PATH=/);
   assert.match(compose, /cloak-app-logs/);
   assert.doesNotMatch(compose, /5432:5432/);
@@ -32,6 +34,8 @@ test('production deployment assets document postgres-backed Docker deployment', 
   assert.match(deployment, /创建生产环境变量/);
   assert.match(deployment, /启动 PostgreSQL/);
   assert.match(deployment, /生产默认不配置 BOT_IPS/);
+  assert.match(deployment, /BOT_IP_SOURCE/);
+  assert.match(deployment, /BOT_IP_FILE_PATH/);
   assert.match(deployment, /LOG_FILE_PATH/);
   assert.match(deployment, /日志轮转/);
   assert.doesNotMatch(deployment, /BOT_IPS=66\.249/);

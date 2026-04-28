@@ -17,6 +17,8 @@ test('README documents startup, tests, env vars, and available API routes', asyn
   assert.match(readme, /HOST/);
   assert.match(readme, /PORT/);
   assert.match(readme, /BOT_IPS/);
+  assert.match(readme, /BOT_IP_SOURCE/);
+  assert.match(readme, /BOT_IP_FILE_PATH/);
   assert.match(readme, /ADMIN_TOKEN/);
   assert.match(readme, /REPOSITORY_DRIVER/);
   assert.match(readme, /DATABASE_URL/);
@@ -66,6 +68,8 @@ test('.env.example lists every runtime env var consumed by config', async () => 
     'MIN_CONFIDENCE=',
     'BOT_CONFIDENCE=',
     'BOT_IPS=',
+    'BOT_IP_SOURCE=',
+    'BOT_IP_FILE_PATH=',
     'ADMIN_TOKEN=',
     'REPOSITORY_DRIVER=',
     'DATABASE_URL=',

@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 export class InMemoryBotIpSource {
   constructor({ botIps = [] } = {}) {
     this.botIps = new Set(botIps);
@@ -9,6 +11,29 @@ export class InMemoryBotIpSource {
 
   async has(ip) {
     return this.botIps.has(ip);
+  }
+}
+
+export class FileBotIpSource extends InMemoryBotIpSource {
+  constructor({
+    filePath,
+    readFile = (path) => readFileSync(path, 'utf8')
+  } = {}) {
+    if (!filePath) {
+      throw new TypeError('FileBotIpSource requires filePath');
+    }
+
+    const botIps = parseBotIpFile(readFile(filePath));
+    super({ botIps });
+    this.filePath = filePath;
+  }
+
+  list() {
+    return [...this.botIps];
+  }
+
+  get count() {
+    return this.botIps.size;
   }
 }
 
@@ -41,11 +66,17 @@ export class RedisBotIpSource {
 export function createBotIpSource({
   type = 'memory',
   botIps = [],
+  filePath,
+  readFile,
   redisClient,
   redisKey
 } = {}) {
-  if (type === 'memory') {
+  if (type === 'memory' || type === 'env') {
     return new InMemoryBotIpSource({ botIps });
+  }
+
+  if (type === 'file') {
+    return new FileBotIpSource({ filePath, readFile });
   }
 
   if (type === 'redis') {
@@ -56,4 +87,11 @@ export function createBotIpSource({
   }
 
   throw new Error(`Unsupported bot IP source: ${type}`);
+}
+
+export function parseBotIpFile(content) {
+  return content
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith('#'));
 }

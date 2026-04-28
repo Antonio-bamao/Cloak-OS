@@ -21,12 +21,23 @@ POSTGRES_PASSWORD=replace-with-a-long-random-password
 ADMIN_TOKEN=replace-with-a-long-random-admin-token
 MIN_CONFIDENCE=60
 BOT_CONFIDENCE=80
+BOT_IP_SOURCE=env
+BOT_IP_FILE_PATH=
 LOG_FILE_PATH=/app/logs/cloak.log
 LOG_MAX_BYTES=10485760
 LOG_MAX_FILES=5
 ```
 
-生产默认不配置 BOT_IPS，避免把示例 IP 当成线上规则。真实流量会先经过 User-Agent 检测；如果你有自己的 Bot IP 情报源，再把确认后的 IP 以英文逗号写入 `BOT_IPS`。常见爬虫 User-Agent，例如 `Googlebot`，也会被 UA 检测器识别。
+生产默认不配置 BOT_IPS，避免把示例 IP 当成线上规则。真实流量会先经过 User-Agent 检测；如果你有自己的 Bot IP 情报源，可以保持 `BOT_IP_SOURCE=env` 并把确认后的 IP 以英文逗号写入 `BOT_IPS`。常见爬虫 User-Agent，例如 `Googlebot`，也会被 UA 检测器识别。
+
+如果要用文件维护 Bot IP 列表，设置：
+
+```bash
+BOT_IP_SOURCE=file
+BOT_IP_FILE_PATH=/app/config/bot-ips.txt
+```
+
+文件格式是一行一个 IP，支持空行和 `#` 注释。生产部署时可把宿主机上的确认名单以只读方式挂载到容器内，例如把 `./config/bot-ips.txt` 挂载到 `/app/config/bot-ips.txt`。
 
 日志默认写入容器内 `/app/logs/cloak.log`，Compose 会挂载到 `cloak-app-logs` volume。`LOG_MAX_BYTES` 控制单个日志文件最大字节数，`LOG_MAX_FILES` 控制总保留文件数（包含当前日志）；例如默认值会保留当前 `cloak.log` 加上 4 个轮转归档。
 

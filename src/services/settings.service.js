@@ -19,7 +19,11 @@ export class SettingsService {
         suspiciousThreshold: this.config.detection?.suspiciousThreshold,
         botThreshold: this.config.detection?.botThreshold,
         botIpCount: botIps.length,
-        botIps: [...botIps]
+        botIps: [...botIps],
+        botIpSource: {
+          type: this.config.detection?.botIpSource?.type ?? 'env',
+          filePath: this.config.detection?.botIpSource?.filePath ?? ''
+        }
       },
       repository: {
         driver: this.config.repository?.driver,

@@ -18,6 +18,8 @@ test('getConfig reads host and port from an injected env object', () => {
     REPOSITORY_DRIVER: 'postgres',
     DATABASE_URL: 'postgres://cloak:secret@127.0.0.1:5432/cloak',
     ADMIN_TOKEN: 'dev-admin-token',
+    BOT_IP_SOURCE: 'file',
+    BOT_IP_FILE_PATH: 'config/bot-ips.txt',
     LOG_FILE_PATH: '/var/log/cloak/app.log',
     LOG_MAX_BYTES: '2048',
     LOG_MAX_FILES: '4'
@@ -30,7 +32,11 @@ test('getConfig reads host and port from an injected env object', () => {
   assert.deepEqual(config.detection, {
     suspiciousThreshold: 55,
     botThreshold: 88,
-    botIps: ['66.249.66.1', '66.249.66.2']
+    botIps: ['66.249.66.1', '66.249.66.2'],
+    botIpSource: {
+      type: 'file',
+      filePath: 'config/bot-ips.txt'
+    }
   });
   assert.deepEqual(config.auth, {
     adminToken: 'dev-admin-token'
@@ -44,6 +50,36 @@ test('getConfig reads host and port from an injected env object', () => {
     maxBytes: 2048,
     maxFiles: 4
   });
+});
+
+test('validateConfig rejects file bot IP source without a file path', () => {
+  assert.throws(
+    () => validateConfig({
+      server: { host: '127.0.0.1', port: 3000 },
+      detection: {
+        suspiciousThreshold: 60,
+        botThreshold: 80,
+        botIps: [],
+        botIpSource: {
+          type: 'file',
+          filePath: ''
+        }
+      },
+      auth: {
+        adminToken: 'dev-admin-token'
+      },
+      repository: {
+        driver: 'memory',
+        databaseUrl: ''
+      },
+      logging: {
+        filePath: '',
+        maxBytes: 10485760,
+        maxFiles: 5
+      }
+    }),
+    /detection.botIpSource.filePath is required/
+  );
 });
 
 test('getConfig infers postgres repository when DATABASE_URL is configured', () => {

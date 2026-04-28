@@ -46,6 +46,7 @@ const elements = {
   settingsRepository: document.querySelector('#settings-repository'),
   settingsThresholds: document.querySelector('#settings-thresholds'),
   settingsBotCount: document.querySelector('#settings-bot-count'),
+  settingsBotSource: document.querySelector('#settings-bot-source'),
   settingsBotIps: document.querySelector('#settings-bot-ips'),
   settingsNotes: document.querySelector('#settings-notes'),
   campaignForm: document.querySelector('#campaign-form'),
@@ -318,12 +319,25 @@ function renderSettings() {
     : `${driverLabel} / 未配置数据库`;
   elements.settingsThresholds.textContent = `可疑 ${settings.detection?.suspiciousThreshold ?? '-'} / 机器人 ${settings.detection?.botThreshold ?? '-'}`;
   elements.settingsBotCount.textContent = String(settings.detection?.botIpCount ?? 0);
+  elements.settingsBotSource.textContent = formatBotIpSource(settings.detection?.botIpSource);
   elements.settingsBotIps.textContent = settings.detection?.botIps?.length
     ? settings.detection.botIps.join(', ')
     : '未配置';
   elements.settingsNotes.innerHTML = (settings.notes ?? [])
     .map((note) => `<li>${escapeHtml(note)}</li>`)
     .join('');
+}
+
+function formatBotIpSource(source) {
+  if (!source || source.type === 'env') {
+    return '环境变量';
+  }
+
+  if (source.type === 'file') {
+    return source.filePath ? `文件 / ${source.filePath}` : '文件';
+  }
+
+  return source.type;
 }
 
 function renderCampaigns() {
