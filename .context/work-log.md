@@ -603,3 +603,10 @@
 - 结果：默认 `BOT_IP_SOURCE=env` 保持兼容；设置 `BOT_IP_SOURCE=file` 与 `BOT_IP_FILE_PATH=/app/config/bot-ips.txt` 后，运行时会从文本文件加载确认过的 Bot IP 名单，文件支持空行和 `#` 注释。管理台可见来源类型和文件路径。
 - 验证：RED：新增测试先因缺少 `FileBotIpSource`、配置字段、settings 输出和文档说明失败；GREEN：定向 Bot source/config/settings/docs 测试 35 个通过；`node --check public\admin\app.js` 通过；全量 `node --test` 输出 172 个测试、168 通过、0 失败、4 个 opt-in 跳过；`docker compose -f docker-compose.prod.yml config` 使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 解析通过并显示 `BOT_IP_SOURCE` / `BOT_IP_FILE_PATH`；`python scripts\validate_context.py --project-root .` 输出 `context is valid`。
 - 下一步：可继续生产观测告警、备份恢复演练，或后续把 Bot IP source 升级到 Redis/数据库/外部情报源同步。
+
+## 2026-04-29 02:02 CST｜补齐生产监控告警入口
+- 目标：给生产运行中的 Cloak 服务补一个可由 cron、GitHub Actions、Uptime Kuma 或其他监控平台调用的健康/设置检查和通用 Webhook 告警入口。
+- 动作：按 TDD 新增 `test/production-monitor.test.js`；实现 `src/ops/run-production-monitor.js`；新增脚本 `npm run monitor:production`；更新 README、`docs/DEPLOYMENT.md` 和 GitHub Actions CI，让 CI 覆盖 monitor CLI 的 help direct-run。
+- 结果：监控命令会检查 `/health` 的 `status=ok`，检查 `/api/v1/settings` 的仓储和数据库配置，默认期望 `postgres`。失败时若提供 `--alert-webhook-url`，会 POST `{ service, status, baseUrl, error }` 到指定 Webhook。
+- 验证：RED：`node --test test\production-monitor.test.js` 先因缺少 monitor module 失败；GREEN：monitor/docs 定向测试 9 个通过，GitHub Actions/monitor 定向测试 7 个通过；`node --check src\ops\run-production-monitor.js` 与 `npm run monitor:production -- --help` 通过；全量 `node --test` 输出 177 个测试、173 通过、0 失败、4 个 opt-in 跳过；`docker compose -f docker-compose.prod.yml config` 使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 解析通过；`python scripts\validate_context.py --project-root .` 输出 `context is valid`。
+- 下一步：可继续备份恢复演练，或把 Bot IP source 升级到 Redis/数据库/外部情报源同步。

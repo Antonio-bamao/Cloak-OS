@@ -192,3 +192,25 @@ docker compose --env-file .env.production -f docker-compose.prod.yml up -d app
 ```
 
 如果 smoke-check 失败，先保留旧版本应用，查看错误输出，不要继续发布。
+
+## 10. 生产监控和告警
+
+可以用内置监控命令检查运行中的服务：
+
+```bash
+npm run monitor:production -- --base-url https://cloak.example.com --admin-token <ADMIN_TOKEN>
+```
+
+该命令会检查 `/health` 返回 `status=ok`，并检查 `/api/v1/settings` 中的仓储状态。默认期望仓储为 `postgres`；如需覆盖可追加：
+
+```bash
+--expect-repository postgres
+```
+
+如果希望失败时发出通用 Webhook 告警，可追加：
+
+```bash
+--alert-webhook-url https://alerts.example/webhook
+```
+
+告警请求是 `POST` JSON，包含 `service`、`status`、`baseUrl` 和 `error` 字段。可以把这个命令接到 cron、GitHub Actions 定时任务、Uptime Kuma 的通知链路或其他监控平台。

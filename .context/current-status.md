@@ -429,9 +429,23 @@
   - 全量：`node --test`，172 个测试，168 通过、0 失败、4 个 opt-in 跳过。
   - Compose：使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 运行 `docker compose -f docker-compose.prod.yml config` 解析通过，并确认 `BOT_IP_SOURCE` / `BOT_IP_FILE_PATH` 生效。
   - `.context` 校验：`context is valid`。
+- 已补齐生产监控告警入口：
+  - 新增 `src/ops/run-production-monitor.js` 和脚本 `npm run monitor:production`。
+  - 监控命令会检查运行中应用的 `/health` 与受保护 `/api/v1/settings`，默认要求仓储为 `postgres` 且数据库已配置。
+  - 支持 `--base-url`、`--admin-token`、`--expect-repository` 和 `--alert-webhook-url`；失败时可 POST 通用 JSON 告警。
+  - GitHub Actions CI 已加入 `npm run monitor:production -- --help`，确保 CLI direct-run 路径可用。
+  - README 与 `docs/DEPLOYMENT.md` 已补监控和 Webhook 告警说明。
+- 已运行生产监控验证：
+  - RED：`node --test test\production-monitor.test.js` 先因缺少 `src/ops/run-production-monitor.js` 失败。
+  - GREEN：`node --test test\production-monitor.test.js test\docs.test.js test\deployment-docs.test.js`，9 个测试全部通过。
+  - `node --test test\github-actions.test.js test\production-monitor.test.js`，7 个测试全部通过。
+  - `node --check src\ops\run-production-monitor.js` 与 `npm run monitor:production -- --help` 通过。
+  - 全量：`node --test`，177 个测试，173 通过、0 失败、4 个 opt-in 跳过。
+  - Compose：使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 运行 `docker compose -f docker-compose.prod.yml config` 解析通过。
+  - `.context` 校验：`context is valid`。
 - 进行中：
   - Phase 4 上线前收口与剩余生产能力评估。
 - 下一步：
-  - 根据上线目标决定是否继续补生产观测告警、备份恢复演练，或把 Bot IP source 升级到 Redis/数据库/外部情报源。
+  - 根据上线目标决定是否继续补备份恢复演练，或把 Bot IP source 升级到 Redis/数据库/外部情报源。
 - 阻塞项：
   - 无当前阻塞。

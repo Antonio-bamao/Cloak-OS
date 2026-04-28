@@ -18,6 +18,7 @@ npm run smoke:postgres
 npm run smoke:postgres-api
 npm run smoke:postgres-admin
 npm run preflight:postgres
+npm run monitor:production
 npm start
 ```
 
@@ -29,6 +30,7 @@ npm start
 `npm run smoke:postgres-api` 会在 PostgreSQL 模式下启动真实 app，通过 HTTP 创建 Campaign、访问公网入口并检查日志与 Analytics；成功后默认删除本次创建的访问日志和测试 Campaign。可追加 `--check-health` 先探测 `GET /health`。
 `npm run smoke:postgres-admin` 会在 PostgreSQL 模式下启动真实 app，加载管理台页面/CSS/JS，检查错误态/空状态资源，并检查 Campaign、Logs、Analytics 管理 API。可追加 `--check-health` 先探测 `GET /health`。
 `npm run preflight:postgres` 是上线前检查：确认 migration 没有 pending，启动 PostgreSQL 模式 app，检查 health/settings/admin，再创建临时 Campaign 验证 Googlebot 去白页、普通浏览器去黑页，最后清理临时 Campaign 和访问日志。
+`npm run monitor:production` 会检查运行中应用的 `/health` 与 `/api/v1/settings`，失败时可通过 `--alert-webhook-url` 发送 JSON 告警。
 
 ## GitHub Actions
 

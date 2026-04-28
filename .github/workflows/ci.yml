@@ -35,6 +35,9 @@ jobs:
       - name: Run Node test suite
         run: node --test
 
+      - name: Check production monitor CLI
+        run: npm run monitor:production -- --help
+
       - name: Validate production Compose config
         run: docker compose -f docker-compose.prod.yml config
 

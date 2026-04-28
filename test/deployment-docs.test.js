@@ -28,6 +28,8 @@ test('production deployment assets document postgres-backed Docker deployment', 
   assert.match(deployment, /npm run migrate/);
   assert.match(deployment, /npm run smoke:postgres-api/);
   assert.match(deployment, /npm run preflight:postgres/);
+  assert.match(deployment, /monitor:production/);
+  assert.match(deployment, /alert-webhook-url/);
   assert.match(deployment, /\/health/);
   assert.match(deployment, /# 生产部署/);
   assert.match(deployment, /前置条件/);
