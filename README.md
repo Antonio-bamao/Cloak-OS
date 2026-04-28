@@ -30,6 +30,12 @@ npm start
 `npm run smoke:postgres-admin` 会在 PostgreSQL 模式下启动真实 app，加载管理台页面/CSS/JS，检查错误态/空状态资源，并检查 Campaign、Logs、Analytics 管理 API。可追加 `--check-health` 先探测 `GET /health`。
 `npm run preflight:postgres` 是上线前检查：确认 migration 没有 pending，启动 PostgreSQL 模式 app，检查 health/settings/admin，再创建临时 Campaign 验证 Googlebot 去白页、普通浏览器去黑页，最后清理临时 Campaign 和访问日志。
 
+## GitHub Actions
+
+- `.github/workflows/ci.yml` 会在 `push` 和 `pull_request` 上运行：安装依赖、`node --test`、`docker compose -f docker-compose.prod.yml config` 和 `.context` 校验。
+- `.github/workflows/release-smoke.yml` 是手动触发的发布前验收：启动 PostgreSQL service container，执行 migration，然后依次运行 readonly smoke、API smoke、Admin smoke 和 `preflight:postgres`。
+- 当前 workflow 不自动部署生产服务器；部署仍按 `docs/DEPLOYMENT.md` 的发布流程执行。
+
 管理台浏览器布局检查默认不会随 `npm test` 启动 Chrome；需要显式开启：
 
 ```powershell

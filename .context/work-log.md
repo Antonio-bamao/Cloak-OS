@@ -589,3 +589,10 @@
 - 结果：生产 Compose 默认把 JSON Lines 日志写到 `/app/logs/cloak.log`，挂载 `cloak-app-logs` volume，并按 `LOG_MAX_BYTES` / `LOG_MAX_FILES` 做大小轮转和保留。未配置 `LOG_FILE_PATH` 时仍回退 stdout，适合平台日志系统接管。
 - 验证：RED：logger 测试先因缺少 `createRotatingFileSink()` 失败，server-start 测试先因缺少 `logging` 配置和日志文件失败；GREEN：`node --test test\logger.test.js test\server-start.test.js test\deployment-docs.test.js test\ops-assets.test.js test\docs.test.js` 21 个测试通过；`docker compose -f docker-compose.prod.yml config` 使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 解析通过并显示 `LOG_FILE_PATH` 与 `cloak-app-logs` volume；全量 `node --test` 输出 165 个测试、161 通过、0 失败、4 个 opt-in 跳过；`.context` 校验输出 `context is valid`。
 - 下一步：运行全量测试与 `.context` 校验；之后可继续 CI/CD、真实 Bot IP 情报源或生产告警。
+
+## 2026-04-29 00:29 CST｜补齐 GitHub Actions CI/CD 验收门
+- 目标：把本地已有的测试、Compose 解析、PostgreSQL smoke 和 preflight 串进 GitHub Actions，形成提交质量门和发布前手动验收门。
+- 动作：按 TDD 新增 `test/github-actions.test.js`，先确认缺少 `.github/workflows/ci.yml` 与 `.github/workflows/release-smoke.yml`；新增 CI workflow、release smoke workflow 和 repo-local `scripts/validate_context.py`；更新 README 与 `docs/DEPLOYMENT.md` 说明 workflow 用途。
+- 结果：`ci.yml` 会在 push / pull request 上安装依赖、运行 `node --test`、解析 `docker-compose.prod.yml` 并校验 `.context`；`release-smoke.yml` 可手动触发 PostgreSQL service container，执行 migration、readonly smoke、API smoke、Admin smoke 和 production preflight。当前不自动部署生产服务器。
+- 验证：RED：`node --test test\github-actions.test.js` 先因 workflow 文件不存在失败；GREEN：`node --test test\github-actions.test.js test\docs.test.js test\deployment-docs.test.js` 6 个测试通过；全量 `node --test` 输出 167 个测试、163 通过、0 失败、4 个 opt-in 跳过；`docker compose -f docker-compose.prod.yml config` 使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 解析通过；`python scripts\validate_context.py --project-root .` 输出 `context is valid`。
+- 下一步：运行全量测试、Compose 配置解析和 `.context` 校验；之后可提交并推送 CI/CD 验收门。

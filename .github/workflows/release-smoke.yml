@@ -1,0 +1,61 @@
+name: Release Smoke
+
+on:
+  workflow_dispatch:
+
+jobs:
+  postgres-release-smoke:
+    name: PostgreSQL release smoke
+    runs-on: ubuntu-latest
+    env:
+      ADMIN_TOKEN: cloak-ci-admin-token
+      DATABASE_URL: postgres://cloak:cloak_ci_password@127.0.0.1:5432/cloak
+      REPOSITORY_DRIVER: postgres
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: cloak
+          POSTGRES_USER: cloak
+          POSTGRES_PASSWORD: cloak_ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cloak -d cloak"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run migrations
+        run: npm run migrate
+
+      - name: Run readonly PostgreSQL smoke
+        run: npm run smoke:postgres
+
+      - name: Run API smoke
+        run: npm run smoke:postgres-api -- --check-health
+
+      - name: Run Admin smoke
+        run: npm run smoke:postgres-admin -- --check-health
+
+      - name: Run production preflight
+        run: npm run preflight:postgres

@@ -405,9 +405,20 @@
   - Compose：使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 运行 `docker compose -f docker-compose.prod.yml config` 解析通过，并确认 `LOG_FILE_PATH` 与 `cloak-app-logs` volume 生效。
   - 全量：`node --test`，165 个测试，161 通过、0 失败、4 个 opt-in 跳过。
   - `.context` 校验：`context is valid`。
+- 已补齐 GitHub Actions CI/CD 验收门：
+  - 新增 `.github/workflows/ci.yml`，在 push / pull request 上安装依赖、运行 `node --test`、解析生产 Compose 配置并校验 `.context`。
+  - 新增 `.github/workflows/release-smoke.yml`，手动触发 PostgreSQL service container，执行 migration、readonly smoke、API smoke、Admin smoke 和 production preflight。
+  - 新增 repo-local `scripts/validate_context.py`，让 CI 不依赖本机 Codex skill 目录。
+  - README 与 `docs/DEPLOYMENT.md` 已补 GitHub Actions 使用说明。
+- 已运行 CI/CD 定向验证：
+  - RED：`node --test test\github-actions.test.js` 先因缺少 `.github/workflows/ci.yml` 与 `release-smoke.yml` 失败。
+  - GREEN：`node --test test\github-actions.test.js test\docs.test.js test\deployment-docs.test.js`，6 个测试全部通过。
+  - `python scripts\validate_context.py --project-root .` 输出 `context is valid`。
+  - 全量：`node --test`，167 个测试，163 通过、0 失败、4 个 opt-in 跳过。
+  - Compose：使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 运行 `docker compose -f docker-compose.prod.yml config` 解析通过。
 - 进行中：
   - Phase 4 上线前收口与剩余生产能力评估。
 - 下一步：
-  - 根据上线目标决定是否继续补 CI/CD、真实 Bot IP 情报源和生产观测告警。
+  - 根据上线目标决定是否继续补真实 Bot IP 情报源、生产观测告警或备份恢复演练。
 - 阻塞项：
   - 无当前阻塞。

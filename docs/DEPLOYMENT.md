@@ -164,6 +164,13 @@ $env:CLOAK_CONFIRM_RESTORE='yes'
 
 ## 9. 更新发布流程
 
+仓库内置两个 GitHub Actions workflow：
+
+- `.github/workflows/ci.yml`：在 push / pull request 上运行测试、Compose 配置解析和 `.context` 校验。
+- `.github/workflows/release-smoke.yml`：手动触发，使用 PostgreSQL service container 跑 migration、smoke-check 和上线前检查。
+
+建议每次发布前先在 GitHub Actions 手动运行 `release-smoke.yml`。通过后再执行服务器更新：
+
 ```bash
 git pull
 docker compose --env-file .env.production -f docker-compose.prod.yml build app
