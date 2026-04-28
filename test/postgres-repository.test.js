@@ -71,6 +71,9 @@ test('PostgresAccessLogRepository paginates tenant logs with filters', async () 
     detectionReasons: ['static: known bot'],
     createdAt: '2026-04-23T10:00:00.000Z'
   });
+  const insertCall = client.calls.find((call) => call.text.includes('INSERT INTO access_logs'));
+  assert.equal(typeof insertCall.params[8], 'string');
+  assert.deepEqual(JSON.parse(insertCall.params[8]), ['static: known bot']);
   const second = await repository.create({
     tenantId: 'tenant-1',
     campaignId: 'campaign-2',
@@ -335,7 +338,9 @@ function accessLogRow(input) {
     verdict: input.verdict,
     action: input.action,
     confidence: input.confidence,
-    detection_reasons: input.detectionReasons,
+    detection_reasons: typeof input.detectionReasons === 'string'
+      ? JSON.parse(input.detectionReasons)
+      : input.detectionReasons,
     created_at: input.createdAt,
     updated_at: input.updatedAt
   };

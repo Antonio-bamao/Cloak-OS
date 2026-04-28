@@ -1,5 +1,4 @@
 const TOKEN_KEY = 'cloak-admin-token';
-const DEFAULT_TOKEN = 'dev-admin-token';
 
 const REDIRECT_MODE_LABELS = {
   redirect: '直接跳转',
@@ -20,7 +19,7 @@ const ACTION_LABELS = {
 };
 
 const state = {
-  token: localStorage.getItem(TOKEN_KEY) || DEFAULT_TOKEN,
+  token: localStorage.getItem(TOKEN_KEY) || '',
   overview: null,
   settings: null,
   campaigns: [],

@@ -1,9 +1,13 @@
 import { AppError } from '../utils/errors.js';
 
 export const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000000';
+const DEFAULT_ADMIN_TOKEN = 'dev-admin-token';
 
 export function getConfig(env = process.env) {
+  const databaseUrl = env.DATABASE_URL ?? '';
+
   return {
+    environment: env.NODE_ENV ?? 'development',
     server: {
       host: env.HOST ?? '0.0.0.0',
       port: Number(env.PORT ?? 3000)
@@ -14,11 +18,11 @@ export function getConfig(env = process.env) {
       botIps: parseCsv(env.BOT_IPS)
     },
     auth: {
-      adminToken: env.ADMIN_TOKEN ?? 'dev-admin-token'
+      adminToken: env.ADMIN_TOKEN ?? DEFAULT_ADMIN_TOKEN
     },
     repository: {
-      driver: env.REPOSITORY_DRIVER ?? 'memory',
-      databaseUrl: env.DATABASE_URL ?? ''
+      driver: env.REPOSITORY_DRIVER ?? (databaseUrl ? 'postgres' : 'memory'),
+      databaseUrl
     }
   };
 }
@@ -48,8 +52,16 @@ export function validateConfig(runtimeConfig) {
     errors.push('auth.adminToken is required');
   }
 
+  if (runtimeConfig.environment === 'production' && runtimeConfig.auth?.adminToken === DEFAULT_ADMIN_TOKEN) {
+    errors.push('auth.adminToken must not use the development default in production');
+  }
+
   if (!['memory', 'postgres'].includes(runtimeConfig.repository?.driver)) {
     errors.push('repository.driver must be memory or postgres');
+  }
+
+  if (runtimeConfig.environment === 'production' && runtimeConfig.repository?.driver !== 'postgres') {
+    errors.push('repository.driver must be postgres in production');
   }
 
   if (runtimeConfig.repository?.driver === 'postgres' && !runtimeConfig.repository?.databaseUrl) {

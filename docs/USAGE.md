@@ -71,31 +71,9 @@ http://127.0.0.1:3000/c/<campaign-id>
 - `moneyUrl`：你的黑页 / 黑夜页，例如 `https://example.com/black-night-page`。
 - `redirectMode`：建议先用 `redirect`，因为最容易通过 `302 Location` 检查结果。
 
-### 2. 用 BOT_IPS 触发机器人流量
+### 2. 用爬虫 User-Agent 触发机器人流量
 
-启动应用前设置 `BOT_IPS`：
-
-```bash
-BOT_IPS=203.0.113.10
-```
-
-然后发送一个看起来来自这个 IP 的请求：
-
-```bash
-curl -i http://127.0.0.1:3000/c/<campaign-id> \
-  -H "X-Forwarded-For: 203.0.113.10" \
-  -H "User-Agent: Mozilla/5.0"
-```
-
-预期结果：
-
-- 响应跳转到 `safeUrl`。
-- 访问日志里的 `verdict` 是 `bot`。
-- 访问日志里的 `action` 是 `safe`。
-
-### 3. 用 Googlebot User-Agent 触发机器人流量
-
-如果不想改 `BOT_IPS`，可以使用已知爬虫 User-Agent：
+生产默认不配置 `BOT_IPS` 示例值。先用已知爬虫 User-Agent 验证检测管道会把机器人流量送到白页：
 
 ```bash
 curl -i http://127.0.0.1:3000/c/<campaign-id> \
@@ -108,13 +86,14 @@ curl -i http://127.0.0.1:3000/c/<campaign-id> \
 - 访问日志里的 `verdict` 是 `bot`。
 - 访问日志里的 `action` 是 `safe`。
 
-### 4. 触发真人流量
+如果你已经有真实 Bot IP 情报源，也可以把确认后的 IP 写入 `BOT_IPS`，再通过真实代理链路进入系统；不要把文档里的示例 IP 当成线上规则。
 
-使用普通浏览器 User-Agent，并使用不在 `BOT_IPS` 里的 IP：
+### 3. 触发真人流量
+
+使用普通浏览器 User-Agent 访问同一个公开链接：
 
 ```bash
 curl -i http://127.0.0.1:3000/c/<campaign-id> \
-  -H "X-Forwarded-For: 198.51.100.25" \
   -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36"
 ```
 

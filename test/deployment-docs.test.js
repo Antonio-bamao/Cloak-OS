@@ -28,6 +28,8 @@ test('production deployment assets document postgres-backed Docker deployment', 
   assert.match(deployment, /前置条件/);
   assert.match(deployment, /创建生产环境变量/);
   assert.match(deployment, /启动 PostgreSQL/);
+  assert.match(deployment, /生产默认不配置 BOT_IPS/);
+  assert.doesNotMatch(deployment, /BOT_IPS=66\.249/);
   assert.doesNotMatch(deployment, /# Production Deployment/);
   assert.doesNotMatch(deployment, /## Prerequisites/);
   assert.match(readme, /docs\/DEPLOYMENT\.md/);
@@ -43,6 +45,8 @@ test('usage guide explains bot safe page and human money page verification', asy
   assert.match(usage, /黑页|黑夜/);
   assert.match(usage, /BOT_IPS/);
   assert.match(usage, /Googlebot/);
+  assert.doesNotMatch(usage, /BOT_IPS=203\.0\.113\.10/);
+  assert.doesNotMatch(usage, /X-Forwarded-For: 203\.0\.113\.10/);
   assert.match(usage, /\/c\/:campaignId/);
   assert.match(usage, /Authorization: Bearer/);
   assert.match(usage, /verdict/);

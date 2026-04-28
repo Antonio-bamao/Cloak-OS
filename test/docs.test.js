@@ -47,6 +47,9 @@ test('README documents startup, tests, env vars, and available API routes', asyn
   assert.match(readme, /POSTGRES_BROWSER_LAYOUT_DATABASE_URL/);
   assert.match(readme, /POSTGRES_API_SMOKE_DATABASE_URL/);
   assert.match(readme, /test-output\/admin-browser-layout/);
+  assert.match(readme, /DATABASE_URL 配置后会自动使用 PostgreSQL/);
+  assert.match(readme, /生产环境不允许使用本地内存仓储/);
+  assert.doesNotMatch(readme, /BOT_IPS=66\.249/);
 });
 
 test('.env.example lists every runtime env var consumed by config', async () => {

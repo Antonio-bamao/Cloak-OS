@@ -21,10 +21,9 @@ POSTGRES_PASSWORD=replace-with-a-long-random-password
 ADMIN_TOKEN=replace-with-a-long-random-admin-token
 MIN_CONFIDENCE=60
 BOT_CONFIDENCE=80
-BOT_IPS=66.249.66.1,66.249.66.2
 ```
 
-`BOT_IPS` 是英文逗号分隔的 Bot IP 列表。请求来自这些 IP 时，默认 IP 检测器会把它识别为机器人流量。常见爬虫 User-Agent，例如 `Googlebot`，也会被 UA 检测器识别。
+生产默认不配置 BOT_IPS，避免把示例 IP 当成线上规则。真实流量会先经过 User-Agent 检测；如果你有自己的 Bot IP 情报源，再把确认后的 IP 以英文逗号写入 `BOT_IPS`。常见爬虫 User-Agent，例如 `Googlebot`，也会被 UA 检测器识别。
 
 ## 2. 启动 PostgreSQL
 

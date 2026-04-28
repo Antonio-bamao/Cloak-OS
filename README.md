@@ -69,20 +69,20 @@ HOST=0.0.0.0
 PORT=3000
 MIN_CONFIDENCE=60
 BOT_CONFIDENCE=80
-BOT_IPS=66.249.66.1,66.249.66.2
-ADMIN_TOKEN=dev-admin-token
-REPOSITORY_DRIVER=memory
-DATABASE_URL=
+BOT_IPS=
+ADMIN_TOKEN=replace-with-admin-token
+REPOSITORY_DRIVER=postgres
+DATABASE_URL=postgres://cloak:replace-with-password@127.0.0.1:55432/cloak
 ```
 
 - `HOST`：HTTP server 监听地址。
 - `PORT`：HTTP server 监听端口，范围 `0-65535`。
 - `MIN_CONFIDENCE`：进入 suspicious 判定的最低置信度，范围 `1-100`。
 - `BOT_CONFIDENCE`：进入 bot 判定的最低置信度，范围 `1-100`。
-- `BOT_IPS`：逗号分隔的 Bot IP 列表，进入默认 IP 检测数据源。
-- `ADMIN_TOKEN`：管理 API Bearer token。生产环境必须替换示例值。
-- `REPOSITORY_DRIVER`：仓储驱动，支持 `memory` 或 `postgres`；默认 `memory`。
-- `DATABASE_URL`：当 `REPOSITORY_DRIVER=postgres` 时必填，供内置 `pg` 驱动创建 PostgreSQL 连接池使用。
+- `BOT_IPS`：逗号分隔的 Bot IP 列表；生产默认留空，只在有真实 Bot IP 情报源时填写。
+- `ADMIN_TOKEN`：管理 API Bearer token。生产环境必须设置真实随机值，不能使用开发默认值。
+- `REPOSITORY_DRIVER`：仓储驱动，支持 `memory` 或 `postgres`。DATABASE_URL 配置后会自动使用 PostgreSQL。
+- `DATABASE_URL`：PostgreSQL 连接串，供内置 `pg` 驱动创建连接池使用。生产环境不允许使用本地内存仓储。
 
 ## API
 

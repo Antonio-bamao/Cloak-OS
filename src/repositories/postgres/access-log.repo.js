@@ -40,7 +40,7 @@ export class PostgresAccessLogRepository {
         input.verdict,
         input.action,
         input.confidence,
-        input.detectionReasons ?? [],
+        JSON.stringify(input.detectionReasons ?? []),
         now,
         now
       ]

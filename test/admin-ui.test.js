@@ -66,6 +66,7 @@ test('admin UI shell and assets are served by the app', async () => {
     assert.match(js, /handleUiError/);
     assert.match(js, /emptyState/);
     assert.match(js, /暂无匹配记录/);
+    assert.doesNotMatch(js, /dev-admin-token/);
     assert.doesNotMatch(js, /Premium|Campaign updated|Campaign created|operation board|Save Campaign|Update Campaign/);
   } finally {
     await new Promise((resolve, reject) => {

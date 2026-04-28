@@ -366,9 +366,25 @@
   - GREEN：`node --test test\settings-api.test.js test\admin-ui.test.js test\docs.test.js`，5 个测试通过。
   - 语法：`node --check public\admin\app.js` 通过。
   - 全量：`node --test`，148 个测试通过、4 个 opt-in 测试跳过、0 失败。
+- 已完成上线前真实链路去模拟化：
+  - 生产环境现在禁止使用 `repository.driver=memory`。
+  - 生产环境现在禁止使用默认开发管理令牌 `dev-admin-token`。
+  - `DATABASE_URL` 存在且未显式设置 `REPOSITORY_DRIVER` 时，会自动切到 PostgreSQL。
+  - 管理台不再预填开发默认 token。
+  - `.env.example`、README、`docs/DEPLOYMENT.md`、`docs/USAGE.md` 已移除持久化示例 Bot IP 和伪造 `X-Forwarded-For` 验证步骤。
+  - 修复 PostgreSQL `access_logs.detection_reasons JSONB` 写入：Bot 流量的 detection reasons 现在会序列化为 JSON，避免 Googlebot 访问触发 500。
+- 已运行上线前真实链路验证：
+  - `node --test`：155 个测试，151 通过、0 失败、4 个 opt-in 跳过。
+  - `docker compose -f docker-compose.prod.yml config`：使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 解析通过。
+  - `docker exec cloak-postgres pg_isready -U cloak -d cloak`：返回 accepting connections。
+  - migration status：2 个已应用，0 个 pending。
+  - PostgreSQL API smoke：通过，`Health status: 200`，并清理本次 Campaign/log。
+  - PostgreSQL Admin smoke：通过，Campaign count 0，Log count 0，Total visits 0。
+  - 临时真实链路演练：Googlebot UA 302 到白页，普通浏览器 UA 302 到黑页，产生 2 条日志后清理，最终 Campaign 0 / Log 0。
+  - 当前本地服务已以 PostgreSQL 模式运行在 `http://127.0.0.1:3000/admin`，PID `5180`，管理 token 为 `local-real-admin-token`，`BOT_IPS` 为空。
 - 进行中：
-  - Phase 2/3 收尾、生产部署配置、中文使用文档与系统设置面板已完成。
+  - Phase 4 上线前收口与剩余生产能力评估。
 - 下一步：
-  - 启动本地服务，让用户查看管理台系统设置与查询记录入口。
+  - 根据上线目标决定是否继续补 Nginx/TLS、备份恢复、日志轮转、CI/CD、真实 Bot IP 情报源和生产观测告警。
 - 阻塞项：
   - 无当前阻塞。

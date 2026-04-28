@@ -35,6 +35,18 @@ test('getConfig reads host and port from an injected env object', () => {
   });
 });
 
+test('getConfig infers postgres repository when DATABASE_URL is configured', () => {
+  const config = getConfig({
+    DATABASE_URL: 'postgres://cloak:secret@127.0.0.1:5432/cloak',
+    ADMIN_TOKEN: 'admin-token-for-real-runtime'
+  });
+
+  assert.deepEqual(config.repository, {
+    driver: 'postgres',
+    databaseUrl: 'postgres://cloak:secret@127.0.0.1:5432/cloak'
+  });
+});
+
 test('startServer listens using configured host and port and logs startup', async () => {
   const entries = [];
   const logger = {
@@ -139,6 +151,50 @@ test('validateConfig requires databaseUrl when repository driver is postgres', (
       }
     }),
     /repository.databaseUrl/
+  );
+});
+
+test('validateConfig rejects in-memory repository in production', () => {
+  assert.throws(
+    () => validateConfig({
+      environment: 'production',
+      server: { host: '127.0.0.1', port: 3000 },
+      detection: {
+        suspiciousThreshold: 60,
+        botThreshold: 80,
+        botIps: []
+      },
+      auth: {
+        adminToken: 'admin-token-for-real-runtime'
+      },
+      repository: {
+        driver: 'memory',
+        databaseUrl: ''
+      }
+    }),
+    /repository.driver must be postgres in production/
+  );
+});
+
+test('validateConfig rejects the default admin token in production', () => {
+  assert.throws(
+    () => validateConfig({
+      environment: 'production',
+      server: { host: '127.0.0.1', port: 3000 },
+      detection: {
+        suspiciousThreshold: 60,
+        botThreshold: 80,
+        botIps: []
+      },
+      auth: {
+        adminToken: 'dev-admin-token'
+      },
+      repository: {
+        driver: 'postgres',
+        databaseUrl: 'postgres://cloak:secret@127.0.0.1:5432/cloak'
+      }
+    }),
+    /auth.adminToken must not use the development default in production/
   );
 });
 

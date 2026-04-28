@@ -568,3 +568,10 @@
 - 结果：系统设置不再是活动表单占位，已成为独立只读运行配置面板；敏感配置只返回是否已配置，不返回 ADMIN_TOKEN 或 DATABASE_URL 明文。
 - 验证：RED：node --test test\settings-api.test.js test\admin-ui.test.js 先失败；GREEN：settings/admin/docs 定向测试 5 个通过；node --check public\admin\app.js 通过；全量 node --test 148 通过、0 失败、4 跳过。
 - 下一步：运行 .context 校验，提交并推送系统设置功能。
+
+## 2026-04-28 21:48 CST｜上线前真实链路去模拟化
+- 目标：去掉容易误导的模拟/开发默认配置，接入真实 PostgreSQL 链路并做上线前查漏补缺。
+- 动作：按系统化调试确认并修复生产默认仍可回退内存仓储、管理台预填开发 token、文档持久化示例 Bot IP、以及 PostgreSQL Bot detection reasons 写入 JSONB 导致 Googlebot 访问 500 的问题。按 TDD 增加生产配置、Admin UI、文档和 PostgreSQL 仓储回归测试。
+- 结果：生产环境不允许 `memory` 仓储或默认开发 token；`DATABASE_URL` 可自动选择 PostgreSQL；管理台不再预填 `dev-admin-token`；生产文档和 env 示例不再放示例 Bot IP；Bot 命中理由会以 JSON 写入 PostgreSQL。
+- 验证：`node --test` 输出 155 个测试、151 通过、0 失败、4 个 opt-in 跳过；Compose config 使用临时生产变量解析通过；真实 PostgreSQL migration pending 为 0；API/Admin smoke 均通过；临时链路演练中 Googlebot UA 302 到白页、普通浏览器 UA 302 到黑页，cleanup 后 Campaign 0 / Log 0。
+- 下一步：按上线范围决定是否继续补 preflight CLI、Nginx/TLS、备份恢复、日志轮转、CI/CD、真实 Bot IP 情报源和告警。
