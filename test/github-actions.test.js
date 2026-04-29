@@ -15,6 +15,7 @@ test('CI workflow runs tests, compose validation, and context validation', async
   assert.match(ci, /pnpm install --frozen-lockfile/);
   assert.match(ci, /node --test/);
   assert.match(ci, /npm run monitor:production -- --help/);
+  assert.match(ci, /npm run bot-ips:sync -- --help/);
   assert.match(ci, /docker compose -f docker-compose\.prod\.yml config/);
   assert.match(ci, /validate_context\.py --project-root \./);
   assert.match(readme, /GitHub Actions/);

@@ -468,9 +468,23 @@
   - 全量：`node --test`，179 个测试，175 通过、0 失败、4 个 opt-in 跳过。
   - Compose：使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 运行 `docker compose -f docker-compose.prod.yml config` 解析通过。
   - `.context` 校验：`context is valid`。
+- 已提交并推送 Bot IP 热重载能力：`f7f503d feat: add bot ip reload`。
+- 已补齐 Bot IP 文件同步 CLI：
+  - 新增 `src/ops/sync-bot-ip-file.js` 与脚本 `npm run bot-ips:sync`。
+  - CLI 支持重复传入 `--source-url` / `--source-file`，将一行一个 IP 的文本名单去重后写入 `--output` 或 `BOT_IP_FILE_PATH`。
+  - CLI 支持 `--dry-run`，便于接入 cron 前确认来源内容。
+  - GitHub Actions CI 已加入 `npm run bot-ips:sync -- --help`，覆盖 direct-run 入口。
+  - README 与 `docs/DEPLOYMENT.md` 已补 Bot IP 外部文本同步流程，并说明可配合热重载接口生效。
+- 已运行 Bot IP 同步定向验证：
+  - RED：`node --test test\bot-ip-sync.test.js test\docs.test.js test\deployment-docs.test.js test\github-actions.test.js` 先因缺少 sync 模块、脚本、CI 和文档失败。
+  - GREEN：`node --test test\bot-ip-sync.test.js test\docs.test.js test\deployment-docs.test.js test\github-actions.test.js`，12 个测试全部通过。
+  - `npm run bot-ips:sync -- --help` 与 `node --check src\ops\sync-bot-ip-file.js` 通过。
+  - 全量：`node --test`，185 个测试，181 通过、0 失败、4 个 opt-in 跳过。
+  - Compose：使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 运行 `docker compose -f docker-compose.prod.yml config` 解析通过。
+  - `.context` 校验：`context is valid`。
 - 进行中：
   - Phase 4 上线前收口与剩余生产能力评估。
 - 下一步：
-  - 提交并推送 Bot IP 热重载能力；之后根据上线目标决定是否补自动部署或进入最终发布/交付收口。
+  - 提交并推送 Bot IP 同步 CLI；之后根据上线目标决定是否补自动部署或进入最终发布/交付收口。
 - 阻塞项：
   - 无当前阻塞。

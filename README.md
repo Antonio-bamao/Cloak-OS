@@ -19,6 +19,7 @@ npm run smoke:postgres-api
 npm run smoke:postgres-admin
 npm run preflight:postgres
 npm run monitor:production
+npm run bot-ips:sync
 npm start
 ```
 
@@ -31,6 +32,7 @@ npm start
 `npm run smoke:postgres-admin` 会在 PostgreSQL 模式下启动真实 app，加载管理台页面/CSS/JS，检查错误态/空状态资源，并检查 Campaign、Logs、Analytics 管理 API。可追加 `--check-health` 先探测 `GET /health`。
 `npm run preflight:postgres` 是上线前检查：确认 migration 没有 pending，启动 PostgreSQL 模式 app，检查 health/settings/admin，再创建临时 Campaign 验证 Googlebot 去白页、普通浏览器去黑页，最后清理临时 Campaign 和访问日志。
 `npm run monitor:production` 会检查运行中应用的 `/health` 与 `/api/v1/settings`，失败时可通过 `--alert-webhook-url` 发送 JSON 告警。
+`npm run bot-ips:sync` 会把外部文本 URL 或本地文本文件中的 Bot IP 名单归一化写入 `BOT_IP_FILE_PATH`，可配合 `POST /api/v1/settings/bot-ips/reload` 热更新文件型名单。
 
 ## GitHub Actions
 
@@ -69,6 +71,7 @@ node src/database/run-postgres-api-smoke-check.js --database-url postgres://cloa
 node src/database/run-postgres-admin-smoke-check.js --database-url postgres://cloak:secret@127.0.0.1:5432/cloak
 node src/database/run-postgres-admin-smoke-check.js --database-url postgres://cloak:secret@127.0.0.1:5432/cloak --check-health
 node src/database/run-production-preflight.js --database-url postgres://cloak:secret@127.0.0.1:5432/cloak --admin-token <ADMIN_TOKEN>
+npm run bot-ips:sync -- --source-url https://intel.example/bot-ips.txt --output config/bot-ips.txt --dry-run
 ```
 
 ## Environment

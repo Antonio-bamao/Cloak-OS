@@ -39,6 +39,15 @@ BOT_IP_FILE_PATH=/app/config/bot-ips.txt
 
 文件格式是一行一个 IP，支持空行和 `#` 注释。生产部署时可把宿主机上的确认名单以只读方式挂载到容器内，例如把 `./config/bot-ips.txt` 挂载到 `/app/config/bot-ips.txt`。
 
+如果你的情报源能提供文本名单，可以先用同步命令生成或更新文件：
+
+```bash
+npm run bot-ips:sync -- --source-url https://intel.example/bot-ips.txt --output ./config/bot-ips.txt --dry-run
+npm run bot-ips:sync -- --source-url https://intel.example/bot-ips.txt --output ./config/bot-ips.txt
+```
+
+同步命令支持重复传入 `--source-url` 和 `--source-file`，会去重、忽略空行与 `#` 注释。也可以通过 `BOT_IP_SYNC_URLS`、`BOT_IP_SYNC_FILES` 和 `BOT_IP_FILE_PATH` 环境变量接到 cron。
+
 文件名单更新后，可以在管理台“系统设置”点击“重载 Bot IP”，或调用受保护接口：
 
 ```bash

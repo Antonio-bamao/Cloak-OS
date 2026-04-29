@@ -623,4 +623,12 @@
 - 动作：按 TDD 扩展 `test/bot-ip-source.test.js` 与 `test/settings-api.test.js`，先确认 `FileBotIpSource` 没有 `reload()` 且 Settings API 只展示配置静态值；随后实现 source reload、让 `createApp()` 共享同一个 Bot IP source、给 Settings routes 增加 `POST /api/v1/settings/bot-ips/reload`，并在管理台系统设置增加“重载 Bot IP”按钮。同步更新 README、`docs/DEPLOYMENT.md` 和文档测试。
 - 结果：`GET /api/v1/settings` 现在展示 active source 实际加载的 Bot IP 列表；文件名单变更后可通过管理台或 API 触发重载，新的名单会进入同一个检测数据源。`env` 来源仍通过重启生效。
 - 验证：RED：`node --test test\bot-ip-source.test.js test\settings-api.test.js` 先因缺少 `reload()` 和 active source 展示失败；GREEN：`node --test test\bot-ip-source.test.js test\settings-api.test.js test\admin-ui.test.js test\docs.test.js test\deployment-docs.test.js` 19 个测试通过；`node --check public\admin\app.js` 通过；全量 `node --test` 输出 179 个测试、175 通过、0 失败、4 个 opt-in 跳过；`docker compose -f docker-compose.prod.yml config` 使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 解析通过；`python scripts\validate_context.py --project-root .` 输出 `context is valid`。
-- 下一步：提交并推送本次热重载能力。
+- 提交：`f7f503d feat: add bot ip reload`，已推送 `origin/main`。
+- 下一步：继续补外部 Bot IP 文本同步入口。
+
+## 2026-04-29 23:10 CST｜补齐 Bot IP 文件同步 CLI
+- 目标：让生产可从外部文本情报源或本地文本来源生成 `BOT_IP_SOURCE=file` 使用的名单文件，再配合热重载入口生效。
+- 动作：按 TDD 新增 `test/bot-ip-sync.test.js`，并扩展 README、部署文档和 GitHub Actions 测试；实现 `src/ops/sync-bot-ip-file.js` 与 `npm run bot-ips:sync`；CI 新增 sync CLI help direct-run 检查。
+- 结果：同步 CLI 支持重复 `--source-url` / `--source-file`、`--output`、`--dry-run`，会按现有 Bot IP 文件格式解析文本、忽略注释/空行、去重并写入目标文件。也可通过 `BOT_IP_SYNC_URLS`、`BOT_IP_SYNC_FILES` 和 `BOT_IP_FILE_PATH` 接入 cron。
+- 验证：RED：`node --test test\bot-ip-sync.test.js test\docs.test.js test\deployment-docs.test.js test\github-actions.test.js` 先因缺少模块、脚本、CI 和文档失败；GREEN：同一组定向测试 12 个通过；`npm run bot-ips:sync -- --help` 通过；`node --check src\ops\sync-bot-ip-file.js` 通过；全量 `node --test` 输出 185 个测试、181 通过、0 失败、4 个 opt-in 跳过；`docker compose -f docker-compose.prod.yml config` 使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 解析通过；`python scripts\validate_context.py --project-root .` 输出 `context is valid`。
+- 下一步：提交并推送。

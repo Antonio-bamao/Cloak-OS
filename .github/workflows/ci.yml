@@ -38,6 +38,9 @@ jobs:
       - name: Check production monitor CLI
         run: npm run monitor:production -- --help
 
+      - name: Check Bot IP sync CLI
+        run: npm run bot-ips:sync -- --help
+
       - name: Validate production Compose config
         run: docker compose -f docker-compose.prod.yml config
 

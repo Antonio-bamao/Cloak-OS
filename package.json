@@ -15,6 +15,7 @@
     "smoke:postgres-admin": "node src/database/run-postgres-admin-smoke-check.js",
     "preflight:postgres": "node src/database/run-production-preflight.js",
     "monitor:production": "node src/ops/run-production-monitor.js",
+    "bot-ips:sync": "node src/ops/sync-bot-ip-file.js",
     "start": "node src/server/start.js",
     "test": "node --test"
   },
