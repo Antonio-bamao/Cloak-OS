@@ -7,6 +7,9 @@ export function parseProductionMonitorArgs(argv = process.argv.slice(2)) {
     baseUrl: undefined,
     adminToken: undefined,
     expectRepository: undefined,
+    checkAnalytics: false,
+    maxBotPercent: undefined,
+    maxSuspiciousPercent: undefined,
     alertWebhookUrl: undefined,
     help: false
   };
@@ -52,6 +55,39 @@ export function parseProductionMonitorArgs(argv = process.argv.slice(2)) {
       continue;
     }
 
+    if (argument === '--check-analytics') {
+      parsed.checkAnalytics = true;
+      continue;
+    }
+
+    if (argument === '--max-bot-percent') {
+      parsed.maxBotPercent = parsePercent(requireCliValue(argv, index, '--max-bot-percent'), '--max-bot-percent');
+      index += 1;
+      continue;
+    }
+
+    if (argument.startsWith('--max-bot-percent=')) {
+      parsed.maxBotPercent = parsePercent(argument.slice('--max-bot-percent='.length), '--max-bot-percent');
+      continue;
+    }
+
+    if (argument === '--max-suspicious-percent') {
+      parsed.maxSuspiciousPercent = parsePercent(
+        requireCliValue(argv, index, '--max-suspicious-percent'),
+        '--max-suspicious-percent'
+      );
+      index += 1;
+      continue;
+    }
+
+    if (argument.startsWith('--max-suspicious-percent=')) {
+      parsed.maxSuspiciousPercent = parsePercent(
+        argument.slice('--max-suspicious-percent='.length),
+        '--max-suspicious-percent'
+      );
+      continue;
+    }
+
     if (argument === '--alert-webhook-url') {
       parsed.alertWebhookUrl = requireCliValue(argv, index, '--alert-webhook-url');
       index += 1;
@@ -78,11 +114,15 @@ export function formatProductionMonitorHelp() {
     'Checks:',
     '  health endpoint returns 200 with status ok',
     '  settings endpoint returns 200 with expected repository state',
+    '  optional analytics overview thresholds for bot and suspicious traffic',
     '',
     'Flags:',
     '  --base-url <url>           Base app URL, defaults to MONITOR_BASE_URL or http://127.0.0.1:3000',
     '  --admin-token <token>      Admin token, defaults to ADMIN_TOKEN',
     '  --expect-repository <name> Expected repository driver, defaults to MONITOR_EXPECT_REPOSITORY or postgres',
+    '  --check-analytics          Also check /api/v1/analytics/overview',
+    '  --max-bot-percent <n>      Fail when bot verdict percentage is above n',
+    '  --max-suspicious-percent <n> Fail when suspicious verdict percentage is above n',
     '  --alert-webhook-url <url>  Optional webhook URL to POST a failure alert',
     '  --help                     Show this help text'
   ].join('\n');
@@ -94,14 +134,24 @@ export function formatProductionMonitorSummary({
   healthPayloadStatus,
   settingsStatus,
   repositoryDriver,
-  databaseConfigured
+  databaseConfigured,
+  analyticsStatus,
+  totalVisits,
+  botPercent,
+  suspiciousPercent
 } = {}) {
-  return [
+  const lines = [
     'Production monitor check passed',
     `Base URL: ${baseUrl}`,
     `Health: ${healthStatus} / ${healthPayloadStatus}`,
     `Settings: ${settingsStatus} / ${repositoryDriver} / ${databaseConfigured ? 'database configured' : 'database not configured'}`
-  ].join('\n');
+  ];
+
+  if (analyticsStatus !== undefined) {
+    lines.push(`Analytics: ${analyticsStatus} / visits ${totalVisits} / bot ${formatPercent(botPercent)} / suspicious ${formatPercent(suspiciousPercent)}`);
+  }
+
+  return lines.join('\n');
 }
 
 export async function runProductionMonitor({
@@ -150,6 +200,9 @@ async function checkProductionRuntime({
   baseUrl,
   adminToken,
   expectRepository,
+  checkAnalytics,
+  maxBotPercent,
+  maxSuspiciousPercent,
   fetchImpl
 }) {
   const health = await requestJson(fetchImpl, joinUrl(baseUrl, '/health'));
@@ -172,7 +225,7 @@ async function checkProductionRuntime({
     assertEqual(repository.databaseConfigured, true, 'settings databaseConfigured');
   }
 
-  return {
+  const result = {
     baseUrl,
     healthStatus: health.status,
     healthPayloadStatus: health.body.data?.status,
@@ -180,6 +233,38 @@ async function checkProductionRuntime({
     repositoryDriver: repository.driver,
     databaseConfigured: Boolean(repository.databaseConfigured)
   };
+
+  if (checkAnalytics) {
+    const analytics = await requestJson(fetchImpl, joinUrl(baseUrl, '/api/v1/analytics/overview'), {
+      headers: {
+        Authorization: `Bearer ${adminToken}`
+      }
+    });
+    assertEqual(analytics.status, 200, 'analytics HTTP status');
+
+    const analyticsData = analytics.body.data ?? {};
+    const totalVisits = Number(analyticsData.totalVisits ?? 0);
+    const verdicts = analyticsData.verdicts ?? {};
+    const botPercent = calculatePercent(Number(verdicts.bot ?? 0), totalVisits);
+    const suspiciousPercent = calculatePercent(Number(verdicts.suspicious ?? 0), totalVisits);
+
+    if (maxBotPercent !== undefined && botPercent > maxBotPercent) {
+      throw new Error(`analytics bot percent expected <= ${maxBotPercent}, got ${botPercent}`);
+    }
+
+    if (maxSuspiciousPercent !== undefined && suspiciousPercent > maxSuspiciousPercent) {
+      throw new Error(`analytics suspicious percent expected <= ${maxSuspiciousPercent}, got ${suspiciousPercent}`);
+    }
+
+    Object.assign(result, {
+      analyticsStatus: analytics.status,
+      totalVisits,
+      botPercent,
+      suspiciousPercent
+    });
+  }
+
+  return result;
 }
 
 async function sendFailureAlert({
@@ -211,6 +296,10 @@ function resolveMonitorOptions(cliArgs, env) {
     baseUrl: trimTrailingSlash(cliArgs.baseUrl ?? env.MONITOR_BASE_URL ?? DEFAULT_BASE_URL),
     adminToken: cliArgs.adminToken ?? env.ADMIN_TOKEN ?? '',
     expectRepository: cliArgs.expectRepository ?? env.MONITOR_EXPECT_REPOSITORY ?? 'postgres',
+    checkAnalytics: cliArgs.checkAnalytics || env.MONITOR_CHECK_ANALYTICS === 'true',
+    maxBotPercent: cliArgs.maxBotPercent ?? parseOptionalPercent(env.MONITOR_MAX_BOT_PERCENT, 'MONITOR_MAX_BOT_PERCENT'),
+    maxSuspiciousPercent: cliArgs.maxSuspiciousPercent
+      ?? parseOptionalPercent(env.MONITOR_MAX_SUSPICIOUS_PERCENT, 'MONITOR_MAX_SUSPICIOUS_PERCENT'),
     alertWebhookUrl: cliArgs.alertWebhookUrl ?? env.ALERT_WEBHOOK_URL ?? ''
   };
 }
@@ -241,6 +330,36 @@ function assertEqual(actual, expected, label) {
   if (actual !== expected) {
     throw new Error(`${label} expected ${expected}, got ${actual}`);
   }
+}
+
+function calculatePercent(count, total) {
+  if (!total) {
+    return 0;
+  }
+
+  return (count / total) * 100;
+}
+
+function formatPercent(value) {
+  return `${value.toFixed(2)}%`;
+}
+
+function parseOptionalPercent(value, label) {
+  if (value === undefined || value === '') {
+    return undefined;
+  }
+
+  return parsePercent(value, label);
+}
+
+function parsePercent(value, label) {
+  const percent = Number(value);
+
+  if (!Number.isFinite(percent) || percent < 0 || percent > 100) {
+    throw new Error(`${label} must be a number from 0 to 100.`);
+  }
+
+  return percent;
 }
 
 function requireCliValue(argv, index, flagName) {

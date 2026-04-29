@@ -119,6 +119,7 @@
    - 新增 Bot IP 文件同步 CLI：`npm run bot-ips:sync`，支持外部文本 URL / 本地文本文件、dry-run、去重输出。
    - 新增生产监控 CLI：`npm run monitor:production`，检查 `/health` 与 `/api/v1/settings`。
    - 监控 CLI 支持 `--alert-webhook-url`，失败时发送通用 JSON Webhook 告警。
+   - 监控 CLI 支持可选 Analytics 阈值检查：`--check-analytics`、`--max-bot-percent`、`--max-suspicious-percent`。
    - GitHub Actions CI 已覆盖监控 CLI help direct-run。
    - 新增 `scripts/verify-postgres-restore.ps1`，把备份恢复到临时 PostgreSQL 容器并运行 smoke 验证。
    - `docs/DEPLOYMENT.md` 已补恢复演练流程和临时端口覆盖说明。

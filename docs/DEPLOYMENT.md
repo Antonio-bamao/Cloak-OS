@@ -245,4 +245,12 @@ npm run monitor:production -- --base-url https://cloak.example.com --admin-token
 --alert-webhook-url https://alerts.example/webhook
 ```
 
+如果希望把异常流量比例也纳入监控，可追加 Analytics 检查和阈值：
+
+```bash
+--check-analytics --max-bot-percent 80 --max-suspicious-percent 20
+```
+
+该检查会读取 `/api/v1/analytics/overview`，计算 bot / suspicious 判定在累计访问中的占比；超过阈值时命令失败，并可触发同一个 Webhook 告警。
+
 告警请求是 `POST` JSON，包含 `service`、`status`、`baseUrl` 和 `error` 字段。可以把这个命令接到 cron、GitHub Actions 定时任务、Uptime Kuma 的通知链路或其他监控平台。

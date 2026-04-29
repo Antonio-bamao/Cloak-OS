@@ -30,6 +30,9 @@ test('production deployment assets document postgres-backed Docker deployment', 
   assert.match(deployment, /npm run preflight:postgres/);
   assert.match(deployment, /monitor:production/);
   assert.match(deployment, /alert-webhook-url/);
+  assert.match(deployment, /check-analytics/);
+  assert.match(deployment, /max-bot-percent/);
+  assert.match(deployment, /max-suspicious-percent/);
   assert.match(deployment, /bot-ips:sync/);
   assert.match(deployment, /\/health/);
   assert.match(deployment, /# 生产部署/);

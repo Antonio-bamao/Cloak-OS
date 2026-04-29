@@ -482,9 +482,22 @@
   - 全量：`node --test`，185 个测试，181 通过、0 失败、4 个 opt-in 跳过。
   - Compose：使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 运行 `docker compose -f docker-compose.prod.yml config` 解析通过。
   - `.context` 校验：`context is valid`。
+- 已提交并推送 Bot IP 同步 CLI：`7f9be5f feat: add bot ip sync cli`。
+- 已补齐生产监控 Analytics 阈值检查：
+  - `npm run monitor:production` 新增 `--check-analytics`，会读取受保护 `/api/v1/analytics/overview`。
+  - 新增 `--max-bot-percent` 与 `--max-suspicious-percent`，超过阈值时命令失败并沿用现有 Webhook 告警。
+  - 监控摘要会输出 total visits、bot 百分比和 suspicious 百分比，便于 cron / 监控平台留痕。
+  - README 与 `docs/DEPLOYMENT.md` 已补阈值监控示例。
+- 已运行监控阈值定向验证：
+  - RED：`node --test test\production-monitor.test.js test\docs.test.js test\deployment-docs.test.js` 先因缺少 analytics 参数、请求、摘要和文档失败。
+  - GREEN：同一组定向测试 11 个全部通过。
+  - `npm run monitor:production -- --help` 与 `node --check src\ops\run-production-monitor.js` 通过。
+  - 全量：`node --test`，187 个测试，183 通过、0 失败、4 个 opt-in 跳过。
+  - Compose：使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 运行 `docker compose -f docker-compose.prod.yml config` 解析通过。
+  - `.context` 校验：`context is valid`。
 - 进行中：
   - Phase 4 上线前收口与剩余生产能力评估。
 - 下一步：
-  - 提交并推送 Bot IP 同步 CLI；之后根据上线目标决定是否补自动部署或进入最终发布/交付收口。
+  - 提交并推送生产监控阈值检查；之后进入最终发布前收口检查。
 - 阻塞项：
   - 无当前阻塞。

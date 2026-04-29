@@ -15,6 +15,9 @@ test('README documents startup, tests, env vars, and available API routes', asyn
   assert.match(readme, /npm run smoke:postgres-admin/);
   assert.match(readme, /npm run preflight:postgres/);
   assert.match(readme, /npm run monitor:production/);
+  assert.match(readme, /--check-analytics/);
+  assert.match(readme, /--max-bot-percent/);
+  assert.match(readme, /--max-suspicious-percent/);
   assert.match(readme, /npm run bot-ips:sync/);
   assert.match(readme, /HOST/);
   assert.match(readme, /PORT/);

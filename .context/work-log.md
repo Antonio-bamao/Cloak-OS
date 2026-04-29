@@ -631,4 +631,12 @@
 - 动作：按 TDD 新增 `test/bot-ip-sync.test.js`，并扩展 README、部署文档和 GitHub Actions 测试；实现 `src/ops/sync-bot-ip-file.js` 与 `npm run bot-ips:sync`；CI 新增 sync CLI help direct-run 检查。
 - 结果：同步 CLI 支持重复 `--source-url` / `--source-file`、`--output`、`--dry-run`，会按现有 Bot IP 文件格式解析文本、忽略注释/空行、去重并写入目标文件。也可通过 `BOT_IP_SYNC_URLS`、`BOT_IP_SYNC_FILES` 和 `BOT_IP_FILE_PATH` 接入 cron。
 - 验证：RED：`node --test test\bot-ip-sync.test.js test\docs.test.js test\deployment-docs.test.js test\github-actions.test.js` 先因缺少模块、脚本、CI 和文档失败；GREEN：同一组定向测试 12 个通过；`npm run bot-ips:sync -- --help` 通过；`node --check src\ops\sync-bot-ip-file.js` 通过；全量 `node --test` 输出 185 个测试、181 通过、0 失败、4 个 opt-in 跳过；`docker compose -f docker-compose.prod.yml config` 使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 解析通过；`python scripts\validate_context.py --project-root .` 输出 `context is valid`。
+- 提交：`7f9be5f feat: add bot ip sync cli`，已推送 `origin/main`。
+- 下一步：继续补生产监控的更深入指标阈值。
+
+## 2026-04-29 23:19 CST｜补齐生产监控 Analytics 阈值
+- 目标：让生产监控不只检查服务活着和配置正确，还能在可选模式下检查 bot / suspicious 判定比例，给异常流量趋势一个自动告警入口。
+- 动作：按 TDD 扩展 `test/production-monitor.test.js`、README 和部署文档测试；让 `npm run monitor:production` 支持 `--check-analytics`、`--max-bot-percent`、`--max-suspicious-percent`，并在启用后请求 `/api/v1/analytics/overview`。
+- 结果：监控摘要会输出 Analytics HTTP 状态、total visits、bot 百分比和 suspicious 百分比；超过配置阈值时命令失败，并复用现有 `--alert-webhook-url` 告警。
+- 验证：RED：`node --test test\production-monitor.test.js test\docs.test.js test\deployment-docs.test.js` 先因缺少 analytics 参数、请求、摘要和文档失败；GREEN：同一组定向测试 11 个通过；`npm run monitor:production -- --help` 通过；`node --check src\ops\run-production-monitor.js` 通过；全量 `node --test` 输出 187 个测试、183 通过、0 失败、4 个 opt-in 跳过；`docker compose -f docker-compose.prod.yml config` 使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 解析通过；`python scripts\validate_context.py --project-root .` 输出 `context is valid`。
 - 下一步：提交并推送。
