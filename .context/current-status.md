@@ -495,9 +495,10 @@
   - 全量：`node --test`，187 个测试，183 通过、0 失败、4 个 opt-in 跳过。
   - Compose：使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 运行 `docker compose -f docker-compose.prod.yml config` 解析通过。
   - `.context` 校验：`context is valid`。
+- 已提交并推送生产监控阈值检查：`eb59fb2 feat: add monitor analytics thresholds`。
 - 进行中：
-  - Phase 4 上线前收口与剩余生产能力评估。
+  - Phase 4 上线前非部署项已收口。
 - 下一步：
-  - 提交并推送生产监控阈值检查；之后进入最终发布前收口检查。
+  - 用户自行部署真实服务器；后续如有实际部署反馈，再按线上日志或 CI 结果继续修复。
 - 阻塞项：
   - 无当前阻塞。

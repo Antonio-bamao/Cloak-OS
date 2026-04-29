@@ -639,4 +639,6 @@
 - 动作：按 TDD 扩展 `test/production-monitor.test.js`、README 和部署文档测试；让 `npm run monitor:production` 支持 `--check-analytics`、`--max-bot-percent`、`--max-suspicious-percent`，并在启用后请求 `/api/v1/analytics/overview`。
 - 结果：监控摘要会输出 Analytics HTTP 状态、total visits、bot 百分比和 suspicious 百分比；超过配置阈值时命令失败，并复用现有 `--alert-webhook-url` 告警。
 - 验证：RED：`node --test test\production-monitor.test.js test\docs.test.js test\deployment-docs.test.js` 先因缺少 analytics 参数、请求、摘要和文档失败；GREEN：同一组定向测试 11 个通过；`npm run monitor:production -- --help` 通过；`node --check src\ops\run-production-monitor.js` 通过；全量 `node --test` 输出 187 个测试、183 通过、0 失败、4 个 opt-in 跳过；`docker compose -f docker-compose.prod.yml config` 使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 解析通过；`python scripts\validate_context.py --project-root .` 输出 `context is valid`。
-- 下一步：提交并推送。
+- 提交：`eb59fb2 feat: add monitor analytics thresholds`，已推送 `origin/main`。
+- 扫描：剩余项只剩用户明确自行处理的真实服务器部署、未来可选 React 管理台、未来可选 Redis/数据库 Bot IP source。当前上线前本地/CI 可完成的生产能力已收口。
+- 下一步：提交项目上下文收口记录。
