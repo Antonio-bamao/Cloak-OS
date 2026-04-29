@@ -28,7 +28,8 @@ test('admin UI shell and assets are served by the app', async () => {
     assert.match(html, /系统设置/);
     assert.match(html, /运行配置/);
     assert.match(html, /检测阈值/);
-    assert.match(html, /环境变量修改后需要重启服务/);
+    assert.match(html, /重载 Bot IP/);
+    assert.match(html, /文件型 Bot IP 名单可通过重载接口刷新/);
     assert.doesNotMatch(html, /premium-card|Go Premium|Live shield insights/);
     assert.doesNotMatch(html, /Premium|SaaS|trial|Broker|Create New|Overview|Campaigns|Access Logs/);
     assert.match(html, /\/admin\/styles.css/);
@@ -59,6 +60,7 @@ test('admin UI shell and assets are served by the app', async () => {
     assert.match(js, /loadSettings/);
     assert.match(js, /renderSettings/);
     assert.match(js, /\/api\/v1\/settings/);
+    assert.match(js, /\/api\/v1\/settings\/bot-ips\/reload/);
     assert.match(js, /botIpCount/);
     assert.match(js, /formatBotIpSource/);
     assert.match(js, /showSuccessModal/);

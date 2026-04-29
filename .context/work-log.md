@@ -617,3 +617,10 @@
 - 结果：演练脚本会启动临时 `postgres:16-alpine` 容器，把指定 SQL 备份恢复进去，随后对恢复库运行 migration status、readonly PostgreSQL smoke、API smoke 和 Admin smoke，最后在 `finally` 中停止临时容器。默认端口 `55433` 可通过 `-HostPort` 覆盖。
 - 验证：RED：`node --test test\ops-assets.test.js` 先因缺少 `scripts/verify-postgres-restore.ps1` 失败；GREEN：`node --test test\ops-assets.test.js` 通过；PowerShell Parser 解析 `scripts\verify-postgres-restore.ps1` 通过；全量 `node --test` 输出 177 个测试、173 通过、0 失败、4 个 opt-in 跳过；`docker compose -f docker-compose.prod.yml config` 使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 解析通过；`python scripts\validate_context.py --project-root .` 输出 `context is valid`。
 - 下一步：可按实际基础设施补自动部署、外部 Bot IP 同步或更深入指标告警；当前 Phase 4 生产基础能力已基本闭环。
+
+## 2026-04-29 22:58 CST｜补齐文件型 Bot IP 热重载
+- 目标：让生产文件型 Bot IP 名单更新后能通过受保护管理入口刷新到实际检测链路，避免每次更新名单都重启应用。
+- 动作：按 TDD 扩展 `test/bot-ip-source.test.js` 与 `test/settings-api.test.js`，先确认 `FileBotIpSource` 没有 `reload()` 且 Settings API 只展示配置静态值；随后实现 source reload、让 `createApp()` 共享同一个 Bot IP source、给 Settings routes 增加 `POST /api/v1/settings/bot-ips/reload`，并在管理台系统设置增加“重载 Bot IP”按钮。同步更新 README、`docs/DEPLOYMENT.md` 和文档测试。
+- 结果：`GET /api/v1/settings` 现在展示 active source 实际加载的 Bot IP 列表；文件名单变更后可通过管理台或 API 触发重载，新的名单会进入同一个检测数据源。`env` 来源仍通过重启生效。
+- 验证：RED：`node --test test\bot-ip-source.test.js test\settings-api.test.js` 先因缺少 `reload()` 和 active source 展示失败；GREEN：`node --test test\bot-ip-source.test.js test\settings-api.test.js test\admin-ui.test.js test\docs.test.js test\deployment-docs.test.js` 19 个测试通过；`node --check public\admin\app.js` 通过；全量 `node --test` 输出 179 个测试、175 通过、0 失败、4 个 opt-in 跳过；`docker compose -f docker-compose.prod.yml config` 使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 解析通过；`python scripts\validate_context.py --project-root .` 输出 `context is valid`。
+- 下一步：提交并推送本次热重载能力。

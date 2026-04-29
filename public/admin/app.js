@@ -49,6 +49,7 @@ const elements = {
   settingsBotSource: document.querySelector('#settings-bot-source'),
   settingsBotIps: document.querySelector('#settings-bot-ips'),
   settingsNotes: document.querySelector('#settings-notes'),
+  reloadBotIps: document.querySelector('#reload-bot-ips'),
   campaignForm: document.querySelector('#campaign-form'),
   campaignId: document.querySelector('#campaign-id'),
   campaignName: document.querySelector('#campaign-name'),
@@ -83,6 +84,7 @@ elements.tokenForm.addEventListener('submit', async (event) => {
 
 elements.refreshButton.addEventListener('click', () => refreshAll('数据已刷新'));
 elements.retryError.addEventListener('click', () => refreshAll('已重新加载'));
+elements.reloadBotIps.addEventListener('click', reloadBotIps);
 
 elements.logFilters.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -215,6 +217,28 @@ async function loadSettings() {
   const response = await api('/api/v1/settings');
   state.settings = response.data;
   renderSettings();
+}
+
+async function reloadBotIps() {
+  try {
+    hideErrorBanner();
+    const response = await api('/api/v1/settings/bot-ips/reload', {
+      method: 'POST'
+    });
+    state.settings = {
+      ...state.settings,
+      detection: {
+        ...state.settings?.detection,
+        botIpCount: response.data.botIpCount,
+        botIps: response.data.botIps,
+        botIpSource: response.data.botIpSource
+      }
+    };
+    renderSettings();
+    showSuccessModal('Bot IP 名单已重载，新的检测名单已生效。');
+  } catch (error) {
+    handleUiError(error);
+  }
 }
 
 async function api(path, options = {}) {

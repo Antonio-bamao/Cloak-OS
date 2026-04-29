@@ -153,9 +153,10 @@ GET /api/v1/logs
 
 ```http
 GET /api/v1/settings
+POST /api/v1/settings/bot-ips/reload
 ```
 
-该接口返回运行配置摘要，不会返回 `ADMIN_TOKEN` 或 `DATABASE_URL` 明文。
+`GET /api/v1/settings` 返回运行配置摘要，不会返回 `ADMIN_TOKEN` 或 `DATABASE_URL` 明文。`POST /api/v1/settings/bot-ips/reload` 用于在 `BOT_IP_SOURCE=file` 时重新读取文件名单，让确认后的 Bot IP 更新无需重启应用。
 
 ### Public Cloak
 

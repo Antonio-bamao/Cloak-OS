@@ -12,6 +12,14 @@ export class InMemoryBotIpSource {
   async has(ip) {
     return this.botIps.has(ip);
   }
+
+  list() {
+    return [...this.botIps];
+  }
+
+  get count() {
+    return this.botIps.size;
+  }
 }
 
 export class FileBotIpSource extends InMemoryBotIpSource {
@@ -26,14 +34,17 @@ export class FileBotIpSource extends InMemoryBotIpSource {
     const botIps = parseBotIpFile(readFile(filePath));
     super({ botIps });
     this.filePath = filePath;
+    this.readFile = readFile;
   }
 
-  list() {
-    return [...this.botIps];
-  }
+  async reload() {
+    const botIps = parseBotIpFile(await this.readFile(this.filePath));
+    await this.load(botIps);
 
-  get count() {
-    return this.botIps.size;
+    return {
+      count: this.count,
+      botIps: this.list()
+    };
   }
 }
 

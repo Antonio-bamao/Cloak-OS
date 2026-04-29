@@ -469,6 +469,14 @@ select {
   margin-bottom: 18px;
 }
 
+.heading-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .ghost-link {
   display: inline-flex;
   align-items: center;

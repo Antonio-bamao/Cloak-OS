@@ -38,6 +38,8 @@ test('production deployment assets document postgres-backed Docker deployment', 
   assert.match(deployment, /生产默认不配置 BOT_IPS/);
   assert.match(deployment, /BOT_IP_SOURCE/);
   assert.match(deployment, /BOT_IP_FILE_PATH/);
+  assert.match(deployment, /settings\/bot-ips\/reload/);
+  assert.match(deployment, /重载 Bot IP/);
   assert.match(deployment, /LOG_FILE_PATH/);
   assert.match(deployment, /日志轮转/);
   assert.doesNotMatch(deployment, /BOT_IPS=66\.249/);

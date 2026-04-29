@@ -58,6 +58,27 @@ test('FileBotIpSource loads configured IPs from a text file', async () => {
   assert.equal(await source.has('203.0.113.10'), false);
 });
 
+test('FileBotIpSource can reload an updated file without recreating the detector', async () => {
+  let content = '66.249.66.1\n';
+  const source = new FileBotIpSource({
+    filePath: 'config/bot-ips.txt',
+    readFile: () => content
+  });
+
+  assert.equal(await source.has('66.249.66.1'), true);
+  assert.equal(await source.has('203.0.113.10'), false);
+
+  content = '203.0.113.10\n';
+  const result = await source.reload();
+
+  assert.deepEqual(result, {
+    count: 1,
+    botIps: ['203.0.113.10']
+  });
+  assert.equal(await source.has('66.249.66.1'), false);
+  assert.equal(await source.has('203.0.113.10'), true);
+});
+
 test('createBotIpSource creates a file source from BOT_IP_FILE_PATH settings', async () => {
   const source = createBotIpSource({
     type: 'file',

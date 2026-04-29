@@ -455,9 +455,22 @@
   - 全量：`node --test`，177 个测试，173 通过、0 失败、4 个 opt-in 跳过。
   - Compose：使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 运行 `docker compose -f docker-compose.prod.yml config` 解析通过。
   - `.context` 校验：`context is valid`。
+- 已补齐文件型 Bot IP 名单热重载：
+  - `FileBotIpSource` 新增 `reload()`，可重新读取当前文件并更新同一个检测数据源。
+  - `createApp()` 现在让检测管道和 Settings API 共享同一个 Bot IP source，避免设置页展示和实际检测名单漂移。
+  - `GET /api/v1/settings` 会展示实际已加载的 Bot IP 列表；新增受保护 `POST /api/v1/settings/bot-ips/reload`。
+  - 管理台“系统设置”新增“重载 Bot IP”按钮，文件名单更新后无需重启应用即可生效。
+  - README 与 `docs/DEPLOYMENT.md` 已补重载接口说明。
+- 已运行 Bot IP 重载定向验证：
+  - RED：`node --test test\bot-ip-source.test.js test\settings-api.test.js` 先因缺少 `reload()` 和 Settings API 未读取 active source 失败。
+  - GREEN：`node --test test\bot-ip-source.test.js test\settings-api.test.js test\admin-ui.test.js test\docs.test.js test\deployment-docs.test.js`，19 个测试全部通过。
+  - `node --check public\admin\app.js` 通过。
+  - 全量：`node --test`，179 个测试，175 通过、0 失败、4 个 opt-in 跳过。
+  - Compose：使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 运行 `docker compose -f docker-compose.prod.yml config` 解析通过。
+  - `.context` 校验：`context is valid`。
 - 进行中：
   - Phase 4 上线前收口与剩余生产能力评估。
 - 下一步：
-  - 根据上线目标决定是否把 Bot IP source 升级到 Redis/数据库/外部情报源，或进入最终发布/交付收口。
+  - 提交并推送 Bot IP 热重载能力；之后根据上线目标决定是否补自动部署或进入最终发布/交付收口。
 - 阻塞项：
   - 无当前阻塞。

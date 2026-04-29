@@ -39,6 +39,15 @@ BOT_IP_FILE_PATH=/app/config/bot-ips.txt
 
 文件格式是一行一个 IP，支持空行和 `#` 注释。生产部署时可把宿主机上的确认名单以只读方式挂载到容器内，例如把 `./config/bot-ips.txt` 挂载到 `/app/config/bot-ips.txt`。
 
+文件名单更新后，可以在管理台“系统设置”点击“重载 Bot IP”，或调用受保护接口：
+
+```bash
+curl -X POST https://cloak.example.com/api/v1/settings/bot-ips/reload \
+  -H "Authorization: Bearer <ADMIN_TOKEN>"
+```
+
+该接口只重载文件型 Bot IP source；`env` 来源仍需修改环境变量并重启应用。
+
 日志默认写入容器内 `/app/logs/cloak.log`，Compose 会挂载到 `cloak-app-logs` volume。`LOG_MAX_BYTES` 控制单个日志文件最大字节数，`LOG_MAX_FILES` 控制总保留文件数（包含当前日志）；例如默认值会保留当前 `cloak.log` 加上 4 个轮转归档。
 
 ## 2. 启动 PostgreSQL

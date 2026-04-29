@@ -26,20 +26,40 @@ export function createApp({
   postgresClient,
   repositories,
   readBotIpFile,
+  botIpSource,
   cloakRateLimiter = new InMemoryRateLimiter({ limit: 120, windowMs: 60_000 }),
   adminAuthService = new BearerTokenAuthService({ token: config.auth.adminToken }),
-  campaignService = createDefaultCampaignService({ config, repositories, postgresClient, readBotIpFile }),
-  analyticsService = createDefaultAnalyticsService({ campaignService }),
-  accessLogService = createDefaultAccessLogService({ campaignService }),
-  settingsService = new SettingsService({ config })
+  campaignService,
+  analyticsService,
+  accessLogService,
+  settingsService
 } = {}) {
-  const cloakRoute = createCloakRoute({ campaignService });
+  const configuredBotIpSource = botIpSource ?? createConfiguredBotIpSource({
+    config,
+    readBotIpFile
+  });
+  const configuredCampaignService = campaignService ?? createDefaultCampaignService({
+    config,
+    repositories,
+    postgresClient,
+    botIpSource: configuredBotIpSource
+  });
+  const configuredAnalyticsService = analyticsService ?? createDefaultAnalyticsService({
+    campaignService: configuredCampaignService
+  });
+  const configuredAccessLogService = accessLogService ?? createDefaultAccessLogService({
+    campaignService: configuredCampaignService
+  });
+  const configuredSettingsService = settingsService ?? new SettingsService({
+    config,
+    botIpSource: configuredBotIpSource
+  });
   const managementRoutes = createAuthenticatedRoutes(
     {
-      ...createCampaignRoutes({ campaignService }),
-      ...createAccessLogRoutes({ accessLogService }),
-      ...createAnalyticsRoutes({ analyticsService }),
-      ...createSettingsRoutes({ settingsService })
+      ...createCampaignRoutes({ campaignService: configuredCampaignService }),
+      ...createAccessLogRoutes({ accessLogService: configuredAccessLogService }),
+      ...createAnalyticsRoutes({ analyticsService: configuredAnalyticsService }),
+      ...createSettingsRoutes({ settingsService: configuredSettingsService })
     },
     adminAuthService
   );
@@ -51,7 +71,7 @@ export function createApp({
       ...createAdminStaticRoutes(),
       ...managementRoutes,
       'GET /c/:campaignId': createRateLimitedRoute({
-        route: cloakRoute,
+        route: createCloakRoute({ campaignService: configuredCampaignService }),
         limiter: cloakRateLimiter
       })
     }

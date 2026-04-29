@@ -114,6 +114,8 @@
    - 新增 `FileBotIpSource`，支持一行一个 IP、空行和 `#` 注释。
    - 默认运行时按配置装配 env/file Bot IP source，并在 Settings API / 管理台展示来源。
    - README、`.env.example`、`docs/DEPLOYMENT.md` 与生产 Compose 已补 Bot IP source 配置说明。
+   - 新增文件型 Bot IP source 热重载入口：`POST /api/v1/settings/bot-ips/reload`。
+   - 管理台系统设置支持重载 Bot IP 名单，并展示实际已加载的文件名单。
    - 新增生产监控 CLI：`npm run monitor:production`，检查 `/health` 与 `/api/v1/settings`。
    - 监控 CLI 支持 `--alert-webhook-url`，失败时发送通用 JSON Webhook 告警。
    - GitHub Actions CI 已覆盖监控 CLI help direct-run。
@@ -124,8 +126,8 @@
 
 - 若未来确实需要复杂前端状态管理，再单独立项 React/Vite 管理台；当前无构建静态管理台已满足本阶段验收。
 - 若未来需要完整公网生产发布，可继续补自动部署流水线和更深入的指标告警。
-- 若要进一步增强真实机器人识别，可接入 Redis/数据库 Bot IP source 管理界面或外部情报源同步。
-- 若要上线公网，备份/恢复脚本、恢复演练入口和基础健康/设置告警入口已具备；仍可按实际基础设施补自动部署、外部 Bot IP 同步和更深入指标告警。
+- 若要进一步增强真实机器人识别，可接入 Redis/数据库 Bot IP source 管理界面或外部情报源同步；当前文件型名单已支持后台重载。
+- 若要上线公网，备份/恢复脚本、恢复演练入口、文件型 Bot IP 重载和基础健康/设置告警入口已具备；仍可按实际基础设施补自动部署、外部 Bot IP 同步和更深入指标告警。
 
 ## 依赖关系
 
