@@ -506,6 +506,16 @@
   - `node --check public\admin\app.js` 通过。
   - `$env:RUN_BROWSER_LAYOUT='1'; node --test test\admin-browser-layout.test.js` 通过，2 个真实 Chrome 布局测试通过，PostgreSQL opt-in 测试按预期跳过。
   - 全量：`node --test`，187 个测试，183 通过、0 失败、4 个 opt-in 跳过。
+- 已重构管理台信息架构：
+  - `/admin` 从单页堆叠改为四个视图：总览、活动、访问日志、系统设置。
+  - 侧栏 hash 导航会切换当前视图；顶部标题和说明随视图更新。
+  - 总览页只展示运行态势、KPI、流量分布和动作分布；活动页单独承载活动表和配置表单；日志页单独承载筛选和日志表；设置页单独承载运行配置和 Bot IP 重载。
+  - 既有 DOM id、表单、筛选、管理令牌、Bot IP 重载、API 调用和错误/成功反馈均保留。
+- 已运行信息架构重构验证：
+  - `node --test test\admin-ui.test.js` 通过。
+  - `node --check public\admin\app.js` 通过。
+  - `$env:RUN_BROWSER_LAYOUT='1'; node --test test\admin-browser-layout.test.js` 通过，真实 Chrome 分别验证 overview/campaigns/logs/settings，2 个 opt-in 布局测试通过、PostgreSQL opt-in 跳过。
+  - 全量：`node --test`，187 个测试，183 通过、0 失败、4 个 opt-in 跳过。
 - 进行中：
   - Phase 4 上线前非部署项已收口。
 - 下一步：

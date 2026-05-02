@@ -54,19 +54,19 @@
 
         <p class="nav-heading">菜单</p>
         <nav class="nav-list" aria-label="管理台导航">
-          <a class="nav-item is-active" href="#overview">
+          <a class="nav-item is-active" href="#overview" data-view-link="overview">
             <svg><use href="#icon-shield"></use></svg>
             总览
           </a>
-          <a class="nav-item" href="#campaigns">
+          <a class="nav-item" href="#campaigns" data-view-link="campaigns">
             <svg><use href="#icon-edit"></use></svg>
             活动
           </a>
-          <a class="nav-item" href="#logs">
+          <a class="nav-item" href="#logs" data-view-link="logs">
             <svg><use href="#icon-bolt"></use></svg>
             访问日志
           </a>
-          <a class="nav-item" href="#analytics-panel">
+          <a class="nav-item" href="#overview" data-view-link="overview">
             <svg><use href="#icon-refresh"></use></svg>
             数据分析
           </a>
@@ -74,11 +74,11 @@
 
         <p class="nav-heading">工具</p>
         <nav class="nav-list support-list" aria-label="支持导航">
-          <a class="nav-item" href="#settings">
+          <a class="nav-item" href="#settings" data-view-link="settings">
             <svg><use href="#icon-bell"></use></svg>
             系统设置
           </a>
-          <a class="nav-item" href="#logs">
+          <a class="nav-item" href="#logs" data-view-link="logs">
             <svg><use href="#icon-search"></use></svg>
             查询记录
           </a>
@@ -89,8 +89,8 @@
         <header class="workspace-header">
           <div>
             <span class="eyebrow">运行中枢</span>
-            <h1>总览</h1>
-            <p>查看当前斗篷分流、访问判定和活动状态</p>
+            <h1 id="workspace-title">总览</h1>
+            <p id="workspace-subtitle">查看当前斗篷分流、访问判定和活动状态</p>
           </div>
           <div class="top-status" aria-label="状态栏">
             <button class="status-button" id="refresh-button" type="button" aria-label="刷新数据">
@@ -122,214 +122,244 @@
           <button class="secondary-button" id="retry-error" type="button">重试</button>
         </section>
 
-        <section class="command-center" id="overview" aria-label="数据概览">
-          <div class="command-copy">
-            <span class="eyebrow">今日态势</span>
-            <h2>分流、日志和规则状态</h2>
-            <p>核心指标集中在第一屏，便于上线后快速判断服务是否正常。</p>
-          </div>
-          <div class="metrics-grid">
-            <article class="metric-card is-hot">
-              <span class="metric-icon"><svg><use href="#icon-shield"></use></svg></span>
-              <strong id="metric-campaigns">0</strong>
-              <small>活动总数</small>
-            </article>
-            <article class="metric-card">
-              <span class="metric-icon"><svg><use href="#icon-bolt"></use></svg></span>
-              <strong id="metric-visits">0</strong>
-              <small>累计访问</small>
-            </article>
-            <article class="metric-card">
-              <span class="metric-icon"><svg><use href="#icon-search"></use></svg></span>
-              <strong id="metric-bots">0</strong>
-              <small>安全匹配</small>
-            </article>
-            <article class="metric-card">
-              <span class="metric-icon"><svg><use href="#icon-refresh"></use></svg></span>
-              <strong id="metric-money">0</strong>
-              <small>收益页动作</small>
-            </article>
-          </div>
-        </section>
+        <div class="view-stack">
+          <section class="view-panel is-active" id="overview" data-view="overview" aria-label="总览">
+            <section class="command-center" aria-label="数据概览">
+              <div class="command-copy">
+                <span class="eyebrow">今日态势</span>
+                <h2>分流、日志和规则状态</h2>
+                <p>核心指标集中在第一屏，便于上线后快速判断服务是否正常。</p>
+              </div>
+              <div class="metrics-grid">
+                <article class="metric-card is-hot">
+                  <span class="metric-icon"><svg><use href="#icon-shield"></use></svg></span>
+                  <strong id="metric-campaigns">0</strong>
+                  <small>活动总数</small>
+                </article>
+                <article class="metric-card">
+                  <span class="metric-icon"><svg><use href="#icon-bolt"></use></svg></span>
+                  <strong id="metric-visits">0</strong>
+                  <small>累计访问</small>
+                </article>
+                <article class="metric-card">
+                  <span class="metric-icon"><svg><use href="#icon-search"></use></svg></span>
+                  <strong id="metric-bots">0</strong>
+                  <small>安全匹配</small>
+                </article>
+                <article class="metric-card">
+                  <span class="metric-icon"><svg><use href="#icon-refresh"></use></svg></span>
+                  <strong id="metric-money">0</strong>
+                  <small>收益页动作</small>
+                </article>
+              </div>
+            </section>
 
-        <section class="dashboard-grid" aria-label="运营面板">
-          <section class="panel table-panel" id="campaigns" aria-labelledby="campaigns-title">
-            <div class="panel-heading">
+            <section class="analytics-grid" id="analytics-panel" aria-label="数据分析">
+              <section class="panel chart-panel" aria-labelledby="chart-title">
+                <div class="panel-heading">
+                  <div>
+                    <h2 id="chart-title">流量分布</h2>
+                    <p>访问判定占比</p>
+                  </div>
+                </div>
+                <div class="donut-wrap">
+                  <div class="donut-chart" id="donut-chart" aria-label="判定分布环形图">
+                    <span id="donut-total">0%</span>
+                    <small>总计</small>
+                  </div>
+                </div>
+                <div class="split-bars" id="verdict-bars"></div>
+              </section>
+
+              <section class="panel revenue-panel" aria-labelledby="action-title">
+                <div class="panel-heading compact-heading">
+                  <div>
+                    <h2 id="action-title">动作分布</h2>
+                    <p>跳转动作占比</p>
+                  </div>
+                </div>
+                <div class="action-strip" id="action-strip"></div>
+              </section>
+            </section>
+          </section>
+
+          <section class="view-panel" id="campaigns" data-view="campaigns" aria-label="活动管理" hidden>
+            <div class="page-heading">
               <div>
-                <h2 id="campaigns-title">活动列表</h2>
-                <p>当前启用的分流活动</p>
+                <span class="eyebrow">活动管理</span>
+                <h2>分流活动</h2>
+                <p>集中维护安全页、收益页和跳转模式。</p>
               </div>
               <a class="ghost-link" href="#campaign-form-title">新建活动</a>
             </div>
-            <div class="table-wrap">
-              <table class="campaigns-table">
-                <thead>
-                  <tr>
-                    <th>活动</th>
-                    <th>模式</th>
-                    <th>安全页链接</th>
-                    <th>收益页链接</th>
-                    <th>操作</th>
-                  </tr>
-                </thead>
-                <tbody id="campaigns-table"></tbody>
-              </table>
-            </div>
+
+            <section class="campaigns-layout">
+              <section class="panel table-panel" aria-labelledby="campaigns-title">
+                <div class="panel-heading">
+                  <div>
+                    <h2 id="campaigns-title">活动列表</h2>
+                    <p>当前启用的分流活动</p>
+                  </div>
+                </div>
+                <div class="table-wrap">
+                  <table class="campaigns-table">
+                    <thead>
+                      <tr>
+                        <th>活动</th>
+                        <th>模式</th>
+                        <th>安全页链接</th>
+                        <th>收益页链接</th>
+                        <th>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody id="campaigns-table"></tbody>
+                  </table>
+                </div>
+              </section>
+
+              <section class="panel form-panel" aria-labelledby="campaign-form-title">
+                <div class="panel-heading">
+                  <div>
+                    <h2 id="campaign-form-title">活动配置</h2>
+                    <p>安全页与收益页设置</p>
+                  </div>
+                </div>
+                <form id="campaign-form" class="campaign-form">
+                  <input type="hidden" id="campaign-id">
+                  <label>
+                    名称
+                    <input id="campaign-name" name="name" required>
+                  </label>
+                  <label>
+                    安全页链接
+                    <input id="campaign-safe-url" name="safeUrl" type="url" required>
+                  </label>
+                  <label>
+                    收益页链接
+                    <input id="campaign-money-url" name="moneyUrl" type="url" required>
+                  </label>
+                  <label>
+                    跳转模式
+                    <select id="campaign-mode" name="redirectMode">
+                      <option value="redirect">直接跳转</option>
+                      <option value="iframe">内嵌页</option>
+                      <option value="loading">加载页</option>
+                    </select>
+                  </label>
+                  <div class="form-actions">
+                    <button class="secondary-button" id="reset-campaign-form" type="button">清空</button>
+                    <button class="primary-button" id="save-campaign-button" type="submit">保存活动</button>
+                  </div>
+                </form>
+              </section>
+            </section>
           </section>
 
-          <aside class="right-rail" id="analytics-panel">
-            <section class="panel chart-panel" aria-labelledby="chart-title">
+          <section class="view-panel" id="logs" data-view="logs" aria-label="访问日志" hidden>
+            <div class="page-heading">
+              <div>
+                <span class="eyebrow">访问日志</span>
+                <h2>实时分流记录</h2>
+                <p>按判定、动作和 IP 查询近期访问。</p>
+              </div>
+            </div>
+
+            <section class="panel logs-panel" aria-labelledby="logs-title">
+              <div class="panel-heading table-heading">
+                <div>
+                  <h2 id="logs-title">日志列表</h2>
+                  <p>最新 10 条访问记录</p>
+                </div>
+                <form class="filters" id="log-filters">
+                  <select id="filter-verdict" aria-label="按判定筛选">
+                    <option value="">全部判定</option>
+                    <option value="human">正常访客</option>
+                    <option value="bot">机器人</option>
+                    <option value="suspicious">可疑访问</option>
+                  </select>
+                  <select id="filter-action" aria-label="按动作筛选">
+                    <option value="">全部动作</option>
+                    <option value="money">收益页</option>
+                    <option value="safe">安全页</option>
+                    <option value="block">拦截</option>
+                  </select>
+                  <input id="filter-ip" aria-label="按 IP 筛选" placeholder="IP 地址">
+                  <button class="secondary-button" type="submit">筛选</button>
+                </form>
+              </div>
+              <div class="table-wrap">
+                <table class="logs-table">
+                  <thead>
+                    <tr>
+                      <th>时间</th>
+                      <th>活动</th>
+                      <th>IP</th>
+                      <th>判定</th>
+                      <th>动作</th>
+                      <th>置信度</th>
+                    </tr>
+                  </thead>
+                  <tbody id="logs-table"></tbody>
+                </table>
+              </div>
+            </section>
+          </section>
+
+          <section class="view-panel" id="settings" data-view="settings" aria-label="系统设置" hidden>
+            <div class="page-heading">
+              <div>
+                <span class="eyebrow">系统设置</span>
+                <h2>运行配置</h2>
+                <p>查看当前仓储、检测阈值和 Bot IP 来源。</p>
+              </div>
+              <button class="secondary-button" id="reload-bot-ips" type="button">重载 Bot IP</button>
+            </div>
+
+            <section class="panel settings-panel" aria-labelledby="settings-title">
               <div class="panel-heading">
                 <div>
-                  <h2 id="chart-title">流量分布</h2>
-                  <p>访问判定占比</p>
+                  <h2 id="settings-title">配置详情</h2>
+                  <p>运行配置与检测参数</p>
                 </div>
-              </div>
-              <div class="donut-wrap">
-                <div class="donut-chart" id="donut-chart" aria-label="判定分布环形图">
-                  <span id="donut-total">0%</span>
-                  <small>总计</small>
-                </div>
-              </div>
-              <div class="split-bars" id="verdict-bars"></div>
-            </section>
-
-            <section class="panel revenue-panel" aria-labelledby="action-title">
-              <div class="panel-heading compact-heading">
-                <div>
-                  <h2 id="action-title">动作分布</h2>
-                  <p>跳转动作占比</p>
-                </div>
-              </div>
-              <div class="action-strip" id="action-strip"></div>
-            </section>
-          </aside>
-        </section>
-
-        <section class="wide-grid">
-          <section class="panel logs-panel" id="logs" aria-labelledby="logs-title">
-            <div class="panel-heading table-heading">
-              <div>
-                <h2 id="logs-title">访问日志</h2>
-                <p>实时分流记录</p>
-              </div>
-              <form class="filters" id="log-filters">
-                <select id="filter-verdict" aria-label="按判定筛选">
-                  <option value="">全部判定</option>
-                  <option value="human">正常访客</option>
-                  <option value="bot">机器人</option>
-                  <option value="suspicious">可疑访问</option>
-                </select>
-                <select id="filter-action" aria-label="按动作筛选">
-                  <option value="">全部动作</option>
-                  <option value="money">收益页</option>
-                  <option value="safe">安全页</option>
-                  <option value="block">拦截</option>
-                </select>
-                <input id="filter-ip" aria-label="按 IP 筛选" placeholder="IP 地址">
-                <button class="secondary-button" type="submit">筛选</button>
-              </form>
-            </div>
-            <div class="table-wrap">
-              <table class="logs-table">
-                <thead>
-                  <tr>
-                    <th>时间</th>
-                    <th>活动</th>
-                    <th>IP</th>
-                    <th>判定</th>
-                    <th>动作</th>
-                    <th>置信度</th>
-                  </tr>
-                </thead>
-                <tbody id="logs-table"></tbody>
-              </table>
-            </div>
-          </section>
-
-          <section class="panel form-panel" aria-labelledby="campaign-form-title">
-            <div class="panel-heading">
-              <div>
-                <h2 id="campaign-form-title">活动配置</h2>
-                <p>安全页与收益页设置</p>
-              </div>
-            </div>
-            <form id="campaign-form" class="campaign-form">
-              <input type="hidden" id="campaign-id">
-              <label>
-                名称
-                <input id="campaign-name" name="name" required>
-              </label>
-              <label>
-                安全页链接
-                <input id="campaign-safe-url" name="safeUrl" type="url" required>
-              </label>
-              <label>
-                收益页链接
-                <input id="campaign-money-url" name="moneyUrl" type="url" required>
-              </label>
-              <label>
-                跳转模式
-                <select id="campaign-mode" name="redirectMode">
-                  <option value="redirect">直接跳转</option>
-                  <option value="iframe">内嵌页</option>
-                  <option value="loading">加载页</option>
-                </select>
-              </label>
-              <div class="form-actions">
-                <button class="secondary-button" id="reset-campaign-form" type="button">清空</button>
-                <button class="primary-button" id="save-campaign-button" type="submit">保存活动</button>
-              </div>
-            </form>
-          </section>
-
-          <section class="panel settings-panel" id="settings" aria-labelledby="settings-title">
-            <div class="panel-heading">
-              <div>
-                <h2 id="settings-title">系统设置</h2>
-                <p>运行配置与检测参数</p>
-              </div>
-              <div class="heading-actions">
-                <button class="secondary-button" id="reload-bot-ips" type="button">重载 Bot IP</button>
                 <span class="pill" id="settings-driver">未加载</span>
               </div>
-            </div>
-            <div class="settings-grid" aria-label="运行配置">
-              <article class="setting-tile">
-                <span>服务监听</span>
-                <strong id="settings-server">-</strong>
-              </article>
-              <article class="setting-tile">
-                <span>仓储模式</span>
-                <strong id="settings-repository">-</strong>
-              </article>
-              <article class="setting-tile">
-                <span>检测阈值</span>
-                <strong id="settings-thresholds">-</strong>
-              </article>
-              <article class="setting-tile">
-                <span>Bot IP 数量</span>
-                <strong id="settings-bot-count">0</strong>
-              </article>
-              <article class="setting-tile">
-                <span>Bot IP 来源</span>
-                <strong id="settings-bot-source">env</strong>
-              </article>
-            </div>
-            <div class="settings-detail">
-              <div>
-                <h3>Bot IP 列表</h3>
-                <p id="settings-bot-ips">未配置</p>
+              <div class="settings-grid" aria-label="运行配置">
+                <article class="setting-tile">
+                  <span>服务监听</span>
+                  <strong id="settings-server">-</strong>
+                </article>
+                <article class="setting-tile">
+                  <span>仓储模式</span>
+                  <strong id="settings-repository">-</strong>
+                </article>
+                <article class="setting-tile">
+                  <span>检测阈值</span>
+                  <strong id="settings-thresholds">-</strong>
+                </article>
+                <article class="setting-tile">
+                  <span>Bot IP 数量</span>
+                  <strong id="settings-bot-count">0</strong>
+                </article>
+                <article class="setting-tile">
+                  <span>Bot IP 来源</span>
+                  <strong id="settings-bot-source">env</strong>
+                </article>
               </div>
-              <div>
-                <h3>运维提示</h3>
-                <ul id="settings-notes">
-                  <li>系统设置来自环境变量；文件型 Bot IP 名单可通过重载接口刷新。</li>
-                </ul>
+              <div class="settings-detail">
+                <div>
+                  <h3>Bot IP 列表</h3>
+                  <p id="settings-bot-ips">未配置</p>
+                </div>
+                <div>
+                  <h3>运维提示</h3>
+                  <ul id="settings-notes">
+                    <li>系统设置来自环境变量；文件型 Bot IP 名单可通过重载接口刷新。</li>
+                  </ul>
+                </div>
               </div>
-            </div>
+            </section>
           </section>
-        </section>
+        </div>
       </main>
     </div>
 

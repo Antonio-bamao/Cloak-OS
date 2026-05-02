@@ -18,8 +18,28 @@ const ACTION_LABELS = {
   block: '拦截'
 };
 
+const VIEW_LABELS = {
+  overview: {
+    title: '总览',
+    subtitle: '查看当前斗篷分流、访问判定和活动状态'
+  },
+  campaigns: {
+    title: '活动',
+    subtitle: '维护分流活动、安全页和收益页配置'
+  },
+  logs: {
+    title: '访问日志',
+    subtitle: '查询当前访问判定、跳转动作和 IP 记录'
+  },
+  settings: {
+    title: '系统设置',
+    subtitle: '查看运行配置、检测阈值和 Bot IP 来源'
+  }
+};
+
 const state = {
   token: localStorage.getItem(TOKEN_KEY) || '',
+  activeView: 'overview',
   overview: null,
   settings: null,
   campaigns: [],
@@ -39,6 +59,10 @@ const elements = {
   errorBanner: document.querySelector('#error-banner'),
   errorMessage: document.querySelector('#error-message'),
   retryError: document.querySelector('#retry-error'),
+  workspaceTitle: document.querySelector('#workspace-title'),
+  workspaceSubtitle: document.querySelector('#workspace-subtitle'),
+  viewPanels: Array.from(document.querySelectorAll('[data-view]')),
+  navItems: Array.from(document.querySelectorAll('[data-view-link]')),
   statusVisits: document.querySelector('#status-visits'),
   repositoryBadge: document.querySelector('#repository-badge'),
   settingsDriver: document.querySelector('#settings-driver'),
@@ -74,6 +98,7 @@ const elements = {
 };
 
 elements.tokenInput.value = state.token;
+initNavigation();
 
 elements.tokenForm.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -142,6 +167,24 @@ elements.successModal.addEventListener('click', (event) => {
   }
 });
 
+window.addEventListener('hashchange', () => {
+  setActiveView(viewFromHash(window.location.hash, state.activeView));
+});
+
+elements.navItems.forEach((item) => {
+  item.addEventListener('click', (event) => {
+    const view = item.dataset.viewLink;
+
+    if (!view) {
+      return;
+    }
+
+    event.preventDefault();
+    window.location.hash = view;
+    setActiveView(view);
+  });
+});
+
 document.addEventListener('click', async (event) => {
   const editButton = event.target.closest('[data-edit-campaign]');
   const deleteButton = event.target.closest('[data-delete-campaign]');
@@ -171,6 +214,44 @@ document.addEventListener('click', async (event) => {
 });
 
 refreshAll();
+
+function initNavigation() {
+  setActiveView(viewFromHash(window.location.hash));
+}
+
+function viewFromHash(hash, fallback = 'overview') {
+  const id = hash.replace(/^#/, '');
+
+  if (id === 'analytics-panel') {
+    return 'overview';
+  }
+
+  if (Object.hasOwn(VIEW_LABELS, id)) {
+    return id;
+  }
+
+  return fallback;
+}
+
+function setActiveView(view) {
+  const nextView = Object.hasOwn(VIEW_LABELS, view) ? view : 'overview';
+  state.activeView = nextView;
+
+  for (const panel of elements.viewPanels) {
+    const isActive = panel.dataset.view === nextView;
+    panel.hidden = !isActive;
+    panel.classList.toggle('is-active', isActive);
+  }
+
+  for (const item of elements.navItems) {
+    item.classList.remove('is-active');
+  }
+
+  elements.navItems.find((item) => item.dataset.viewLink === nextView)?.classList.add('is-active');
+
+  elements.workspaceTitle.textContent = VIEW_LABELS[nextView].title;
+  elements.workspaceSubtitle.textContent = VIEW_LABELS[nextView].subtitle;
+}
 
 async function refreshAll(message) {
   try {

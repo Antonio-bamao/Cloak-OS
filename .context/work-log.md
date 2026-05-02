@@ -649,3 +649,10 @@
 - 结果：桌面第一屏现在集中展示总览、令牌状态、关键指标、活动表和图表；移动端导航/令牌/指标不挤压；长 URL 表格通过横向滚动保留完整列，同时单元格不再竖排撑高。
 - 验证：`node --test test\admin-ui.test.js` 通过；`node --check public\admin\app.js` 通过；`$env:RUN_BROWSER_LAYOUT='1'; node --test test\admin-browser-layout.test.js` 真实 Chrome 布局测试 2 通过、PostgreSQL opt-in 跳过；全量 `node --test` 输出 187 个测试、183 通过、0 失败、4 个 opt-in 跳过。
 - 下一步：校验 `.context`，提交并推送 UI 刷新。
+
+## 2026-05-02 23:58 CST｜重构管理台信息架构
+- 目标：解决管理台所有功能和元素挤在同一画面的问题，在不打乱已完成功能的前提下降低视觉负担。
+- 动作：将 `/admin` 从连续堆叠改成四个 hash 视图：总览、活动、访问日志、系统设置；新增轻量视图切换逻辑和顶部标题同步；保留既有 DOM id、API 调用、表单提交、日志筛选、管理令牌、Bot IP 重载、错误横幅和成功弹窗。同步更新真实 Chrome 布局测试，让它分别打开四个视图，而不是要求活动表和日志表同时出现在总览页。
+- 结果：总览页只负责运行态势和分析；活动页集中处理活动表与配置；日志页集中查询访问记录；设置页集中展示运行配置。桌面和移动端信息密度都明显降低。
+- 验证：`node --test test\admin-ui.test.js` 通过；`node --check public\admin\app.js` 通过；`$env:RUN_BROWSER_LAYOUT='1'; node --test test\admin-browser-layout.test.js` 真实 Chrome 布局测试 2 通过、PostgreSQL opt-in 跳过；全量 `node --test` 输出 187 个测试、183 通过、0 失败、4 个 opt-in 跳过。
+- 下一步：校验 `.context`，提交并推送信息架构重构。

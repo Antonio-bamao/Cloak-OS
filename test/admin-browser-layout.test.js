@@ -51,25 +51,61 @@ test('admin UI has no page overflow or undersized touch targets in real Chrome',
     await client.send('Runtime.enable');
 
     const { port } = app.address();
-    const url = `http://127.0.0.1:${port}/admin`;
-
-    for (const viewport of viewports) {
-      const result = await inspectViewport({
-        client,
-        viewport,
-        url,
+    const baseUrl = `http://127.0.0.1:${port}/admin`;
+    const views = [
+      {
+        name: 'overview',
+        url: `${baseUrl}#overview`,
         waitFor: `
           document.readyState === 'complete' &&
-            document.querySelector('#campaigns-table .empty-state') &&
+            !document.querySelector('#overview').hidden &&
+            document.querySelector('#donut-chart')
+        `
+      },
+      {
+        name: 'campaigns',
+        url: `${baseUrl}#campaigns`,
+        waitFor: `
+          document.readyState === 'complete' &&
+            !document.querySelector('#campaigns').hidden &&
+            document.querySelector('#campaigns-table .empty-state')
+        `
+      },
+      {
+        name: 'logs',
+        url: `${baseUrl}#logs`,
+        waitFor: `
+          document.readyState === 'complete' &&
+            !document.querySelector('#logs').hidden &&
             document.querySelector('#logs-table .empty-state')
         `
-      });
-      await writeFile(
-        path.join(screenshotDir, `${viewport.name}.png`),
-        Buffer.from(result.screenshot, 'base64')
-      );
+      },
+      {
+        name: 'settings',
+        url: `${baseUrl}#settings`,
+        waitFor: `
+          document.readyState === 'complete' &&
+            !document.querySelector('#settings').hidden &&
+            document.querySelector('#settings-driver').textContent.trim() !== '未加载'
+        `
+      }
+    ];
 
-      assertHealthyLayout(result.metrics, viewport.name);
+    for (const viewport of viewports) {
+      for (const view of views) {
+        const result = await inspectViewport({
+          client,
+          viewport,
+          url: view.url,
+          waitFor: view.waitFor
+        });
+        await writeFile(
+          path.join(screenshotDir, `${viewport.name}-${view.name}.png`),
+          Buffer.from(result.screenshot, 'base64')
+        );
+
+        assertHealthyLayout(result.metrics, `${viewport.name} ${view.name}`);
+      }
     }
   } finally {
     client.close();
@@ -112,28 +148,45 @@ test('admin UI contains long non-empty tables without page overflow in real Chro
     await seedLongCampaign(baseUrl);
 
     for (const viewport of viewports) {
-      const result = await inspectViewport({
+      const campaignsResult = await inspectViewport({
         client,
         viewport,
-        url: `${baseUrl}/admin`,
+        url: `${baseUrl}/admin#campaigns`,
         waitFor: `
           document.readyState === 'complete' &&
+            !document.querySelector('#campaigns').hidden &&
             document.querySelectorAll('#campaigns-table tr').length > 0 &&
+            !document.querySelector('#campaigns-table .empty-state')
+        `
+      });
+      await writeFile(
+        path.join(screenshotDir, `${viewport.name}-campaigns-long-data.png`),
+        Buffer.from(campaignsResult.screenshot, 'base64')
+      );
+
+      assertHealthyLayout(campaignsResult.metrics, `${viewport.name} campaigns long-data`);
+      assert.ok(
+        campaignsResult.metrics.tableWraps.every((tableWrap) => tableWrap.containsOverflow),
+        `${viewport.name} campaign table overflow should stay contained in table-wrap: ${JSON.stringify(campaignsResult.metrics.tableWraps)}`
+      );
+
+      const logsResult = await inspectViewport({
+        client,
+        viewport,
+        url: `${baseUrl}/admin#logs`,
+        waitFor: `
+          document.readyState === 'complete' &&
+            !document.querySelector('#logs').hidden &&
             document.querySelectorAll('#logs-table tr').length > 0 &&
-            !document.querySelector('#campaigns-table .empty-state') &&
             !document.querySelector('#logs-table .empty-state')
         `
       });
       await writeFile(
-        path.join(screenshotDir, `${viewport.name}-long-data.png`),
-        Buffer.from(result.screenshot, 'base64')
+        path.join(screenshotDir, `${viewport.name}-logs-long-data.png`),
+        Buffer.from(logsResult.screenshot, 'base64')
       );
 
-      assertHealthyLayout(result.metrics, `${viewport.name} long-data`);
-      assert.ok(
-        result.metrics.tableWraps.every((tableWrap) => tableWrap.containsOverflow),
-        `${viewport.name} table overflow should stay contained in table-wrap: ${JSON.stringify(result.metrics.tableWraps)}`
-      );
+      assertHealthyLayout(logsResult.metrics, `${viewport.name} logs long-data`);
     }
   } finally {
     client.close();
@@ -190,29 +243,46 @@ test('postgres admin UI contains long non-empty tables without page overflow in 
     });
 
     for (const viewport of viewports) {
-      const result = await inspectViewport({
+      const campaignsResult = await inspectViewport({
         client,
         viewport,
-        url: `${baseUrl}/admin`,
+        url: `${baseUrl}/admin#campaigns`,
         waitFor: `
           document.readyState === 'complete' &&
+            !document.querySelector('#campaigns').hidden &&
             document.body.textContent.includes('PostgreSQL 长链接布局回归') &&
             document.querySelectorAll('#campaigns-table tr').length > 0 &&
+            !document.querySelector('#campaigns-table .empty-state')
+        `
+      });
+      await writeFile(
+        path.join(screenshotDir, `${viewport.name}-postgres-campaigns-long-data.png`),
+        Buffer.from(campaignsResult.screenshot, 'base64')
+      );
+
+      assertHealthyLayout(campaignsResult.metrics, `${viewport.name} postgres campaigns long-data`);
+      assert.ok(
+        campaignsResult.metrics.tableWraps.every((tableWrap) => tableWrap.containsOverflow),
+        `${viewport.name} postgres campaign table overflow should stay contained in table-wrap: ${JSON.stringify(campaignsResult.metrics.tableWraps)}`
+      );
+
+      const logsResult = await inspectViewport({
+        client,
+        viewport,
+        url: `${baseUrl}/admin#logs`,
+        waitFor: `
+          document.readyState === 'complete' &&
+            !document.querySelector('#logs').hidden &&
             document.querySelectorAll('#logs-table tr').length > 0 &&
-            !document.querySelector('#campaigns-table .empty-state') &&
             !document.querySelector('#logs-table .empty-state')
         `
       });
       await writeFile(
-        path.join(screenshotDir, `${viewport.name}-postgres-long-data.png`),
-        Buffer.from(result.screenshot, 'base64')
+        path.join(screenshotDir, `${viewport.name}-postgres-logs-long-data.png`),
+        Buffer.from(logsResult.screenshot, 'base64')
       );
 
-      assertHealthyLayout(result.metrics, `${viewport.name} postgres long-data`);
-      assert.ok(
-        result.metrics.tableWraps.every((tableWrap) => tableWrap.containsOverflow),
-        `${viewport.name} postgres table overflow should stay contained in table-wrap: ${JSON.stringify(result.metrics.tableWraps)}`
-      );
+      assertHealthyLayout(logsResult.metrics, `${viewport.name} postgres logs long-data`);
     }
   } finally {
     if (campaignId) {
@@ -287,7 +357,16 @@ function layoutMetricsExpression() {
           height: Math.round(rect.height)
         };
       });
-    const tableWraps = Array.from(document.querySelectorAll('.table-wrap')).map((element) => {
+    const tableWraps = Array.from(document.querySelectorAll('.table-wrap'))
+      .filter((element) => {
+        const rect = element.getBoundingClientRect();
+        const style = getComputedStyle(element);
+        return style.visibility !== 'hidden' &&
+          style.display !== 'none' &&
+          rect.width > 0 &&
+          rect.height > 0;
+      })
+      .map((element) => {
       const rect = element.getBoundingClientRect();
       return {
         width: Math.round(rect.width),

@@ -407,11 +407,42 @@ select {
   font-size: 0.84rem;
 }
 
+.view-stack {
+  margin-top: 18px;
+}
+
+.view-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.view-panel[hidden] {
+  display: none;
+}
+
+.page-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 82px;
+  padding: 18px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: rgba(17, 21, 22, 0.56);
+}
+
+.page-heading p {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+
 .command-center {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
   gap: 16px;
-  margin: 18px 0 14px;
+  margin: 0;
   padding: 18px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
@@ -533,8 +564,25 @@ select {
   gap: 14px;
 }
 
+.analytics-grid,
+.campaigns-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 16px;
+  align-items: start;
+}
+
+.logs-panel,
+.settings-panel {
+  min-height: min(680px, calc(100dvh - 190px));
+}
+
 .chart-panel {
-  min-height: 486px;
+  min-height: min(560px, calc(100dvh - 326px));
+}
+
+.revenue-panel {
+  min-height: 260px;
 }
 
 .donut-wrap {
@@ -1023,6 +1071,8 @@ td {
   }
 
   .command-center,
+  .analytics-grid,
+  .campaigns-layout,
   .dashboard-grid,
   .wide-grid {
     grid-template-columns: 1fr;
@@ -1062,6 +1112,7 @@ td {
   .workspace-header,
   .error-banner,
   .top-status,
+  .page-heading,
   .panel-heading {
     display: grid;
     justify-content: stretch;
@@ -1120,6 +1171,11 @@ td {
   }
 
   .command-center {
+    padding: 14px;
+  }
+
+  .page-heading {
+    min-height: auto;
     padding: 14px;
   }
 

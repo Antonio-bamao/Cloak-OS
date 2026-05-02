@@ -17,6 +17,16 @@ test('admin UI shell and assets are served by the app', async () => {
     assert.match(html, /id="app-shell"/);
     assert.match(html, /class="command-center"/);
     assert.match(html, /class="workspace-header"/);
+    assert.match(html, /class="view-stack"/);
+    assert.match(html, /class="view-panel is-active" id="overview" data-view="overview"/);
+    assert.match(html, /class="view-panel" id="campaigns" data-view="campaigns"[^>]*hidden/);
+    assert.match(html, /class="view-panel" id="logs" data-view="logs"[^>]*hidden/);
+    assert.match(html, /class="view-panel" id="settings" data-view="settings"[^>]*hidden/);
+    assert.match(html, /data-view-link="campaigns"/);
+    assert.match(html, /data-view-link="logs"/);
+    assert.match(html, /data-view-link="settings"/);
+    assert.match(html, /class="analytics-grid"/);
+    assert.match(html, /class="campaigns-layout"/);
     assert.match(html, /class="campaigns-table"/);
     assert.match(html, /class="logs-table"/);
     assert.match(html, /class="top-status"/);
@@ -48,6 +58,9 @@ test('admin UI shell and assets are served by the app', async () => {
     assert.match(css, /--surface-panel/);
     assert.match(css, /conic-gradient/);
     assert.match(css, /backdrop-filter/);
+    assert.match(css, /\.view-panel\[hidden\]/);
+    assert.match(css, /\.analytics-grid/);
+    assert.match(css, /\.campaigns-layout/);
     assert.match(css, /\.url-cell/);
     assert.match(css, /\.error-banner/);
     assert.match(css, /\.empty-state/);
@@ -65,6 +78,9 @@ test('admin UI shell and assets are served by the app', async () => {
     assert.match(jsResponse.headers.get('content-type'), /javascript/);
     const js = await jsResponse.text();
     assert.match(js, /loadOverview/);
+    assert.match(js, /setActiveView/);
+    assert.match(js, /viewFromHash/);
+    assert.match(js, /hashchange/);
     assert.match(js, /loadSettings/);
     assert.match(js, /renderSettings/);
     assert.match(js, /\/api\/v1\/settings/);
