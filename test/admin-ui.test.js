@@ -15,6 +15,10 @@ test('admin UI shell and assets are served by the app', async () => {
     assert.match(htmlResponse.headers.get('content-type'), /text\/html/);
     const html = await htmlResponse.text();
     assert.match(html, /id="app-shell"/);
+    assert.match(html, /class="command-center"/);
+    assert.match(html, /class="workspace-header"/);
+    assert.match(html, /class="campaigns-table"/);
+    assert.match(html, /class="logs-table"/);
     assert.match(html, /class="top-status"/);
     assert.match(html, /id="donut-chart"/);
     assert.match(html, /id="success-modal"/);
@@ -39,10 +43,12 @@ test('admin UI shell and assets are served by the app', async () => {
     assert.equal(cssResponse.status, 200);
     assert.match(cssResponse.headers.get('content-type'), /text\/css/);
     const css = await cssResponse.text();
-    assert.match(css, /--color-primary/);
-    assert.match(css, /--surface-elevated/);
+    assert.match(css, /--accent-green/);
+    assert.match(css, /--accent-cyan/);
+    assert.match(css, /--surface-panel/);
     assert.match(css, /conic-gradient/);
     assert.match(css, /backdrop-filter/);
+    assert.match(css, /\.url-cell/);
     assert.match(css, /\.error-banner/);
     assert.match(css, /\.empty-state/);
     assert.match(css, /touch-action: manipulation/);
@@ -51,6 +57,8 @@ test('admin UI shell and assets are served by the app', async () => {
     assert.match(css, /\.support-list\s*\{[^}]*display: none/s);
     assert.match(css, /\.metrics-grid\s*\{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/s);
     assert.match(css, /\.token-form\s*\{[^}]*grid-template-columns: minmax\(0, 1fr\) 44px/s);
+    assert.doesNotMatch(css, /#7c3aed|#8b5cf6|#a855f7|#4c1d95/i);
+    assert.doesNotMatch(css, /"Inter"|radial-gradient/);
 
     const jsResponse = await fetch(`http://127.0.0.1:${port}/admin/app.js`);
     assert.equal(jsResponse.status, 200);

@@ -86,8 +86,9 @@
       </aside>
 
       <main class="workspace">
-        <header class="topbar">
+        <header class="workspace-header">
           <div>
+            <span class="eyebrow">运行中枢</span>
             <h1>总览</h1>
             <p>查看当前斗篷分流、访问判定和活动状态</p>
           </div>
@@ -121,27 +122,34 @@
           <button class="secondary-button" id="retry-error" type="button">重试</button>
         </section>
 
-        <section class="metrics-grid" id="overview" aria-label="数据概览">
-          <article class="metric-card is-hot">
-            <span class="metric-icon"><svg><use href="#icon-shield"></use></svg></span>
-            <strong id="metric-campaigns">0</strong>
-            <small>活动总数</small>
-          </article>
-          <article class="metric-card">
-            <span class="metric-icon"><svg><use href="#icon-bolt"></use></svg></span>
-            <strong id="metric-visits">0</strong>
-            <small>累计访问</small>
-          </article>
-          <article class="metric-card">
-            <span class="metric-icon"><svg><use href="#icon-search"></use></svg></span>
-            <strong id="metric-bots">0</strong>
-            <small>安全匹配</small>
-          </article>
-          <article class="metric-card">
-            <span class="metric-icon"><svg><use href="#icon-refresh"></use></svg></span>
-            <strong id="metric-money">0</strong>
-            <small>收益页动作</small>
-          </article>
+        <section class="command-center" id="overview" aria-label="数据概览">
+          <div class="command-copy">
+            <span class="eyebrow">今日态势</span>
+            <h2>分流、日志和规则状态</h2>
+            <p>核心指标集中在第一屏，便于上线后快速判断服务是否正常。</p>
+          </div>
+          <div class="metrics-grid">
+            <article class="metric-card is-hot">
+              <span class="metric-icon"><svg><use href="#icon-shield"></use></svg></span>
+              <strong id="metric-campaigns">0</strong>
+              <small>活动总数</small>
+            </article>
+            <article class="metric-card">
+              <span class="metric-icon"><svg><use href="#icon-bolt"></use></svg></span>
+              <strong id="metric-visits">0</strong>
+              <small>累计访问</small>
+            </article>
+            <article class="metric-card">
+              <span class="metric-icon"><svg><use href="#icon-search"></use></svg></span>
+              <strong id="metric-bots">0</strong>
+              <small>安全匹配</small>
+            </article>
+            <article class="metric-card">
+              <span class="metric-icon"><svg><use href="#icon-refresh"></use></svg></span>
+              <strong id="metric-money">0</strong>
+              <small>收益页动作</small>
+            </article>
+          </div>
         </section>
 
         <section class="dashboard-grid" aria-label="运营面板">
@@ -154,7 +162,7 @@
               <a class="ghost-link" href="#campaign-form-title">新建活动</a>
             </div>
             <div class="table-wrap">
-              <table>
+              <table class="campaigns-table">
                 <thead>
                   <tr>
                     <th>活动</th>
@@ -223,7 +231,7 @@
               </form>
             </div>
             <div class="table-wrap">
-              <table>
+              <table class="logs-table">
                 <thead>
                   <tr>
                     <th>时间</th>

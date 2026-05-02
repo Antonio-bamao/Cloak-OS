@@ -496,6 +496,16 @@
   - Compose：使用临时 `POSTGRES_PASSWORD` / `ADMIN_TOKEN` 运行 `docker compose -f docker-compose.prod.yml config` 解析通过。
   - `.context` 校验：`context is valid`。
 - 已提交并推送生产监控阈值检查：`eb59fb2 feat: add monitor analytics thresholds`。
+- 已刷新管理台视觉系统：
+  - `/admin` 从旧紫色霓虹风格改为更克制的后台仪表盘视觉：哑光深色底、绿色/青色状态色、左侧导航、第一屏指挥中心、指标卡、图表和表格区统一。
+  - 活动表和日志表新增独立表格类与列宽策略，长 URL 在单元格内省略并通过横向滚动保留完整表格，不再把活动名、模式标签或链接挤成竖排。
+  - 图标按钮固定为不可压缩 44px 触控目标，移动端、平板和桌面布局都通过真实 Chrome 回归检查。
+  - opt-in 浏览器布局测试会在同源页面写入开发管理令牌后刷新，避免测试浏览器因未认证停在 `Authentication required`。
+- 已运行管理台 UI 验证：
+  - `node --test test\admin-ui.test.js` 通过。
+  - `node --check public\admin\app.js` 通过。
+  - `$env:RUN_BROWSER_LAYOUT='1'; node --test test\admin-browser-layout.test.js` 通过，2 个真实 Chrome 布局测试通过，PostgreSQL opt-in 测试按预期跳过。
+  - 全量：`node --test`，187 个测试，183 通过、0 失败、4 个 opt-in 跳过。
 - 进行中：
   - Phase 4 上线前非部署项已收口。
 - 下一步：

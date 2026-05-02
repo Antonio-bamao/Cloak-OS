@@ -289,7 +289,7 @@ function renderDonut(overview) {
   const suspiciousEnd = botEnd + suspicious;
 
   elements.donutTotal.textContent = `${overview.totalVisits > 0 ? 100 : 0}%`;
-  elements.donutChart.style.background = `conic-gradient(from -30deg, #7c3aed 0 ${humanEnd}%, #fb4d67 ${humanEnd}% ${botEnd}%, #f0b429 ${botEnd}% ${suspiciousEnd}%, #e5e7eb ${suspiciousEnd}% 100%)`;
+  elements.donutChart.style.background = `conic-gradient(from -30deg, #34d399 0 ${humanEnd}%, #fb7185 ${humanEnd}% ${botEnd}%, #f59e0b ${botEnd}% ${suspiciousEnd}%, rgba(205, 213, 209, 0.16) ${suspiciousEnd}% 100%)`;
 }
 
 function renderVerdictBars(overview) {
@@ -387,8 +387,8 @@ function renderCampaigns() {
         </span>
       </td>
       <td><span class="pill">${escapeHtml(formatRedirectMode(campaign.redirectMode))}</span></td>
-      <td class="mono">${escapeHtml(campaign.safeUrl)}</td>
-      <td class="mono">${escapeHtml(campaign.moneyUrl)}</td>
+      <td class="mono url-cell" title="${escapeHtml(campaign.safeUrl)}">${escapeHtml(campaign.safeUrl)}</td>
+      <td class="mono url-cell" title="${escapeHtml(campaign.moneyUrl)}">${escapeHtml(campaign.moneyUrl)}</td>
       <td>
         <div class="row-actions">
           <button class="icon-button" type="button" data-edit-campaign="${campaign.id}" aria-label="编辑 ${escapeHtml(campaign.name)}">

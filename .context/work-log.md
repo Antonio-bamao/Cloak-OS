@@ -642,3 +642,10 @@
 - 提交：`eb59fb2 feat: add monitor analytics thresholds`，已推送 `origin/main`。
 - 扫描：剩余项只剩用户明确自行处理的真实服务器部署、未来可选 React 管理台、未来可选 Redis/数据库 Bot IP source。当前上线前本地/CI 可完成的生产能力已收口。
 - 下一步：提交项目上下文收口记录。
+
+## 2026-05-02 23:28 CST｜刷新管理台后台仪表盘 UI
+- 目标：按用户反馈改善 `/admin` 视觉观感，让它更像成熟后台仪表盘，而不是旧紫色霓虹风格。
+- 动作：使用 web-design-engineer 方向重审第一屏和表格体验；先扩展 admin UI 资产测试锁定新结构和视觉 token；将管理台改为哑光深色运维控制台风格，新增 `workspace-header`、`command-center`、更克制的状态色、表格列宽策略和长 URL 省略；修复 opt-in 浏览器布局测试的认证准备，让临时 Chrome 写入管理令牌后再刷新等待数据。
+- 结果：桌面第一屏现在集中展示总览、令牌状态、关键指标、活动表和图表；移动端导航/令牌/指标不挤压；长 URL 表格通过横向滚动保留完整列，同时单元格不再竖排撑高。
+- 验证：`node --test test\admin-ui.test.js` 通过；`node --check public\admin\app.js` 通过；`$env:RUN_BROWSER_LAYOUT='1'; node --test test\admin-browser-layout.test.js` 真实 Chrome 布局测试 2 通过、PostgreSQL opt-in 跳过；全量 `node --test` 输出 187 个测试、183 通过、0 失败、4 个 opt-in 跳过。
+- 下一步：校验 `.context`，提交并推送 UI 刷新。

@@ -235,6 +235,9 @@ async function inspectViewport({ client, viewport, url, waitFor }) {
     mobile: viewport.mobile
   });
   await client.send('Page.navigate', { url });
+  await waitForExpression(client, `document.readyState === 'complete'`);
+  await authenticateAdminUi(client);
+  await client.send('Page.reload');
   await waitForExpression(client, waitFor);
 
   const metrics = await evaluate(client, layoutMetricsExpression());
@@ -247,6 +250,13 @@ async function inspectViewport({ client, viewport, url, waitFor }) {
     metrics,
     screenshot: screenshot.data
   };
+}
+
+async function authenticateAdminUi(client) {
+  await evaluate(
+    client,
+    `localStorage.setItem('cloak-admin-token', ${JSON.stringify(adminToken)})`
+  );
 }
 
 function layoutMetricsExpression() {
