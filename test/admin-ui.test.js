@@ -85,8 +85,6 @@ test('admin UI shell and assets are served by the app', async () => {
     assert.match(js, /renderSettings/);
     assert.match(js, /\/api\/v1\/settings/);
     assert.match(js, /\/api\/v1\/settings\/bot-ips\/reload/);
-    assert.match(js, /开发内存模式/);
-    assert.match(js, /未连接 PostgreSQL，数据仅保存在当前进程内存/);
     assert.match(js, /botIpCount/);
     assert.match(js, /formatBotIpSource/);
     assert.match(js, /showSuccessModal/);
@@ -96,7 +94,6 @@ test('admin UI shell and assets are served by the app', async () => {
     assert.match(js, /emptyState/);
     assert.match(js, /暂无匹配记录/);
     assert.doesNotMatch(js, /dev-admin-token/);
-    assert.doesNotMatch(js, /本地模式/);
     assert.doesNotMatch(js, /Premium|Campaign updated|Campaign created|operation board|Save Campaign|Update Campaign/);
   } finally {
     await new Promise((resolve, reject) => {

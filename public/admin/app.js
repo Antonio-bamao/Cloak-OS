@@ -421,7 +421,7 @@ function renderSettings() {
   elements.settingsServer.textContent = `${settings.server?.host ?? '-'}:${settings.server?.port ?? '-'}`;
   elements.settingsRepository.textContent = settings.repository?.databaseConfigured
     ? `${driverLabel} / 已配置数据库`
-    : `${driverLabel} / 未连接 PostgreSQL，数据仅保存在当前进程内存`;
+    : `${driverLabel} / 未配置数据库`;
   elements.settingsThresholds.textContent = `可疑 ${settings.detection?.suspiciousThreshold ?? '-'} / 机器人 ${settings.detection?.botThreshold ?? '-'}`;
   elements.settingsBotCount.textContent = String(settings.detection?.botIpCount ?? 0);
   elements.settingsBotSource.textContent = formatBotIpSource(settings.detection?.botIpSource);
@@ -643,7 +643,7 @@ function formatRepositoryDriver(value) {
   }
 
   if (value === 'memory') {
-    return '开发内存模式';
+    return '本地模式';
   }
 
   return value || '-';
