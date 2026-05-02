@@ -133,7 +133,8 @@ export async function runPostgresAdminSmokeCheck({
     assertIncludes(adminPage.text, '/admin/app.js', 'admin app script');
 
     const stylesheet = await requestText(fetchImpl, `${baseUrl}/admin/styles.css`);
-    assertIncludes(stylesheet.text, '--color-primary', 'admin stylesheet');
+    assertIncludes(stylesheet.text, '--accent-green', 'admin stylesheet');
+    assertIncludes(stylesheet.text, '--surface-panel', 'admin stylesheet');
     assertIncludes(stylesheet.text, '.error-banner', 'admin UI state stylesheet');
     assertIncludes(stylesheet.text, '.empty-state', 'admin UI state stylesheet');
 

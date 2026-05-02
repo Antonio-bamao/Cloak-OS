@@ -87,7 +87,7 @@ test('runPostgresAdminSmokeCheck validates admin assets and management APIs then
       }
 
       if (url.endsWith('/admin/styles.css')) {
-        return textResponse(200, ':root { --color-primary: #000; } .error-banner {} .empty-state {}');
+        return textResponse(200, ':root { --accent-green: #34d399; --surface-panel: #111516; } .error-banner {} .empty-state {}');
       }
 
       if (url.endsWith('/admin/app.js')) {
@@ -147,7 +147,7 @@ test('runPostgresAdminSmokeCheck fails when admin UI state assets are missing', 
       }
 
       if (url.endsWith('/admin/styles.css')) {
-        return textResponse(200, ':root { --color-primary: #000; }');
+        return textResponse(200, ':root { --accent-green: #34d399; --surface-panel: #111516; }');
       }
 
       if (url.endsWith('/admin/app.js')) {
@@ -208,7 +208,7 @@ test('runPostgresAdminSmokeCheck can probe health when --check-health is present
       }
 
       if (url.endsWith('/admin/styles.css')) {
-        return textResponse(200, ':root { --color-primary: #000; } .error-banner {} .empty-state {}');
+        return textResponse(200, ':root { --accent-green: #34d399; --surface-panel: #111516; } .error-banner {} .empty-state {}');
       }
 
       if (url.endsWith('/admin/app.js')) {
